@@ -1,0 +1,53 @@
+{# Event forecast. Edit freely -- wording here is yours to change. #}
+# {{ event.event_name }} — {{ event.location.name }}{% if event.location.region %}, {{ event.location.region }}{% endif %}
+
+**{{ event.event_time | datestr }} at {{ event.event_time | clock }}** (local time)
+
+{% if event.alerts %}
+> **Active alerts**
+{% for a in event.alerts %}
+> - {{ a.headlineText or a.eventDescription }}
+{% endfor %}
+
+{% endif %}
+## At ceremony time
+
+{% if blended %}
+| | |
+|---|---|
+| **Conditions** | {{ blended.phrase or "—" }} |
+| **Temperature** | {{ blended.temperature | num }}{{ units.temp }}{% if blended.feels_like is not none %} (feels like {{ blended.feels_like | num }}{{ units.temp }}){% endif %} |
+| **Chance of rain** | {{ blended.precip_chance | pct }} |
+| **Cloud cover** | {{ blended.cloud_cover | pct }} |
+| **Wind** | {{ blended.wind_speed | num }} {{ units.speed }} from the {{ blended.wind_direction or "—" }} |
+| **Gusts** | **{{ blended.wind_gust | num }} {{ units.speed }}** |
+| **Humidity** | {{ blended.humidity | pct }} |
+
+{% if blended.notes %}
+{% for note in blended.notes %}
+_Note: {{ note }}._
+{% endfor %}
+{% endif %}
+{% else %}
+_No source had hourly data for this time._
+{% endif %}
+
+## Hour by hour ({{ event.window_start | clock }} – {{ event.window_end | clock }})
+
+| Time | Conditions | Temp | Rain | Cloud | Wind | Gusts |
+|---|---|---|---|---|---|---|
+{% for row in window %}
+| {{ row.slot | clock }}{% if row.is_event %} **←**{% endif %} | {{ row.phrase or "—" }} | {{ row.temperature | num }}{{ units.temp }} | {{ row.precip_chance | pct }} | {{ row.cloud_cover | pct }} | {{ row.wind_speed | num }} {{ row.wind_direction or "" }} | {{ row.wind_gust | num }} |
+{% endfor %}
+
+## Where each number came from
+
+{% for field, label in sources.items() %}
+- **{{ field }}** — {{ label }}
+{% endfor %}
+
+---
+Generated {{ event.generated_at | datestr }} at {{ event.generated_at | clock }} by Sheerr Weather.
+{% for line in attributions %}
+{{ line }}
+{% endfor %}

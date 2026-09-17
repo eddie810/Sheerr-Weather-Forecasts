@@ -1,0 +1,15 @@
+# Secrets — never commit API keys
+.env
+.env.local
+
+# Generated forecasts
+output/*
+!output/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/

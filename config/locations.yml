@@ -1,0 +1,42 @@
+# Named locations you can generate forecasts for.
+#
+#   sheerr forecast witless-bay
+#   sheerr forecast --lat 47.2814 --lon -52.8306 --name "Witless Bay"
+#
+# `key` is what you type on the CLI. Add as many as you like.
+# timezone must be an IANA name (e.g. America/St_Johns) or "auto".
+
+defaults:
+  units: metric          # metric | imperial
+  days: 7
+  provider: both         # open-meteo | twc | both
+  template: default
+
+locations:
+  witless-bay:
+    name: Witless Bay
+    region: "NL"
+    latitude: 47.2814
+    longitude: -52.8306
+    timezone: America/St_Johns
+
+  st-johns:
+    name: St. John's
+    region: "NL"
+    latitude: 47.5615
+    longitude: -52.7126
+    timezone: America/St_Johns
+
+  halifax:
+    name: Halifax
+    region: "NS"
+    latitude: 44.6488
+    longitude: -63.5752
+    timezone: America/Halifax
+
+  toronto:
+    name: Toronto
+    region: "ON"
+    latitude: 43.6532
+    longitude: -79.3832
+    timezone: America/Toronto

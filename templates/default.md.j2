@@ -1,0 +1,29 @@
+{# Standard multi-day forecast. #}
+# {{ location.name }}{% if location.region %}, {{ location.region }}{% endif %} — {{ days | length }}-day forecast
+
+{% if current %}
+**Now:** {{ current.phrase or "—" }}, {{ current.temperature | num }}{{ units.temp }}{% if current.feels_like is not none %} (feels like {{ current.feels_like | num }}{{ units.temp }}){% endif %}, wind {{ current.wind_speed | num }} {{ units.speed }} {{ current.wind_direction or "" }}.
+
+{% endif %}
+{% if alerts %}
+> **Active alerts**
+{% for a in alerts %}
+> - {{ a.headlineText or a.eventDescription }}
+{% endfor %}
+
+{% endif %}
+{% for day in days %}
+### {{ day.day_of_week }}, {{ day.date.strftime('%B %-d') }}
+{% if day.narrative %}
+{{ day.narrative }}
+{% else %}
+{{ day.phrase or "—" }}.
+{% endif %}
+High {{ day.high | num }}{{ units.temp }} · Low {{ day.low | num }}{{ units.temp }} · Rain {{ day.precip_chance | pct }} · Wind {{ day.wind_speed | num }} {{ units.speed }} {{ day.wind_direction or "" }}
+
+{% endfor %}
+---
+Generated {{ generated_at | datestr }} at {{ generated_at | clock }} by Sheerr Weather.
+{% for line in attributions %}
+{{ line }}
+{% endfor %}
