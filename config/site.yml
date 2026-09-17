@@ -22,6 +22,12 @@ pages:
     location: halifax
     days: 7
 
+  # Regional forecasts: several points summarised as one.
+  - type: region
+    region: avalon
+    days: 5
+    narrative_days: 3
+
   # Event briefings. `when` accepts an ISO timestamp for a fixed date, or a
   # phrase like "saturday 2pm" that rolls forward each week.
   - type: event

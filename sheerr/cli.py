@@ -186,6 +186,67 @@ def cmd_locations(args, config: Config) -> None:
         print(f"{key:<{width}}  {loc.name}{region}  ({loc.geocode})  {loc.timezone}")
 
 
+def build_region_context(config: Config, key: str, provider: str, days: int,
+                         units: str, strict: bool, narrative_days: int = 3) -> dict:
+    """Fetch every member of a region and summarise it."""
+    from . import narrative as narrative_mod
+    from .region import summarise_region
+
+    region = config.region(key)
+    providers = build_providers(provider)
+
+    by_member: dict[str, list] = {}
+    for member in region.members:
+        try:
+            by_member[member.slug] = fetch_all(providers, member, days, units, strict)
+        except SystemExit:
+            print(f"warning: no forecast for {member.name}", file=sys.stderr)
+
+    if not by_member:
+        raise SystemExit(f"error: no member of {region.name} could be fetched")
+
+    summary = summarise_region(region.name, region.timezone, region.members,
+                               by_member, days=days)
+
+    narratives, warnings, sources = [], [], set()
+    for day in summary.days[:narrative_days]:
+        text = narrative_mod.write(summary, day)
+        narratives.append({"day": day, "narrative": text})
+        warnings.extend(text.warnings)
+        sources.add(text.source)
+
+    any_forecast = next(iter(by_member.values()))[0]
+    return {
+        "summary": summary,
+        "narratives": narratives,
+        "units": units_for(any_forecast),
+        "narrative_source": "claude" if "claude" in sources else "rule-based",
+        "warnings": sorted(set(warnings)),
+        "attributions": sorted({p.attribution for p in providers if p.attribution}),
+    }
+
+
+def cmd_region(args, config: Config) -> None:
+    context = build_region_context(config, args.region, args.provider, args.days,
+                                   args.units, args.strict, args.narrative_days)
+    if args.format == "json":
+        summary = context["summary"]
+        payload = {
+            "region": summary.name,
+            "members": summary.member_names,
+            "generated_at": summary.generated_at.isoformat(),
+            "days": [{
+                "date": str(e["day"].date),
+                "headline": e["narrative"].headline,
+                "discussion": e["narrative"].discussion,
+                "written_by": e["narrative"].source,
+            } for e in context["narratives"]],
+        }
+        write_out(json.dumps(payload, indent=2, default=_json_default), args.output)
+        return
+    write_out(render(args.template, args.format, context), args.output)
+
+
 def cmd_site(args, config: Config) -> None:
     from .site import build_site, load_site_config
 
@@ -239,6 +300,19 @@ def build_parser() -> argparse.ArgumentParser:
     e.add_argument("--window", type=int, default=3,
                    help="Hours either side to include (default 3)")
     e.set_defaults(func=cmd_event)
+
+    r = sub.add_parser("region", help="Summarised forecast for a group of locations")
+    r.add_argument("region", help="Configured region key")
+    r.add_argument("--provider", default="licensed")
+    r.add_argument("--days", type=int, default=5)
+    r.add_argument("--units", choices=["metric", "imperial"], default="metric")
+    r.add_argument("--template", default="region")
+    r.add_argument("--format", default="md", choices=["md", "html", "json"])
+    r.add_argument("--narrative-days", type=int, default=3,
+                   help="How many days get written discussion (default 3)")
+    r.add_argument("--output", "-o")
+    r.add_argument("--strict", action="store_true")
+    r.set_defaults(func=cmd_region)
 
     s = sub.add_parser("site", help="Build the static site for hosting")
     s.add_argument("--outdir", default="_site", help="Output directory")

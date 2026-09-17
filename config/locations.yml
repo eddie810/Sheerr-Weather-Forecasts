@@ -40,3 +40,53 @@ locations:
     latitude: 43.6532
     longitude: -79.3832
     timezone: America/Toronto
+
+  cape-race:
+    name: Cape Race
+    region: "NL"
+    latitude: 46.6597
+    longitude: -53.0761
+    timezone: America/St_Johns
+
+  carbonear:
+    name: Carbonear
+    region: "NL"
+    latitude: 47.7350
+    longitude: -53.2158
+    timezone: America/St_Johns
+
+  placentia:
+    name: Placentia
+    region: "NL"
+    latitude: 47.2411
+    longitude: -53.9597
+    timezone: America/St_Johns
+
+  cape-st-marys:
+    name: Cape St. Mary's
+    region: "NL"
+    latitude: 46.8214
+    longitude: -54.1811
+    timezone: America/St_Johns
+
+  bonavista:
+    name: Bonavista
+    region: "NL"
+    latitude: 48.657
+    longitude: -53.112
+    timezone: America/St_Johns
+
+# Regions group locations into one summarised forecast.
+# Every member must exist under `locations:` above.
+regions:
+  avalon:
+    name: Avalon Peninsula
+    region: "NL"
+    timezone: America/St_Johns
+    members:
+      - st-johns
+      - witless-bay
+      - cape-race
+      - carbonear
+      - placentia
+      - cape-st-marys

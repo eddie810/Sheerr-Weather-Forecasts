@@ -49,6 +49,9 @@ jobs:
           # Optional: set for commercial Open-Meteo use (free tier is
           # non-commercial only). Unset falls back to the free endpoint.
           OPENMETEO_API_KEY: ${{ secrets.OPENMETEO_API_KEY }}
+          # Writes the regional forecast discussions. Without it the build
+          # falls back to rule-based text rather than failing.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           # Upstream model queries are occasionally cut off mid-transfer;
           # an unattended run can afford to be more patient than a local one.
           SHEERR_RETRIES: "6"
@@ -62,6 +65,10 @@ jobs:
             exit 1
           fi
           python -m sheerr.cli site --outdir _site
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::warning::ANTHROPIC_API_KEY not set — regional discussions"\
+                 "used rule-based text instead of Claude."
+          fi
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

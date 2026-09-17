@@ -26,6 +26,23 @@
   </section>
   {% endif %}
 
+  {% if regions %}
+  <section>
+    <h2 class="sec">Regional forecasts</h2>
+    <div class="readout">
+      {% for p in regions %}
+      <div class="cell">
+        <div class="k">Region</div>
+        <div class="v" style="font-size:1.15rem;font-family:'IBM Plex Sans',sans-serif">
+          <a href="{{ p.href }}" style="color:var(--accent);text-decoration:none">{{ p.title }} →</a>
+        </div>
+        <div class="n">{{ p.subtitle }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
   {% if forecasts %}
   <section>
     <h2 class="sec">Locations</h2>

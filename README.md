@@ -24,6 +24,7 @@ Rendered output always states which source each number came from.
 | The Weather Company | `TWC_API_KEY` | Per your contract tier |
 | Open-Meteo (free) | none | **Non-commercial only** |
 | Open-Meteo (paid) | `OPENMETEO_API_KEY` | Per your plan |
+| Claude (regional prose) | `ANTHROPIC_API_KEY` | Per your Anthropic plan |
 
 `--provider licensed` uses only ECMWF and TWC, excluding Open-Meteo entirely.
 That is what `config/site.yml` publishes with.
@@ -141,6 +142,46 @@ config/           Your locations
 
 Adding a source means adding a module under `providers/` that returns the
 shared `Forecast` model, then registering it in `providers/__init__.py`.
+
+## Regional forecasts
+
+A region is several point forecasts summarised as one, because the useful
+content of a regional forecast is the spread: the range across the area,
+which point holds each extreme, and when conditions peak.
+
+```bash
+python -m sheerr.cli region avalon --days 5
+python -m sheerr.cli region avalon --format html -o output/avalon.html
+```
+
+Define regions in `config/locations.yml`. Every member must already exist
+under `locations:`.
+
+```yaml
+regions:
+  avalon:
+    name: Avalon Peninsula
+    timezone: America/St_Johns
+    members: [st-johns, witless-bay, cape-race, carbonear, placentia, cape-st-marys]
+```
+
+### Written discussion
+
+Claude writes the regional discussion from a structured brief of the
+aggregated figures, using `ANTHROPIC_API_KEY`. Two safeguards apply:
+
+- **Every number in the generated prose is checked against the source data**
+  before publication. Prose citing a figure the data does not support is
+  discarded and the rule-based writer runs instead. A weather product cannot
+  publish an invented wind speed.
+- **Without a key, or if the call fails, the rule-based writer runs.** An
+  unattended build never fails for want of a narrative.
+
+Pages state which writer produced the text. `--narrative-days N` controls how
+many days get written discussion (default 3); the rest are figures only.
+
+Running cost is roughly $0.02 per region per build — about $5/month at the
+3-hourly schedule with one region.
 
 ## Hosting on GitHub Pages
 

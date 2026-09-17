@@ -77,6 +77,7 @@ def build_site(config: Config, site_config: dict[str, Any], outdir: Path,
                  "description": meta.get("description"),
                  "refresh_hours": meta.get("refresh_hours", 3)},
         "events": [p for p in built if p.kind == "event"],
+        "regions": [p for p in built if p.kind == "region"],
         "forecasts": [p for p in built if p.kind == "forecast"],
         "failures": failed,
         "built_at": _index_time(built, config),
@@ -104,6 +105,32 @@ def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
                 site_defaults: dict | None = None) -> BuiltPage | None:
     site_defaults = site_defaults or {}
     kind = entry.get("type", "forecast")
+
+    if kind == "region":
+        from .cli import build_region_context
+        from .models import Location as _Loc
+
+        provider = entry.get("provider") or site_defaults.get("provider") or "licensed"
+        context = build_region_context(
+            config, entry["region"], provider, int(entry.get("days", 5)),
+            entry.get("units", "metric"), False,
+            int(entry.get("narrative_days", 3)),
+        )
+        attributions.update(context["attributions"])
+        context.update({"home": "./index.html", "standalone": True,
+                        "attributions": sorted(attributions)})
+        summary = context["summary"]
+        html = render(entry.get("template", "region"), "html", context)
+        href = f"region-{entry['region']}.html"
+        (outdir / href).write_text(html)
+        lead = summary.days[0] if summary.days else None
+        subtitle = (f"{len(summary.members)} points"
+                    + (f" · gusts to {lead.gust.high.value:.0f}" if lead and lead.gust else ""))
+        pseudo = _Loc(name=summary.name, latitude=summary.members[0].latitude,
+                      longitude=summary.members[0].longitude,
+                      timezone=summary.timezone, slug=f"region-{entry['region']}")
+        return BuiltPage(pseudo, summary.name, subtitle, href, "region")
+
     location = config.location(entry["location"])
     providers = build_providers(
         entry.get("provider") or site_defaults.get("provider") or "both"

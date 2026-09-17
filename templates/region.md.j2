@@ -1,0 +1,33 @@
+# {{ summary.name }}
+
+_{{ summary.members | length }} points sampled: {{ summary.member_names | join(", ") }}_
+
+{% if summary.alerts %}
+{% for a in summary.alerts %}
+> **{{ a.eventDescription or "Weather alert" }}** — {{ a.headlineText }}
+{% endfor %}
+
+{% endif %}
+{% for entry in narratives %}
+## {{ entry.day.day_of_week }}, {{ entry.day.date.strftime('%B %-d') }}
+
+**{{ entry.narrative.headline }}**
+
+{{ entry.narrative.discussion }}
+
+| | |
+|---|---|
+{% if entry.day.high %}| Highs | {{ entry.day.high.low.value | num }}–{{ entry.day.high.high.value | num }}{{ units.temp }} (coolest {{ entry.day.high.low.where }}) |
+{% endif %}
+{% if entry.day.gust %}| Peak gusts | {{ entry.day.gust.low.value | num }}–{{ entry.day.gust.high.value | num }} {{ units.speed }} (strongest {{ entry.day.gust.high.where }}) |
+{% endif %}
+{% if entry.day.wind_speed %}| Sustained | {{ entry.day.wind_speed.low.value | num }}–{{ entry.day.wind_speed.high.value | num }} {{ units.speed }}{% if entry.day.dominant_direction %} {{ entry.day.dominant_direction }}{% endif %} |
+{% endif %}
+
+{% endfor %}
+---
+Generated {{ summary.generated_at | datestr }} at {{ summary.generated_at | clock }} {{ summary.generated_at.strftime('%Z') }}.
+Discussion written by {{ "Claude, validated against the source figures" if narrative_source == "claude" else "rule" }}.
+{% for line in attributions %}
+{{ line }}
+{% endfor %}
