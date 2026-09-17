@@ -187,9 +187,24 @@ def build_brief(summary: RegionSummary, day: RegionDay) -> tuple[str, set[float]
 
 NUMBER = re.compile(r"-?\d+(?:\.\d+)?")
 
+#: Literal \uXXXX / \xXX sequences that survived JSON decoding. Structured
+#: output occasionally double-escapes punctuation such as an em dash. Left
+#: alone they render as garbage on the page, and their digits look like
+#: forecast figures to the validator.
+ESCAPE = re.compile(r"\\u([0-9a-fA-F]{4})|\\x([0-9a-fA-F]{2})")
+
+
+def decode_escapes(text: str) -> str:
+    """Turn any surviving literal escape sequences into real characters."""
+    def swap(match: re.Match) -> str:
+        return chr(int(match.group(1) or match.group(2), 16))
+
+    return ESCAPE.sub(swap, text)
+
 
 def validate(text: str, allowed: set[float]) -> list[str]:
     """Every number in the prose must be supported by the brief."""
+    text = decode_escapes(text)
     violations = []
     for match in NUMBER.finditer(text):
         value = float(match.group())
@@ -292,7 +307,9 @@ def write(summary: RegionSummary, day: RegionDay,
             raise RuntimeError("model declined the request")
 
         parsed = response.parsed_output
-        text = f"{parsed.headline} {parsed.discussion}"
+        headline = decode_escapes(parsed.headline).strip()
+        discussion = decode_escapes(parsed.discussion).strip()
+        text = f"{headline} {discussion}"
         violations = validate(text, allowed)
         if violations:
             fallback = rule_based(summary, day)
@@ -300,8 +317,8 @@ def write(summary: RegionSummary, day: RegionDay,
             fallback.warnings = violations
             return fallback
 
-        return Narrative(parsed.headline.strip(), parsed.discussion.strip(),
-                         "claude", [key_warning] if key_warning else [])
+        return Narrative(headline, discussion, "claude",
+                         [key_warning] if key_warning else [])
 
     except Exception as exc:  # noqa: BLE001 - never fail a build on narrative
         fallback = rule_based(summary, day)

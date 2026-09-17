@@ -220,7 +220,8 @@ def build_region_context(config: Config, key: str, provider: str, days: int,
         "summary": summary,
         "narratives": narratives,
         "units": units_for(any_forecast),
-        "narrative_source": "claude" if "claude" in sources else "rule-based",
+        "narrative_source": ("claude" if sources == {"claude"}
+                             else "mixed" if "claude" in sources else "rule-based"),
         "warnings": sorted(set(warnings)),
         "attributions": sorted({p.attribution for p in providers if p.attribution}),
     }
