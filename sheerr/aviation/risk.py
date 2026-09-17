@@ -234,10 +234,8 @@ def _outlook(a: Assessment, arriving: bool, weather: str) -> str:
         if a.category in ("IFR", "LIFR"):
             return "Instrument approach"
         return "Straightforward approach"
-    if notams and notams.contaminated and not FREEZING.search(weather):
-        factors.append(Factor("runway contamination",
-                              "runway surface condition reported", 0.45))
-
+    if "runway contamination" in names:
+        return "Contaminated runway"
     if FREEZING.search(weather):
         return "De-icing, holdover critical"
     if FROZEN.search(weather):
