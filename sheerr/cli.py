@@ -270,6 +270,63 @@ def cmd_region(args, config: Config) -> None:
     write_out(render(args.template, args.format, context), args.output)
 
 
+def cmd_aviation(args, config: Config) -> None:
+    from datetime import timezone as _tz
+    from zoneinfo import ZoneInfo
+
+    from .aviation.awc import fetch_metar, fetch_taf
+    from .aviation.risk import assess_factors, write_verdict
+    from .aviation.runways import CYYT
+    from .aviation.schedule import ScheduleError, fetch_schedule, live_sample
+
+    airport = CYYT   # only CYYT is modelled so far
+    if args.airport.upper() not in (airport.icao, airport.iata):
+        raise SystemExit(f"error: only {airport.icao} is configured so far")
+
+    raw_taf, periods = fetch_taf(airport.icao)
+    metar = fetch_metar(airport.icao)
+
+    start = datetime.now(_tz.utc)
+    try:
+        flights = (live_sample(airport.latitude, airport.longitude)
+                   if args.sample
+                   else fetch_schedule(airport.icao, start, args.hours))
+    except ScheduleError as exc:
+        raise SystemExit(f"error: {exc}")
+
+    if not flights:
+        raise SystemExit("error: no flights returned for that window")
+
+    assessments = [write_verdict(assess_factors(f, airport, periods)) for f in flights]
+
+    if args.format == "json":
+        payload = [{
+            "flight": a.flight.callsign or a.flight.number,
+            "direction": a.flight.direction,
+            "scheduled_utc": a.flight.scheduled.isoformat(),
+            "aircraft": a.profile.name,
+            "colour": a.colour, "reason": a.reason,
+            "category": a.category, "runway": a.runway,
+            "crosswind_kt": round(a.crosswind), "assessed_by": a.source,
+        } for a in assessments]
+        write_out(json.dumps(payload, indent=2, default=_json_default), args.output)
+        return
+
+    context = {
+        "airport": airport,
+        "assessments": assessments,
+        "metar": metar,
+        "raw_taf": raw_taf,
+        "periods": periods,
+        "tz": ZoneInfo(airport.timezone),
+        "generated_at": datetime.now(ZoneInfo(airport.timezone)),
+        "sample_mode": args.sample,
+        "assessed_by": ("claude" if any(a.source == "claude" for a in assessments)
+                        else "rule-based"),
+    }
+    write_out(render(args.template, args.format, context), args.output)
+
+
 def cmd_site(args, config: Config) -> None:
     from .site import build_site, load_site_config
 
@@ -336,6 +393,16 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--output", "-o")
     r.add_argument("--strict", action="store_true")
     r.set_defaults(func=cmd_region)
+
+    a = sub.add_parser("aviation", help="Weather-delay risk for flights at an airport")
+    a.add_argument("airport", nargs="?", default="CYYT")
+    a.add_argument("--hours", type=int, default=12, help="Schedule window (default 12)")
+    a.add_argument("--sample", action="store_true",
+                   help="Use live ADS-B traffic instead of a schedule (no key needed)")
+    a.add_argument("--template", default="aviation")
+    a.add_argument("--format", default="md", choices=["md", "html", "json"])
+    a.add_argument("--output", "-o")
+    a.set_defaults(func=cmd_aviation)
 
     s = sub.add_parser("site", help="Build the static site for hosting")
     s.add_argument("--outdir", default="_site", help="Output directory")

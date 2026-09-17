@@ -1,0 +1,27 @@
+# {{ airport.name }} ({{ airport.iata }}) — weather delay risk
+
+{% if sample_mode %}
+_Demonstration using live ADS-B traffic, not a published schedule._
+{% endif %}
+
+**Current:** {{ metar.fltCat }} · wind {{ metar.wdir }}°/{{ metar.wspd }} kt · visibility {{ metar.visib }} sm
+
+| | Flight | Scheduled | Aircraft | Cat | Rwy | Xwind | Assessment |
+|---|---|---|---|---|---|---|---|
+{% for a in assessments %}
+| {{ {"green":"🟢","yellow":"🟡","orange":"🟠"}[a.colour] }} | {{ a.flight.callsign or a.flight.number }} | {{ a.flight.scheduled.astimezone(tz).strftime('%H:%M') }} | {{ a.profile.name }} | {{ a.category }} | {{ a.runway or "—" }} | {{ a.crosswind | round | int }} kt | {{ a.reason }} |
+{% endfor %}
+
+## Terminal forecast
+
+```
+{{ raw_taf }}
+```
+
+---
+Generated {{ generated_at | datestr }} at {{ generated_at | clock }} {{ generated_at.strftime('%Z') }}.
+Assessments written by {{ "Claude, validated against the source figures" if assessed_by == "claude" else "rule" }}.
+
+**Not an operational product.** This estimates schedule risk only. It is not
+a statement about whether any flight is safe or legal to operate. Crews and
+operators decide that against their own limits and current official data.
