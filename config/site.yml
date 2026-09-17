@@ -1,0 +1,31 @@
+# What the hosted site publishes.
+#
+# Rebuilt on a schedule by .github/workflows/publish.yml and deployed to
+# GitHub Pages. Add or remove pages here; no code changes needed.
+
+site:
+  title: Sheerr Weather Forecasts
+  description: Custom forecasts for Atlantic Canada, refreshed through the day.
+  refresh_hours: 3
+
+pages:
+  # Multi-day forecasts for each location.
+  - type: forecast
+    location: witless-bay
+    days: 7
+  - type: forecast
+    location: st-johns
+    days: 7
+  - type: forecast
+    location: halifax
+    days: 7
+
+  # Event briefings. `when` accepts an ISO timestamp for a fixed date, or a
+  # phrase like "saturday 2pm" that rolls forward each week.
+  - type: event
+    location: witless-bay
+    when: "2026-09-19T14:00"
+    name: Wedding
+    window: 4
+    # Drop this page automatically once the event has passed.
+    expires_after: true

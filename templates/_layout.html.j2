@@ -1,0 +1,103 @@
+{# Shared page chrome for every HTML forecast.
+   `standalone` wraps the output in a full HTML document for GitHub Pages;
+   without it the page is a fragment, which is what Claude Artifacts expect. #}
+{% if standalone %}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+{% endif %}
+<title>{% block title %}Sheerr Weather{% endblock %}</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --paper:#f4f6f5; --card:#ffffff; --ink:#15212a; --ink-soft:#4a5c66;
+    --ink-faint:#7d8d95; --rule:#dfe5e4; --accent:#2d6a72; --accent-soft:#e4eeee;
+    --calm:#6b8f7a; --breezy:#c08a2e; --windy:#c2631f; --severe:#a32f2f;
+    --warn-bg:#fdf3e7; --warn-rule:#e8c89a; --warn-ink:#8a5418;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#101a20; --card:#17242c; --ink:#e8eeef; --ink-soft:#a9bcc3;
+      --ink-faint:#7b8f97; --rule:#283942; --accent:#6fb3b8; --accent-soft:#1c3036;
+      --calm:#87b39a; --breezy:#dcab55; --windy:#e08a4c; --severe:#e0706b;
+      --warn-bg:#2a2013; --warn-rule:#5c4622; --warn-ink:#e8c08a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#101a20; --card:#17242c; --ink:#e8eeef; --ink-soft:#a9bcc3;
+    --ink-faint:#7b8f97; --rule:#283942; --accent:#6fb3b8; --accent-soft:#1c3036;
+    --calm:#87b39a; --breezy:#dcab55; --windy:#e08a4c; --severe:#e0706b;
+    --warn-bg:#2a2013; --warn-rule:#5c4622; --warn-ink:#e8c08a;
+  }
+
+  body { background:var(--paper); color:var(--ink);
+         font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,sans-serif;
+         line-height:1.55; }
+  .sheet { max-width:60rem; margin:0 auto; padding-inline:16px; padding-block:2.5rem 4rem;
+           display:flex; flex-direction:column; gap:2rem; }
+
+  .eyebrow { font-size:.7rem; letter-spacing:.14em; text-transform:uppercase;
+             color:var(--ink-faint); font-weight:600; }
+  h1 { font-family:"Newsreader",Georgia,serif; font-weight:600; font-size:clamp(2rem,6vw,3rem);
+       line-height:1.08; margin:.3rem 0 0; text-wrap:balance; letter-spacing:-.01em; }
+  .when { font-family:"Newsreader",Georgia,serif; font-style:italic;
+          font-size:clamp(1.05rem,3vw,1.3rem); color:var(--ink-soft); margin-top:.5rem; }
+
+  .alert { background:var(--warn-bg); border:1px solid var(--warn-rule);
+           border-left:4px solid var(--warn-ink); border-radius:3px; padding:1.1rem 1.25rem; }
+  .alert h2 { font-size:.95rem; margin:0 0 .5rem; color:var(--warn-ink); font-weight:600;
+              font-family:"IBM Plex Sans",sans-serif; letter-spacing:.01em; }
+  .alert p { margin:.45rem 0; font-size:.88rem; color:var(--ink-soft); white-space:pre-line; }
+  .alert .src { font-size:.72rem; color:var(--ink-faint); margin-top:.7rem; }
+
+  h2.sec { font-family:"Newsreader",Georgia,serif; font-weight:600; font-size:1.45rem;
+           margin:0 0 .9rem; letter-spacing:-.005em; }
+
+  .readout { display:grid; gap:1px; background:var(--rule); border:1px solid var(--rule);
+             border-radius:4px; overflow:hidden;
+             grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr)); }
+  .cell { background:var(--card); padding:1rem 1.1rem; display:flex; flex-direction:column; gap:.3rem; }
+  .cell .k { font-size:.68rem; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-faint); font-weight:600; }
+  .cell .v { font-family:"IBM Plex Mono",monospace; font-size:1.55rem; font-weight:500;
+             font-variant-numeric:tabular-nums; line-height:1.15; }
+  .cell .n { font-size:.76rem; color:var(--ink-soft); }
+  .cell.lead { grid-column:1/-1; }
+  .cell.lead .v { font-size:2.4rem; }
+  .v.calm{color:var(--calm)} .v.breezy{color:var(--breezy)}
+  .v.windy{color:var(--windy)} .v.severe{color:var(--severe)}
+
+  .scroll { overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--card); }
+  table { border-collapse:collapse; width:100%; font-size:.85rem; min-width:34rem; }
+  th { text-align:left; font-size:.66rem; letter-spacing:.1em; text-transform:uppercase;
+       color:var(--ink-faint); font-weight:600; padding:.7rem .8rem;
+       border-bottom:1px solid var(--rule); white-space:nowrap; }
+  td { padding:.62rem .8rem; border-bottom:1px solid var(--rule); font-variant-numeric:tabular-nums; }
+  tr:last-child td { border-bottom:none; }
+  tr.now td { background:var(--accent-soft); }
+  tr.now td:first-child { box-shadow:inset 3px 0 0 var(--accent); font-weight:600; }
+  td.num { font-family:"IBM Plex Mono",monospace; }
+  .bar { display:flex; align-items:center; gap:.5rem; }
+  .bar span { font-family:"IBM Plex Mono",monospace; min-width:2.4rem; }
+  .bar i { height:6px; border-radius:3px; display:block; min-width:2px; }
+
+  .prov { display:grid; gap:.5rem 1.5rem; grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));
+          font-size:.8rem; }
+  .prov div { display:flex; justify-content:space-between; gap:1rem; padding:.4rem 0;
+              border-bottom:1px dotted var(--rule); }
+  .prov .f { color:var(--ink-soft); }
+  .prov .s { color:var(--ink); text-align:right; }
+
+  footer { border-top:1px solid var(--rule); padding-top:1.1rem; font-size:.74rem;
+           color:var(--ink-faint); display:flex; flex-direction:column; gap:.25rem; }
+</style>
+{% if standalone %}
+</head>
+<body>
+{% endif %}
+{% block content %}{% endblock %}
+{% if standalone %}
+</body>
+</html>
+{% endif %}

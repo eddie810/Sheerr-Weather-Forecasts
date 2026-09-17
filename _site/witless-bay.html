@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Witless Bay Forecast</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --paper:#f4f6f5; --card:#ffffff; --ink:#15212a; --ink-soft:#4a5c66;
+    --ink-faint:#7d8d95; --rule:#dfe5e4; --accent:#2d6a72; --accent-soft:#e4eeee;
+    --calm:#6b8f7a; --breezy:#c08a2e; --windy:#c2631f; --severe:#a32f2f;
+    --warn-bg:#fdf3e7; --warn-rule:#e8c89a; --warn-ink:#8a5418;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#101a20; --card:#17242c; --ink:#e8eeef; --ink-soft:#a9bcc3;
+      --ink-faint:#7b8f97; --rule:#283942; --accent:#6fb3b8; --accent-soft:#1c3036;
+      --calm:#87b39a; --breezy:#dcab55; --windy:#e08a4c; --severe:#e0706b;
+      --warn-bg:#2a2013; --warn-rule:#5c4622; --warn-ink:#e8c08a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#101a20; --card:#17242c; --ink:#e8eeef; --ink-soft:#a9bcc3;
+    --ink-faint:#7b8f97; --rule:#283942; --accent:#6fb3b8; --accent-soft:#1c3036;
+    --calm:#87b39a; --breezy:#dcab55; --windy:#e08a4c; --severe:#e0706b;
+    --warn-bg:#2a2013; --warn-rule:#5c4622; --warn-ink:#e8c08a;
+  }
+
+  body { background:var(--paper); color:var(--ink);
+         font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,sans-serif;
+         line-height:1.55; }
+  .sheet { max-width:60rem; margin:0 auto; padding-inline:16px; padding-block:2.5rem 4rem;
+           display:flex; flex-direction:column; gap:2rem; }
+
+  .eyebrow { font-size:.7rem; letter-spacing:.14em; text-transform:uppercase;
+             color:var(--ink-faint); font-weight:600; }
+  h1 { font-family:"Newsreader",Georgia,serif; font-weight:600; font-size:clamp(2rem,6vw,3rem);
+       line-height:1.08; margin:.3rem 0 0; text-wrap:balance; letter-spacing:-.01em; }
+  .when { font-family:"Newsreader",Georgia,serif; font-style:italic;
+          font-size:clamp(1.05rem,3vw,1.3rem); color:var(--ink-soft); margin-top:.5rem; }
+
+  .alert { background:var(--warn-bg); border:1px solid var(--warn-rule);
+           border-left:4px solid var(--warn-ink); border-radius:3px; padding:1.1rem 1.25rem; }
+  .alert h2 { font-size:.95rem; margin:0 0 .5rem; color:var(--warn-ink); font-weight:600;
+              font-family:"IBM Plex Sans",sans-serif; letter-spacing:.01em; }
+  .alert p { margin:.45rem 0; font-size:.88rem; color:var(--ink-soft); white-space:pre-line; }
+  .alert .src { font-size:.72rem; color:var(--ink-faint); margin-top:.7rem; }
+
+  h2.sec { font-family:"Newsreader",Georgia,serif; font-weight:600; font-size:1.45rem;
+           margin:0 0 .9rem; letter-spacing:-.005em; }
+
+  .readout { display:grid; gap:1px; background:var(--rule); border:1px solid var(--rule);
+             border-radius:4px; overflow:hidden;
+             grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr)); }
+  .cell { background:var(--card); padding:1rem 1.1rem; display:flex; flex-direction:column; gap:.3rem; }
+  .cell .k { font-size:.68rem; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-faint); font-weight:600; }
+  .cell .v { font-family:"IBM Plex Mono",monospace; font-size:1.55rem; font-weight:500;
+             font-variant-numeric:tabular-nums; line-height:1.15; }
+  .cell .n { font-size:.76rem; color:var(--ink-soft); }
+  .cell.lead { grid-column:1/-1; }
+  .cell.lead .v { font-size:2.4rem; }
+  .v.calm{color:var(--calm)} .v.breezy{color:var(--breezy)}
+  .v.windy{color:var(--windy)} .v.severe{color:var(--severe)}
+
+  .scroll { overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--card); }
+  table { border-collapse:collapse; width:100%; font-size:.85rem; min-width:34rem; }
+  th { text-align:left; font-size:.66rem; letter-spacing:.1em; text-transform:uppercase;
+       color:var(--ink-faint); font-weight:600; padding:.7rem .8rem;
+       border-bottom:1px solid var(--rule); white-space:nowrap; }
+  td { padding:.62rem .8rem; border-bottom:1px solid var(--rule); font-variant-numeric:tabular-nums; }
+  tr:last-child td { border-bottom:none; }
+  tr.now td { background:var(--accent-soft); }
+  tr.now td:first-child { box-shadow:inset 3px 0 0 var(--accent); font-weight:600; }
+  td.num { font-family:"IBM Plex Mono",monospace; }
+  .bar { display:flex; align-items:center; gap:.5rem; }
+  .bar span { font-family:"IBM Plex Mono",monospace; min-width:2.4rem; }
+  .bar i { height:6px; border-radius:3px; display:block; min-width:2px; }
+
+  .prov { display:grid; gap:.5rem 1.5rem; grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));
+          font-size:.8rem; }
+  .prov div { display:flex; justify-content:space-between; gap:1rem; padding:.4rem 0;
+              border-bottom:1px dotted var(--rule); }
+  .prov .f { color:var(--ink-soft); }
+  .prov .s { color:var(--ink); text-align:right; }
+
+  footer { border-top:1px solid var(--rule); padding-top:1.1rem; font-size:.74rem;
+           color:var(--ink-faint); display:flex; flex-direction:column; gap:.25rem; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <header>
+    <div class="eyebrow">Sheerr Weather · <a href="./index.html" style="color:inherit">All forecasts</a></div>
+    <h1>Witless Bay, NL</h1>
+    <div class="when">7-day forecast</div>
+  </header>
+
+  <section class="alert">
+    <h2>Special Weather Statement</h2>
+<p>A fall storm featuring strong winds is expected.
+
+Locations: St. John's, Avalon Peninsula North, and the Clarenville area.
+
+Time span: Saturday morning until Saturday night.
+
+Potential wind gusts: northwesterly 70 to 100 km/h, with the strongest gusts along the coast and locally higher gusts possible.
+
+Similar storms in the past have caused:
+- disruptions to ferry services
+- tree and minor property damage
+- scattered utility outages
+
+Remarks: A weather system is forecast to rapidly intensify off the northeast coast of Newfoundland on Saturday, bringing a period of strong west to northwesterly winds to the region. 
+
+Loose objects may be tossed or damaged by the wind. Secure or bring indoors loose items such as seasonal outdoor furniture before the strongest winds arrive.
+
+Fully leafed trees are more vulnerable to wind damage at this time of year than during the winter season. Consider having flashlights and batteries on hand in case of a utility outage.
+
+###
+
+Please continue to monitor alerts and forecasts issued by Environment Canada. To report severe weather, send an email to NLstorm@ec.gc.ca or post reports on social media using #NLwx.</p>    <div class="src">Meteorological Service of Canada · Special Weather Statement from THU 5:29 AM NDT until SUN 3:30 AM NDT</div>
+  </section>
+
+  <section>
+    <h2 class="sec">Right now</h2>
+    <div class="readout">
+      <div class="cell">
+        <div class="k">Conditions</div>
+        <div class="v" style="font-size:1.05rem;font-family:'IBM Plex Sans',sans-serif">Sunny</div>
+      </div>
+      <div class="cell">
+        <div class="k">Temperature</div>
+        <div class="v">15°C</div>
+<div class="n">Feels like 14°C</div>      </div>
+      <div class="cell">
+        <div class="k">Wind</div>
+        <div class="v">23</div>
+        <div class="n">km/h from the W →</div>
+      </div>
+      <div class="cell">
+        <div class="k">Humidity</div>
+        <div class="v">86%</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="sec">The week ahead</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th>Day</th><th>Conditions</th><th>High</th><th>Low</th><th>Rain</th><th>Wind</th>
+        </tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Thursday</strong><br><span style="color:var(--ink-faint);font-size:.78rem">Sep 17</span></td>
+            <td>Mostly Cloudy</td>
+            <td class="num">22°C</td>
+            <td class="num">11°C</td>
+            <td class="num">2%</td>
+            <td class="num">20 W</td>
+          </tr>
+          <tr>
+            <td><strong>Friday</strong><br><span style="color:var(--ink-faint);font-size:.78rem">Sep 18</span></td>
+            <td>Cloudy</td>
+            <td class="num">16°C</td>
+            <td class="num">10°C</td>
+            <td class="num">24%</td>
+            <td class="num">11 E</td>
+          </tr>
+          <tr>
+            <td><strong>Saturday</strong><br><span style="color:var(--ink-faint);font-size:.78rem">Sep 19</span></td>
+            <td>Mostly Cloudy/Wind</td>
+            <td class="num">12°C</td>
+            <td class="num">6°C</td>
+            <td class="num">12%</td>
+            <td class="num">48 W</td>
+          </tr>
+          <tr>
+            <td><strong>Sunday</strong><br><span style="color:var(--ink-faint);font-size:.78rem">Sep 20</span></td>
+            <td>Partly Cloudy</td>
+            <td class="num">13°C</td>
+            <td class="num">7°C</td>
+            <td class="num">3%</td>
+            <td class="num">22 NW</td>
+          </tr>
+          <tr>
+            <td><strong>Monday</strong><br><span style="color:var(--ink-faint);font-size:.78rem">Sep 21</span></td>
+            <td>PM Showers</td>
+            <td class="num">14°C</td>
+            <td class="num">9°C</td>
+            <td class="num">45%</td>
+            <td class="num">15 S</td>
+          </tr>
+          <tr>
+            <td><strong>Tuesday</strong><br><span style="color:var(--ink-faint);font-size:.78rem">Sep 22</span></td>
+            <td>AM Showers</td>
+            <td class="num">13°C</td>
+            <td class="num">6°C</td>
+            <td class="num">45%</td>
+            <td class="num">21 NW</td>
+          </tr>
+          <tr>
+            <td><strong>Wednesday</strong><br><span style="color:var(--ink-faint);font-size:.78rem">Sep 23</span></td>
+            <td>Partly Cloudy</td>
+            <td class="num">14°C</td>
+            <td class="num">9°C</td>
+            <td class="num">5%</td>
+            <td class="num">17 NW</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="sec">Discussion</h2>
+      <p style="margin:0 0 .8rem"><strong style="font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint)">Thursday</strong><br>Considerable cloudiness. Highs 21 to 23C and lows 10 to 12C.</p>
+      <p style="margin:0 0 .8rem"><strong style="font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint)">Friday</strong><br>Cloudy. Highs 15 to 17C and lows 9 to 11C.</p>
+      <p style="margin:0 0 .8rem"><strong style="font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint)">Saturday</strong><br>Considerably cloudy, windy. Highs 11 to 13C and lows 5 to 7C.</p>
+      <p style="margin:0 0 .8rem"><strong style="font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint)">Sunday</strong><br>Mix of sun and clouds. Highs 12 to 14C and lows 6 to 8C.</p>
+  </section>
+
+  <footer>
+    <div>Generated Thursday, September 17 at 8:52 AM NDT, Witless Bay local time.</div>
+<div>Forecast data from The Weather Company (weather.com)</div><div>Open-Meteo (ECMWF IFS 0.25°) via Open-Meteo.com (CC BY 4.0)</div>  </footer>
+</div>
+</body>
+</html>

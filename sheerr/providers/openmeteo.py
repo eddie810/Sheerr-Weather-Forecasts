@@ -6,12 +6,17 @@ weather codes are mapped to phrases here.
 
 from __future__ import annotations
 
+import os
 from datetime import datetime
 
 from ..models import Current, Day, Forecast, Hour, Location
 from .base import Provider, ProviderError
 
-API_URL = "https://api.open-meteo.com/v1/forecast"
+#: The free endpoint is licensed for non-commercial use only. Setting
+#: OPENMETEO_API_KEY switches to the paid customer endpoint, which is what
+#: commercial use requires.
+FREE_API_URL = "https://api.open-meteo.com/v1/forecast"
+CUSTOMER_API_URL = "https://customer-api.open-meteo.com/v1/forecast"
 
 #: WMO 4677 weather codes -> plain-language phrases.
 WMO_PHRASES: dict[int, str] = {
@@ -78,11 +83,13 @@ class OpenMeteoProvider(Provider):
         "wind_direction_10m", "surface_pressure", "weather_code",
     ]
 
-    def __init__(self, model: str | None = None, **kwargs):
+    def __init__(self, model: str | None = None, api_key: str | None = None, **kwargs):
         # ECMWF queries are noticeably slower than best_match; give them room.
         kwargs.setdefault("timeout", 90)
         super().__init__(**kwargs)
         self.model = model
+        self.api_key = api_key or os.environ.get("OPENMETEO_API_KEY")
+        self.api_url = CUSTOMER_API_URL if self.api_key else FREE_API_URL
         if model:
             self.label = MODEL_LABELS.get(model, f"Open-Meteo ({model})")
             self.attribution = f"{self.label} via Open-Meteo.com (CC BY 4.0)"
@@ -111,8 +118,10 @@ class OpenMeteoProvider(Provider):
 
         if self.model:
             params["models"] = self.model
+        if self.api_key:
+            params["apikey"] = self.api_key
 
-        data = self._get(API_URL, params)
+        data = self._get(self.api_url, params)
         if "daily" not in data:
             raise ProviderError("Open-Meteo: response contained no daily block")
 

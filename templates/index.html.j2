@@ -1,0 +1,62 @@
+{% extends "_layout.html.j2" %}
+{% block title %}{{ site.title }}{% endblock %}
+
+{% block content %}
+<div class="sheet">
+  <header>
+    <div class="eyebrow">Sheerr Weather</div>
+    <h1>{{ site.title }}</h1>
+    {% if site.description %}<div class="when">{{ site.description }}</div>{% endif %}
+  </header>
+
+  {% if events %}
+  <section>
+    <h2 class="sec">Event briefings</h2>
+    <div class="readout">
+      {% for p in events %}
+      <div class="cell">
+        <div class="k">{{ p.location.name }}</div>
+        <div class="v" style="font-size:1.05rem;font-family:'IBM Plex Sans',sans-serif">
+          <a href="{{ p.href }}" style="color:var(--accent);text-decoration:none">{{ p.title }} →</a>
+        </div>
+        <div class="n">{{ p.subtitle }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if forecasts %}
+  <section>
+    <h2 class="sec">Locations</h2>
+    <div class="readout">
+      {% for p in forecasts %}
+      <div class="cell">
+        <div class="k">{{ p.location.region or "Forecast" }}</div>
+        <div class="v" style="font-size:1.15rem;font-family:'IBM Plex Sans',sans-serif">
+          <a href="{{ p.href }}" style="color:var(--accent);text-decoration:none">{{ p.location.name }} →</a>
+        </div>
+        <div class="n">{{ p.subtitle }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if failures %}
+  <section>
+    <h2 class="sec">Not generated this run</h2>
+    <div class="prov">
+      {% for f in failures %}
+      <div><span class="f">{{ f.name }}</span><span class="s">{{ f.reason }}</span></div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <footer>
+    <div>Built {{ built_at | datestr }} at {{ built_at | clock }} {{ built_at.strftime('%Z') }}. Refreshes every {{ site.refresh_hours }} hours.</div>
+    {% for line in attributions %}<div>{{ line }}</div>{% endfor %}
+  </footer>
+</div>
+{% endblock %}

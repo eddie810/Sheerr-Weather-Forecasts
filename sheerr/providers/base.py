@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import time
 
 import requests
@@ -24,9 +25,12 @@ class Provider:
     attribution: str = ""
 
     def __init__(self, timeout: int = 30, session: requests.Session | None = None,
-                 retries: int = 3):
+                 retries: int | None = None):
         self.timeout = timeout
-        self.retries = retries
+        # Scheduled builds are unattended, so let CI ask for more attempts.
+        self.retries = retries if retries is not None else int(
+            os.environ.get("SHEERR_RETRIES", "3")
+        )
         self.session = session or requests.Session()
 
     @property

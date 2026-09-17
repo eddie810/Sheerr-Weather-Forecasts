@@ -103,6 +103,42 @@ config/           Your locations
 Adding a source means adding a module under `providers/` that returns the
 shared `Forecast` model, then registering it in `providers/__init__.py`.
 
+## Hosting on GitHub Pages
+
+`.github/workflows/publish.yml` rebuilds the site every 3 hours and deploys it
+to GitHub Pages. What gets published is listed in `config/site.yml`.
+
+One-time setup:
+
+1. **Settings → Secrets and variables → Actions → New repository secret**
+   Add `TWC_API_KEY`. Add `OPENMETEO_API_KEY` too if you hold a commercial
+   Open-Meteo plan.
+2. **Settings → Pages → Source → GitHub Actions.**
+   The workflow cannot enable Pages itself; this step is manual.
+3. **Actions → Publish forecasts → Run workflow** to build immediately rather
+   than waiting for the next 3-hour slot.
+
+Build it locally the same way CI does:
+
+```bash
+python -m sheerr.cli site --outdir _site
+python -m http.server -d _site 8000
+```
+
+A page that fails to build is skipped and listed on the index rather than
+failing the deploy, so one upstream outage degrades the site instead of
+taking it down. Pass `--strict` to fail the build instead.
+
+### Licensing before you publish publicly
+
+Pages on a public repo is world-readable and search-indexable.
+
+- **Open-Meteo's free endpoint is licensed for non-commercial use only.**
+  Commercial use needs a paid plan; set `OPENMETEO_API_KEY` and requests
+  switch to `customer-api.open-meteo.com` automatically.
+- **The Weather Company** terms vary by contract tier. Confirm yours permits
+  public redistribution before pointing clients at the URL.
+
 ## Notes
 
 - `TWC_API_KEY` is read from the environment and never committed; `.env` is

@@ -16,7 +16,7 @@ from pathlib import Path
 
 from .blend import blend_hours, source_labels
 from .config import Config, ConfigError
-from .event import build_event, resolve_event_time
+from .event import build_event, local_now, resolve_event_time
 from .models import Location
 from .providers import ProviderError, get_provider
 from .render import RenderError, render
@@ -106,7 +106,7 @@ def cmd_forecast(args, config: Config) -> None:
         "alerts": primary.alerts,
         "forecasts": forecasts,
         "units": units_for(primary),
-        "generated_at": datetime.now().astimezone(),
+        "generated_at": local_now(location),
         "attributions": sorted({p.attribution for p in providers if p.attribution}),
     }
     write_out(render(args.template, args.format, context), args.output)
@@ -180,6 +180,26 @@ def cmd_locations(args, config: Config) -> None:
         print(f"{key:<{width}}  {loc.name}{region}  ({loc.geocode})  {loc.timezone}")
 
 
+def cmd_site(args, config: Config) -> None:
+    from .site import build_site, load_site_config
+
+    site_config = load_site_config(args.site_config)
+    built, failed = build_site(config, site_config, Path(args.outdir),
+                               build_providers, fetch_all, units_for)
+
+    for page in built:
+        print(f"  built {page.href}", file=sys.stderr)
+    for failure in failed:
+        print(f"  SKIPPED {failure.name}: {failure.reason}", file=sys.stderr)
+    print(f"{len(built)} page(s) -> {args.outdir}"
+          + (f", {len(failed)} skipped" if failed else ""), file=sys.stderr)
+
+    if failed and args.strict:
+        raise SystemExit("error: --strict set and some pages failed")
+    if not built:
+        raise SystemExit("error: no pages were generated")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="sheerr", description="Generate custom weather forecasts.")
@@ -213,6 +233,13 @@ def build_parser() -> argparse.ArgumentParser:
     e.add_argument("--window", type=int, default=3,
                    help="Hours either side to include (default 3)")
     e.set_defaults(func=cmd_event)
+
+    s = sub.add_parser("site", help="Build the static site for hosting")
+    s.add_argument("--outdir", default="_site", help="Output directory")
+    s.add_argument("--site-config", help="Path to site.yml")
+    s.add_argument("--strict", action="store_true",
+                   help="Fail if any page could not be generated")
+    s.set_defaults(func=cmd_site)
 
     l = sub.add_parser("locations", help="List configured locations")
     l.set_defaults(func=cmd_locations)

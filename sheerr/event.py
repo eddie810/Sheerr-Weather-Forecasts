@@ -163,6 +163,15 @@ def _parse_time(token: str) -> tuple[int, int]:
     return hour, minute
 
 
+def local_now(location: Location) -> datetime:
+    """Current time in the location's own timezone.
+
+    Build servers run in UTC, so stamping output with the server clock
+    would show a Newfoundland forecast as generated hours off.
+    """
+    return datetime.now(_zone(location.timezone))
+
+
 def _zone(name: str | None):
     if not name or name == "auto":
         return datetime.now().astimezone().tzinfo
@@ -196,7 +205,7 @@ def build_event(location: Location, event_time: datetime, forecasts: list[Foreca
         window_hours=window_hours,
         readings=readings,
         forecasts=forecasts,
-        generated_at=datetime.now().astimezone(),
+        generated_at=local_now(location),
     )
 
 

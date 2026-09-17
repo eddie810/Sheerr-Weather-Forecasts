@@ -1,0 +1,89 @@
+{% extends "_layout.html.j2" %}
+{% block title %}{{ location.name }} Forecast{% endblock %}
+
+{% macro gust_class(v) %}{% if v is none %}{% elif v >= 80 %}severe{% elif v >= 60 %}windy{% elif v >= 40 %}breezy{% else %}calm{% endif %}{% endmacro %}
+
+{% block content %}
+<div class="sheet">
+  <header>
+    <div class="eyebrow">Sheerr Weather{% if home %} · <a href="{{ home }}" style="color:inherit">All forecasts</a>{% endif %}</div>
+    <h1>{{ location.name }}{% if location.region %}, {{ location.region }}{% endif %}</h1>
+    <div class="when">{{ days | length }}-day forecast</div>
+  </header>
+
+  {% if alerts %}
+  {% for a in alerts %}
+  <section class="alert">
+    <h2>{{ a.eventDescription or "Weather alert" }}</h2>
+    {% if a.description %}<p>{{ a.description | trim }}</p>{% else %}<p>{{ a.headlineText }}</p>{% endif %}
+    <div class="src">{{ a.officeName or "Issuing office" }} · {{ a.headlineText }}</div>
+  </section>
+  {% endfor %}
+  {% endif %}
+
+  {% if current %}
+  <section>
+    <h2 class="sec">Right now</h2>
+    <div class="readout">
+      <div class="cell">
+        <div class="k">Conditions</div>
+        <div class="v" style="font-size:1.05rem;font-family:'IBM Plex Sans',sans-serif">{{ current.phrase or "—" }}</div>
+      </div>
+      <div class="cell">
+        <div class="k">Temperature</div>
+        <div class="v">{{ current.temperature | num }}{{ units.temp }}</div>
+        {% if current.feels_like is not none %}<div class="n">Feels like {{ current.feels_like | num }}{{ units.temp }}</div>{% endif %}
+      </div>
+      <div class="cell">
+        <div class="k">Wind</div>
+        <div class="v">{{ current.wind_speed | num }}</div>
+        <div class="n">{{ units.speed }} from the {{ current.wind_direction or "—" }} {{ current.wind_direction | arrow }}</div>
+      </div>
+      <div class="cell">
+        <div class="k">Humidity</div>
+        <div class="v">{{ current.humidity | pct }}</div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <section>
+    <h2 class="sec">The week ahead</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th>Day</th><th>Conditions</th><th>High</th><th>Low</th><th>Rain</th><th>Wind</th>
+        </tr></thead>
+        <tbody>
+        {% for day in days %}
+          <tr>
+            <td><strong>{{ day.day_of_week }}</strong><br><span style="color:var(--ink-faint);font-size:.78rem">{{ day.date.strftime('%b %-d') }}</span></td>
+            <td>{{ day.phrase or "—" }}</td>
+            <td class="num">{{ day.high | num }}{{ units.temp }}</td>
+            <td class="num">{{ day.low | num }}{{ units.temp }}</td>
+            <td class="num">{{ day.precip_chance | pct }}</td>
+            <td class="num">{{ day.wind_speed | num }} {{ day.wind_direction or "" }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {% if days and days[0].narrative %}
+  <section>
+    <h2 class="sec">Discussion</h2>
+    {% for day in days[:4] %}
+      {% if day.narrative %}
+      <p style="margin:0 0 .8rem"><strong style="font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint)">{{ day.day_of_week }}</strong><br>{{ day.narrative }}</p>
+      {% endif %}
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <footer>
+    <div>Generated {{ generated_at | datestr }} at {{ generated_at | clock }} {{ generated_at.strftime('%Z') }}, {{ location.name }} local time.</div>
+    {% for line in attributions %}<div>{{ line }}</div>{% endfor %}
+  </footer>
+</div>
+{% endblock %}
