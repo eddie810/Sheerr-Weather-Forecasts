@@ -9,6 +9,7 @@ another, never as an operational figure.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 
@@ -52,14 +53,63 @@ PROFILES = {
     "A332": AircraftProfile("A332", "Airbus A330-200", "widebody", 38, 0.85, 0.8),
     "A333": AircraftProfile("A333", "Airbus A330-300", "widebody", 38, 0.85, 0.8),
     "B788": AircraftProfile("B788", "Boeing 787-8", "widebody", 40, 0.8, 0.8),
+    "BCS1": AircraftProfile("BCS1", "Airbus A220-100", "narrowbody", 35, 1.0, 0.95),
+    "BCS3": AircraftProfile("BCS3", "Airbus A220-300", "narrowbody", 35, 1.0, 0.95),
 }
+
+#: Schedule providers report a human-readable model ("Boeing 737-800"), while
+#: ADS-B reports an ICAO type code ("B738"). Map the former onto the latter.
+#: Ordered most specific first: a MAX 8 must not fall through to plain 737.
+MODEL_PATTERNS: list[tuple[str, str]] = [
+    (r"737.*max\s*8|737-8\s*max|\bb38m\b", "B38M"),
+    (r"737-?800|737-8\b", "B738"),
+    (r"\b737\b", "B737"),
+    (r"a220-?300|\bbcs3\b|cs300", "BCS3"),
+    (r"a220-?100|\bbcs1\b|cs100", "BCS1"),
+    (r"a321.*neo|\ba21n\b", "A21N"),
+    (r"a320.*neo|\ba20n\b", "A20N"),
+    (r"\ba321\b", "A321"),
+    (r"\ba320\b", "A320"),
+    (r"\ba319\b", "A319"),
+    (r"a330-?300|\ba333\b", "A333"),
+    (r"a330-?200|\ba332\b", "A332"),
+    (r"767-?300|\bb763\b", "B763"),
+    (r"787-?8|\bb788\b", "B788"),
+    (r"(dhc-?8|dash\s*8|q)-?400|\bdh8d\b", "DH8D"),
+    (r"(dhc-?8|dash\s*8|q)-?300|\bdh8c\b", "DH8C"),
+    (r"195[\s-]*e2|e195-?e2|\be295\b", "E295"),
+    (r"190[\s-]*e2|e190-?e2|\be290\b", "E290"),
+    (r"e-?195|embraer\s*195", "E195"),
+    (r"e-?190|embraer\s*190", "E190"),
+    (r"e-?175|embraer\s*175", "E175"),
+    (r"crj.*900|\bcrj9\b", "CRJ9"),
+    (r"crj.*200|\bcrj2\b", "CRJ2"),
+    (r"atr.*72|\bat7[25]\b", "AT72"),
+    (r"saab.*340|\bsf34\b", "SF34"),
+    (r"beech.*1900|\bb190\b", "B190"),
+]
 
 #: Used when the type is unknown, deliberately mid-range rather than benign.
 UNKNOWN = AircraftProfile("UNKN", "Unknown type", "unknown", 33, 1.1, 1.0)
 
 
-def profile_for(type_code: str | None) -> AircraftProfile:
-    """Look up a profile by ICAO type code, falling back to a neutral one."""
-    if not type_code:
+def profile_for(type_or_model: str | None) -> AircraftProfile:
+    """Look up a profile from an ICAO type code or a model name.
+
+    ADS-B gives codes like "DH8D"; schedule providers give names like
+    "De Havilland Canada DHC-8-400". Both must resolve, or every flight
+    reads as an unknown type and the per-airframe assessment is pointless.
+    """
+    if not type_or_model:
         return UNKNOWN
-    return PROFILES.get(type_code.strip().upper(), UNKNOWN)
+
+    text = type_or_model.strip()
+    exact = PROFILES.get(text.upper())
+    if exact:
+        return exact
+
+    lowered = text.lower()
+    for pattern, code in MODEL_PATTERNS:
+        if re.search(pattern, lowered):
+            return PROFILES[code]
+    return UNKNOWN
