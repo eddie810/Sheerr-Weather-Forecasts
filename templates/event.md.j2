@@ -47,7 +47,7 @@ _No source had hourly data for this time._
 {% endfor %}
 
 ---
-Generated {{ event.generated_at | datestr }} at {{ event.generated_at | clock }} by Sheerr Weather.
+Generated {{ event.generated_at | datestr }} at {{ event.generated_at | clock }} {{ event.generated_at.strftime('%Z') }}, {{ event.location.name }} local time.
 {% for line in attributions %}
 {{ line }}
 {% endfor %}

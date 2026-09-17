@@ -94,7 +94,7 @@
   </section>
 
   <footer>
-    <div>Generated {{ event.generated_at | datestr }} at {{ event.generated_at | clock }} by Sheerr Weather.</div>
+    <div>Generated {{ event.generated_at | datestr }} at {{ event.generated_at | clock }} {{ event.generated_at.strftime('%Z') }}, {{ event.location.name }} local time.</div>
     {% for line in attributions %}<div>{{ line }}</div>{% endfor %}
     <div>Forecasts beyond a few days carry real uncertainty — re-check closer to the day.</div>
   </footer>
