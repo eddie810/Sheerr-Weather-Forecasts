@@ -33,6 +33,7 @@ pages:
   - type: aviation
     airport: CYYT
     hours: 12
+    direction: departure
 
   - type: aviation
     airport: CYYT

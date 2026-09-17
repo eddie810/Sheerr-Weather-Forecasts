@@ -131,7 +131,10 @@ def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
             sample = True
 
         direction = entry.get("direction", "all")
-        if direction != "all":
+        # Live ADS-B cannot tell an arrival from a departure, so filtering a
+        # sampled list by direction would empty the page rather than degrade
+        # it. Show the sample and let the banner explain what it is.
+        if direction != "all" and not sample:
             flights = [f for f in flights if f.direction == direction]
         if not flights:
             raise ProviderError(f"no {direction} flights in the window at {ap.icao}")

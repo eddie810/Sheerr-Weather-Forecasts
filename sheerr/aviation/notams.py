@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from dataclasses import dataclass, field
 
 import requests
@@ -65,14 +66,21 @@ class AirportNotams:
 def fetch_notams(icao: str) -> AirportNotams:
     """Read NOTAMs for an aerodrome and extract the operational signals."""
     result = AirportNotams()
-    try:
-        response = requests.get(CFPS, params={"site": icao, "alpha": "notam"},
-                                timeout=40, headers={"User-Agent": "sheerr-weather/0.1"})
-        if not response.ok:
-            return result
-        rows = response.json().get("data", [])
-    except Exception:
-        return result       # NOTAMs are enrichment; never fail the build on them
+    rows = []
+    for attempt in range(3):
+        try:
+            response = requests.get(CFPS, params={"site": icao, "alpha": "notam"},
+                                    timeout=40,
+                                    headers={"User-Agent": "sheerr-weather/0.1"})
+            if response.ok:
+                rows = response.json().get("data", [])
+                break
+        except Exception:
+            pass            # NOTAMs are enrichment; never fail the build on them
+        if attempt < 2:
+            time.sleep(2 ** attempt)
+    if not rows:
+        return result
 
     for row in rows:
         text = row.get("text", "")

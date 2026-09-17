@@ -17,7 +17,9 @@
   <section class="alert">
     <h2>Demonstration data</h2>
     <p>These are aircraft currently airborne near {{ airport.iata }}, not a published
-    schedule. Times are "now" and an overflight cannot be told from an arrival.</p>
+    schedule. Times are "now", an overflight cannot be told from an arrival, and
+    {% if direction != "all" %}the list is not filtered to {{ direction }}s because
+    live traffic carries no direction{% else %}no direction is known{% endif %}.</p>
   </section>
   {% endif %}
 

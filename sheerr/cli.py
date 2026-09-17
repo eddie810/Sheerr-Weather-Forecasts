@@ -296,7 +296,7 @@ def cmd_aviation(args, config: Config) -> None:
     except ScheduleError as exc:
         raise SystemExit(f"error: {exc}")
 
-    if args.direction != "all":
+    if args.direction != "all" and not args.sample:
         flights = [f for f in flights if f.direction == args.direction]
 
     if not flights:

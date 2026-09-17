@@ -7,6 +7,8 @@ delay-risk assessment rather than a general-purpose forecast.
 
 from __future__ import annotations
 
+import os
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
@@ -60,12 +62,28 @@ class TafPeriod:
 
 
 def _get(path: str, params: dict) -> list[dict]:
-    response = requests.get(f"{BASE}/{path}", params={**params, "format": "json"},
-                            timeout=45, headers={"User-Agent": "sheerr-weather/0.1"})
-    if not response.ok:
-        raise RuntimeError(f"AWC {path}: HTTP {response.status_code}")
-    data = response.json()
-    return data if isinstance(data, list) else []
+    """GET with retry.
+
+    A single cut-off transfer here would otherwise take the whole aviation
+    page down, the same way it would for the forecast providers — which
+    already retry.
+    """
+    attempts = int(os.environ.get("SHEERR_RETRIES", "3"))
+    last: Exception | None = None
+    for attempt in range(attempts):
+        try:
+            response = requests.get(
+                f"{BASE}/{path}", params={**params, "format": "json"},
+                timeout=45, headers={"User-Agent": "sheerr-weather/0.1"})
+            if response.ok:
+                data = response.json()
+                return data if isinstance(data, list) else []
+            last = RuntimeError(f"AWC {path}: HTTP {response.status_code}")
+        except (requests.RequestException, ValueError) as exc:
+            last = exc
+        if attempt < attempts - 1:
+            time.sleep(2 ** attempt)
+    raise RuntimeError(f"AWC {path} failed after {attempts} attempts: {last}")
 
 
 def _ceiling(clouds: list[dict] | None) -> int | None:
