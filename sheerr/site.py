@@ -66,7 +66,7 @@ def build_site(config: Config, site_config: dict[str, Any], outdir: Path,
         label = f"{entry.get('type', '?')}:{entry.get('location', '?')}"
         try:
             page = _build_page(config, entry, outdir, build_providers,
-                               fetch_all, units_for, attributions)
+                               fetch_all, units_for, attributions, meta)
             if page:
                 built.append(page)
         except (ProviderError, ConfigError, ValueError, SystemExit) as exc:
@@ -100,10 +100,14 @@ def _index_time(built: list[BuiltPage], config: Config) -> datetime:
 
 
 def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
-                fetch_all, units_for, attributions: set[str]) -> BuiltPage | None:
+                fetch_all, units_for, attributions: set[str],
+                site_defaults: dict | None = None) -> BuiltPage | None:
+    site_defaults = site_defaults or {}
     kind = entry.get("type", "forecast")
     location = config.location(entry["location"])
-    providers = build_providers(entry.get("provider", "both"))
+    providers = build_providers(
+        entry.get("provider") or site_defaults.get("provider") or "both"
+    )
     days = int(entry.get("days", 7))
     units = entry.get("units", "metric")
 

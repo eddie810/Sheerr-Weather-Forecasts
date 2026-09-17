@@ -11,10 +11,49 @@ source that does it best:
 | Temperature, feels-like | The Weather Company |
 | Chance of rain, precipitation | The Weather Company |
 | Cloud cover, conditions, humidity | The Weather Company |
-| Wind speed, gusts, direction | Open-Meteo (ECMWF IFS 0.25°) |
+| Wind speed, gusts, direction | ECMWF Open Data (IFS HRES 0.25°) |
 | Weather alerts | The Weather Company / Environment Canada |
 
 Rendered output always states which source each number came from.
+
+### Data sources and licensing
+
+| Source | Key | Licence |
+|---|---|---|
+| ECMWF Open Data | none | **CC BY 4.0 — commercial use permitted** with attribution |
+| The Weather Company | `TWC_API_KEY` | Per your contract tier |
+| Open-Meteo (free) | none | **Non-commercial only** |
+| Open-Meteo (paid) | `OPENMETEO_API_KEY` | Per your plan |
+
+`--provider licensed` uses only ECMWF and TWC, excluding Open-Meteo entirely.
+That is what `config/site.yml` publishes with.
+
+### How the ECMWF provider works
+
+ECMWF open data ships whole-globe GRIB2 files of ~138 MB per timestep and has
+no point-query API. Downloading them outright would be ~7.7 GB per run, so
+the provider instead reads the `.index` sidecar that lists the byte offset of
+every parameter inside each file, then issues an HTTP range request for just
+the field it needs — about 1.4 MB, in roughly two seconds.
+
+Because the fields are global, one download serves every location in a build.
+Messages are cached under `SHEERR_ECMWF_CACHE` (default: a temp directory)
+and keyed by run and step, never by location.
+
+Three things to know when reading ECMWF numbers:
+
+- **Steps are 3-hourly** out to 144h. The provider interpolates to hourly so
+  it blends cleanly with the hourly sources; pass `interpolate=False` for
+  native steps only.
+- **`10fg` is the maximum gust since the previous post-processing step** —
+  the worst case over the preceding 3 hours, not an instantaneous reading.
+  Arguably the right number for event planning, but not the same quantity
+  other providers report.
+- **Values come from the nearest 0.25° gridpoint** (~28 km) with no
+  downscaling. Coastal and orographic effects are not resolved.
+
+This last point is why ECMWF direct and Open-Meteo's ECMWF disagree: the
+latter interpolates and post-processes. Neither is automatically right.
 
 ## Setup
 

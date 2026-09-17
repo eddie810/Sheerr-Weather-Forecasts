@@ -23,8 +23,14 @@ from .render import RenderError, render
 
 #: `--provider` values that expand to several sources.
 PROVIDER_SETS = {
-    "both": ["twc", "open-meteo:ecmwf_ifs025"],
-    "all": ["twc", "open-meteo", "open-meteo:ecmwf_ifs025"],
+    # Default: TWC for temperature and precipitation, ECMWF open data for
+    # wind, plus Open-Meteo as a fallback if the ECMWF fetch fails.
+    "both": ["twc", "ecmwf", "open-meteo:ecmwf_ifs025"],
+    "default": ["twc", "ecmwf", "open-meteo:ecmwf_ifs025"],
+    # Only sources whose licences permit commercial redistribution outright.
+    # Open-Meteo's free endpoint is non-commercial, so it is excluded here.
+    "licensed": ["twc", "ecmwf"],
+    "all": ["twc", "ecmwf", "open-meteo", "open-meteo:ecmwf_ifs025"],
 }
 
 
@@ -213,7 +219,7 @@ def build_parser() -> argparse.ArgumentParser:
         p.add_argument("--name", help="Display name for an ad-hoc location / event")
         p.add_argument("--timezone", help="IANA timezone for an ad-hoc location")
         p.add_argument("--provider", default="both",
-                       help="twc | open-meteo | open-meteo:MODEL | both | all")
+                       help="twc | ecmwf | open-meteo[:MODEL] | both | licensed | all")
         p.add_argument("--days", type=int, default=7)
         p.add_argument("--units", choices=["metric", "imperial"], default="metric")
         p.add_argument("--template", default=default_template)

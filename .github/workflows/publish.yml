@@ -36,7 +36,12 @@ jobs:
           python-version: "3.11"
           cache: pip
 
+      # The eccodes wheel bundles the ecCodes C library, so no apt packages
+      # are needed to decode ECMWF GRIB2 files.
       - run: pip install -r requirements.txt
+
+      - name: Verify GRIB decoding is available
+        run: python -c "import eccodes; print('ecCodes', eccodes.codes_get_api_version())"
 
       - name: Build site
         env:
@@ -47,6 +52,9 @@ jobs:
           # Upstream model queries are occasionally cut off mid-transfer;
           # an unattended run can afford to be more patient than a local one.
           SHEERR_RETRIES: "6"
+          # Cache ECMWF GRIB messages within the run so all locations share
+          # one download of each global field.
+          SHEERR_ECMWF_CACHE: ${{ runner.temp }}/ecmwf-cache
         run: |
           if [ -z "$TWC_API_KEY" ]; then
             echo "::error::TWC_API_KEY secret is not set. Add it under"\

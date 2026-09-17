@@ -20,10 +20,14 @@ BLENDABLE_FIELDS = [
     "wind_degrees", "visibility", "uv_index", "phrase",
 ]
 
-#: Sheerr house defaults: TWC for temperature and precipitation, ECMWF via
-#: Open-Meteo for the wind picture. Wind speed and direction follow gusts to
-#: the same model on purpose -- mixing sustained wind and gusts across models
-#: can yield a gust weaker than the sustained wind, which is not physical.
+#: Sheerr house defaults: TWC for temperature and precipitation, ECMWF open
+#: data for the wind picture. Wind speed and direction follow gusts to the
+#: same model on purpose -- mixing sustained wind and gusts across models can
+#: yield a gust weaker than the sustained wind, which is not physical.
+#:
+#: Wind routes to `ecmwf` (ECMWF's own open data, CC BY 4.0) rather than to
+#: ECMWF via Open-Meteo. If the `ecmwf` fetch fails, blending falls back to
+#: whichever other source is present and records that on the page.
 DEFAULT_FIELD_SOURCES: dict[str, str] = {
     "temperature": "twc",
     "feels_like": "twc",
@@ -35,10 +39,10 @@ DEFAULT_FIELD_SOURCES: dict[str, str] = {
     "phrase": "twc",
     "visibility": "twc",
     "uv_index": "twc",
-    "wind_speed": "open-meteo:ecmwf_ifs025",
-    "wind_gust": "open-meteo:ecmwf_ifs025",
-    "wind_direction": "open-meteo:ecmwf_ifs025",
-    "wind_degrees": "open-meteo:ecmwf_ifs025",
+    "wind_speed": "ecmwf",
+    "wind_gust": "ecmwf",
+    "wind_direction": "ecmwf",
+    "wind_degrees": "ecmwf",
 }
 
 
