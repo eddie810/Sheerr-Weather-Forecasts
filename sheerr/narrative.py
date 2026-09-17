@@ -53,6 +53,34 @@ class Narrative:
     warnings: list[str]
 
 
+#: Environment variables are case-sensitive on Linux, and a key stored under
+#: the wrong casing fails *silently* -- the build falls back to rule-based
+#: prose and nobody notices. Accept any casing, and say so.
+KEY_NAMES = ["ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"]
+
+
+def find_api_key() -> tuple[str | None, str | None]:
+    """Locate the Anthropic key under any capitalisation.
+
+    Returns (key, warning). The warning is set when the key was found under
+    a non-standard name, so the page can surface the misconfiguration
+    instead of quietly degrading.
+    """
+    for name in KEY_NAMES:
+        value = os.environ.get(name)
+        if value:
+            return value, None
+
+    wanted = {n.lower() for n in KEY_NAMES}
+    for name, value in os.environ.items():
+        if name.lower() in wanted and value:
+            return value, (
+                f"found the API key as {name!r}; environment variables are "
+                f"case-sensitive, so rename it to {name.upper()!r}"
+            )
+    return None, None
+
+
 def _window_phrase(window) -> str:
     """Describe a peak window, collapsing a single hour to "around"."""
     start, end = window
@@ -203,7 +231,10 @@ def rule_based(summary: RegionSummary, day: RegionDay) -> Narrative:
 def write(summary: RegionSummary, day: RegionDay,
           api_key: str | None = None, model: str = MODEL) -> Narrative:
     """Generate the regional narrative, falling back when it cannot be trusted."""
-    key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+    key_warning = None
+    key = api_key
+    if not key:
+        key, key_warning = find_api_key()
     if not key:
         result = rule_based(summary, day)
         result.warnings.append("ANTHROPIC_API_KEY not set; used rule-based text")
@@ -252,7 +283,7 @@ def write(summary: RegionSummary, day: RegionDay,
             return fallback
 
         return Narrative(parsed.headline.strip(), parsed.discussion.strip(),
-                         "claude", [])
+                         "claude", [key_warning] if key_warning else [])
 
     except Exception as exc:  # noqa: BLE001 - never fail a build on narrative
         fallback = rule_based(summary, day)

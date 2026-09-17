@@ -177,6 +177,12 @@ aggregated figures, using `ANTHROPIC_API_KEY`. Two safeguards apply:
 - **Without a key, or if the call fails, the rule-based writer runs.** An
   unattended build never fails for want of a narrative.
 
+Environment variable names are case-sensitive on Linux, and a key stored as
+`Anthropic_Api_Key` would otherwise be ignored *silently* — the site would
+keep publishing correct figures with rule-based prose and nobody would
+notice. The lookup therefore accepts any casing and surfaces a warning on
+the page telling you to rename it.
+
 Pages state which writer produced the text. `--narrative-days N` controls how
 many days get written discussion (default 3); the rest are figures only.
 
