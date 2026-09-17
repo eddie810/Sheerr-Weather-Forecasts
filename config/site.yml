@@ -6,7 +6,7 @@
 site:
   title: Sheerr Weather Forecasts
   description: Custom forecasts for Atlantic Canada, refreshed through the day.
-  refresh_hours: 3
+  refresh_hours: 24
   # twc + ecmwf only; excludes Open-Meteo, whose free tier is non-commercial.
   provider: licensed
 

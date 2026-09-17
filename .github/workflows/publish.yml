@@ -2,9 +2,11 @@ name: Publish forecasts
 
 on:
   schedule:
-    # Every 3 hours. GitHub cron is always UTC; pages stamp themselves in
+    # Once daily at 10:00 UTC, which is 07:30 NDT — a morning refresh before
+    # the day starts. GitHub cron is always UTC; pages stamp themselves in
     # each location's own local time, so this needs no seasonal adjustment.
-    - cron: "0 */3 * * *"
+    # Run it on demand from Actions > Publish forecasts > Run workflow.
+    - cron: "0 10 * * *"
   push:
     branches: [claude/elegant-lovelace-lhd1en]
     paths:
