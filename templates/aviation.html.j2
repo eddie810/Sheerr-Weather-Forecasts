@@ -1,12 +1,16 @@
 {% extends "_layout.html.j2" %}
-{% block title %}{{ airport.iata }} Delay Risk{% endblock %}
+{% block title %}{{ airport.iata }} {{ {"arrival":"Arrivals","departure":"Departures"}.get(direction, "Delay Risk") }}{% endblock %}
 
 {% block content %}
 <div class="sheet">
   <header>
     <div class="eyebrow">Sheerr Weather · Aviation{% if home %} · <a href="{{ home }}" style="color:inherit">All forecasts</a>{% endif %}</div>
     <h1>{{ airport.name }} <span style="color:var(--ink-faint)">{{ airport.iata }}</span></h1>
-    <div class="when">Weather delay risk · {{ assessments | length }} movements</div>
+    <div class="when">
+      {% if direction == "arrival" %}Arrivals · risk of holding or diversion
+      {% elif direction == "departure" %}Departures · risk of de-icing and ground delay
+      {% else %}Weather delay risk{% endif %}
+      · {{ assessments | length }} {{ "movements" if direction == "all" else "flights" }}</div>
   </header>
 
   {% if sample_mode %}
@@ -42,13 +46,21 @@
     </div>
   </section>
 
+  {% if notams and notams.significant %}
+  <section class="alert">
+    <h2>Aerodrome NOTAMs affecting operations</h2>
+    {% for line in notams.summary() %}<p>{{ line }}</p>{% endfor %}
+    <div class="src">NAV CANADA flight planning service</div>
+  </section>
+  {% endif %}
+
   <section>
-    <h2 class="sec">Flights</h2>
+    <h2 class="sec">{{ {"arrival":"Arrivals","departure":"Departures"}.get(direction, "Flights") }}</h2>
     <div class="scroll">
       <table>
         <thead><tr>
           <th></th><th>Flight</th><th>Time</th><th>Aircraft</th>
-          <th>Cat</th><th>Rwy</th><th>Xwind</th><th>Assessment</th>
+          <th>Cat</th><th>Rwy</th><th>Xwind</th><th>Outlook</th><th>Assessment</th>
         </tr></thead>
         <tbody>
         {% for a in assessments %}
@@ -62,6 +74,7 @@
             <td class="num">{{ a.category }}</td>
             <td class="num">{{ a.runway or "—" }}</td>
             <td class="num">{{ a.crosswind | num }}</td>
+            <td style="white-space:nowrap">{{ a.outlook }}</td>
             <td style="min-width:18rem">{{ a.reason }}</td>
           </tr>
         {% endfor %}

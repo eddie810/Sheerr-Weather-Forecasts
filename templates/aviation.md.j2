@@ -6,12 +6,20 @@ _Demonstration using live ADS-B traffic, not a published schedule._
 
 **Current:** {{ metar.fltCat }} · wind {{ metar.wdir }}°/{{ metar.wspd }} kt · visibility {{ metar.visib }} sm
 
-| | Flight | Scheduled | Aircraft | Cat | Rwy | Xwind | Assessment |
-|---|---|---|---|---|---|---|---|
+| | Flight | Scheduled | Aircraft | Cat | Rwy | Xwind | Outlook | Assessment |
+|---|---|---|---|---|---|---|---|---|
 {% for a in assessments %}
-| {{ {"green":"🟢","yellow":"🟡","orange":"🟠"}[a.colour] }} | {{ a.flight.callsign or a.flight.number }} | {{ a.flight.scheduled.astimezone(tz).strftime('%H:%M') }} | {{ a.profile.name }} | {{ a.category }} | {{ a.runway or "—" }} | {{ a.crosswind | round | int }} kt | {{ a.reason }} |
+| {{ {"green":"🟢","yellow":"🟡","orange":"🟠"}[a.colour] }} | {{ a.flight.callsign or a.flight.number }} | {{ a.flight.scheduled.astimezone(tz).strftime('%H:%M') }} | {{ a.profile.name }} | {{ a.category }} | {{ a.runway or "—" }} | {{ a.crosswind | round | int }} kt | {{ a.outlook }} | {{ a.reason }} |
 {% endfor %}
 
+{% if notams and notams.significant %}
+## NOTAMs affecting operations
+
+{% for line in notams.summary() %}
+- {{ line }}
+{% endfor %}
+
+{% endif %}
 ## Terminal forecast
 
 ```

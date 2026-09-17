@@ -275,6 +275,7 @@ def cmd_aviation(args, config: Config) -> None:
     from zoneinfo import ZoneInfo
 
     from .aviation.awc import fetch_metar, fetch_taf
+    from .aviation.notams import fetch_notams
     from .aviation.risk import assess_factors, write_verdict
     from .aviation.runways import CYYT
     from .aviation.schedule import ScheduleError, fetch_schedule, live_sample
@@ -285,6 +286,7 @@ def cmd_aviation(args, config: Config) -> None:
 
     raw_taf, periods = fetch_taf(airport.icao)
     metar = fetch_metar(airport.icao)
+    notams = fetch_notams(airport.icao)
 
     start = datetime.now(_tz.utc)
     try:
@@ -294,10 +296,14 @@ def cmd_aviation(args, config: Config) -> None:
     except ScheduleError as exc:
         raise SystemExit(f"error: {exc}")
 
+    if args.direction != "all":
+        flights = [f for f in flights if f.direction == args.direction]
+
     if not flights:
         raise SystemExit("error: no flights returned for that window")
 
-    assessments = [write_verdict(assess_factors(f, airport, periods)) for f in flights]
+    assessments = [write_verdict(assess_factors(f, airport, periods, notams))
+                   for f in flights]
 
     if args.format == "json":
         payload = [{
@@ -316,11 +322,12 @@ def cmd_aviation(args, config: Config) -> None:
         "airport": airport,
         "assessments": assessments,
         "metar": metar,
-        "raw_taf": raw_taf,
+        "raw_taf": raw_taf, "notams": notams,
         "periods": periods,
         "tz": ZoneInfo(airport.timezone),
         "generated_at": datetime.now(ZoneInfo(airport.timezone)),
         "sample_mode": args.sample,
+        "direction": args.direction,
         "assessed_by": ("claude" if any(a.source == "claude" for a in assessments)
                         else "rule-based"),
     }
@@ -399,6 +406,9 @@ def build_parser() -> argparse.ArgumentParser:
     a.add_argument("--hours", type=int, default=12, help="Schedule window (default 12)")
     a.add_argument("--sample", action="store_true",
                    help="Use live ADS-B traffic instead of a schedule (no key needed)")
+    a.add_argument("--direction", default="all",
+                   choices=["all", "arrival", "departure"],
+                   help="Limit to arrivals or departures (default both)")
     a.add_argument("--template", default="aviation")
     a.add_argument("--format", default="md", choices=["md", "html", "json"])
     a.add_argument("--output", "-o")

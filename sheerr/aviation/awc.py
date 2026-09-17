@@ -130,9 +130,24 @@ def fetch_metar(icao: str) -> dict:
     return rows[0]
 
 
-def periods_covering(periods: list[TafPeriod], when: datetime) -> list[TafPeriod]:
-    """Every TAF period in effect at a given time, prevailing group first."""
+def periods_covering(periods: list[TafPeriod],
+                     when: datetime) -> tuple[list[TafPeriod], bool]:
+    """Every TAF period in effect at a time, prevailing group first.
+
+    Returns (periods, covered). A TAF covers a fixed window and is reissued
+    on a cycle, so a time can fall outside it — in the gap between issue and
+    validity, or simply beyond the last period. Falling back to the nearest
+    period keeps an estimate available, but `covered` is False so the caller
+    can say the forecast does not actually reach that far rather than
+    presenting a guess as a forecast.
+    """
     if when.tzinfo is None:
         when = when.replace(tzinfo=timezone.utc)
     hits = [p for p in periods if p.start <= when < p.end]
-    return sorted(hits, key=lambda p: p.transient)
+    if hits:
+        return sorted(hits, key=lambda p: p.transient), True
+    if not periods:
+        return [], False
+    nearest = min(periods, key=lambda p: min(abs((p.start - when).total_seconds()),
+                                             abs((p.end - when).total_seconds())))
+    return [nearest], False

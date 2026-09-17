@@ -34,6 +34,11 @@ pages:
     airport: CYYT
     hours: 12
 
+  - type: aviation
+    airport: CYYT
+    hours: 12
+    direction: arrival
+
   # Event briefings. `when` accepts an ISO timestamp for a fixed date, or a
   # phrase like "saturday 2pm" that rolls forward each week.
   - type: event

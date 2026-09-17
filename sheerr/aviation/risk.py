@@ -19,7 +19,9 @@ from datetime import datetime
 
 from .aircraft import AircraftProfile, profile_for
 from .awc import TafPeriod, periods_covering
-from .runways import Airport, best_runway
+from .runways import (Airport, approach_minima_rvr, best_runway,
+                      visibility_to_rvr)
+from .notams import AirportNotams, crosswind_factor
 from .schedule import Flight
 
 #: Bands the colour code maps to.
@@ -53,6 +55,10 @@ class Assessment:
     crosswind: float
     crosswind_ratio: float          # crosswind as a fraction of the type's limit
     category: str
+    #: Whether the TAF actually reaches the scheduled time.
+    covered_by_taf: bool = True
+    #: Direction-specific outlook: approach for arrivals, ground for departures.
+    outlook: str = ""
     factors: list[Factor] = field(default_factory=list)
     colour: str = GREEN
     reason: str = ""
@@ -72,11 +78,11 @@ class Assessment:
         return min(1.0, peak + others * 0.25)
 
 
-def assess_factors(flight: Flight, airport: Airport,
-                   periods: list[TafPeriod]) -> Assessment:
+def assess_factors(flight: Flight, airport: Airport, periods: list[TafPeriod],
+                   notams: AirportNotams | None = None) -> Assessment:
     """Compute the objective part of the assessment."""
     profile = profile_for(flight.aircraft_type)
-    covering = periods_covering(periods, flight.scheduled)
+    covering, covered = periods_covering(periods, flight.scheduled)
     prevailing = covering[0] if covering else None
 
     wind_dir = wind_speed = gust = None
@@ -86,8 +92,18 @@ def assess_factors(flight: Flight, airport: Airport,
         gust = gust if gust is not None else period.wind_gust
 
     peak_wind = max(w for w in (wind_speed or 0, gust or 0)) or None
-    runway, headwind, crosswind = best_runway(airport, wind_dir, peak_wind)
-    ratio = crosswind / profile.crosswind_kt if profile.crosswind_kt else 0.0
+    usable = airport
+    if notams and notams.runways_closed:
+        from dataclasses import replace as _replace
+        usable = _replace(airport, runways=[r for r in airport.runways
+                                            if r.ident not in notams.runways_closed])
+    runway, headwind, crosswind = best_runway(usable, wind_dir, peak_wind)
+    crfi = None
+    if notams and notams.crfi:
+        crfi = min(notams.crfi.values())
+    factor = crosswind_factor(crfi)
+    effective_limit = profile.crosswind_kt * factor
+    ratio = crosswind / effective_limit if effective_limit else 0.0
 
     factors: list[Factor] = []
 
@@ -95,8 +111,11 @@ def assess_factors(flight: Flight, airport: Airport,
         factors.append(Factor(
             "crosswind",
             f"{crosswind:.0f} kt across runway {runway.ident if runway else '?'}, "
-            f"{ratio:.0%} of the {profile.name}'s {profile.crosswind_kt} kt "
-            "demonstrated crosswind",
+            f"{ratio:.0%} of the {profile.name}'s "
+            + (f"{effective_limit:.0f} kt contaminated-runway limit "
+               f"(CRFI {crfi:.2f} of a {profile.crosswind_kt} kt dry limit)"
+               if crfi is not None else
+               f"{profile.crosswind_kt} kt demonstrated crosswind"),
             min(1.0, (ratio - 0.35) * 1.6) * profile.wind_sensitivity,
         ))
 
@@ -127,26 +146,105 @@ def assess_factors(flight: Flight, airport: Airport,
         factors.append(Factor("ceiling and visibility", detail,
                               weights[category] * (0.75 if worst and worst.transient else 1.0)))
 
+    # Arrivals and departures fail for different reasons. An arrival is
+    # limited by whether it can complete the approach; a departure by
+    # whether it can be de-iced and get airborne on a contaminated surface.
+    arriving = flight.direction == "arrival"
+    if arriving:
+        minima_rvr = approach_minima_rvr(profile.cat3_capable)
+        visibility = min((p.visibility for p in covering
+                          if p.visibility is not None), default=None)
+        forecast_rvr = visibility_to_rvr(visibility)
+        worst = next((p for p in covering
+                      if p.visibility is not None and p.visibility == visibility), None)
+        capability = ("CAT III" if profile.cat3_capable else "non-CAT III")
+        rvr_out = bool(notams and runway and runway.ident in notams.rvr_unserviceable)
+        if rvr_out:
+            factors.append(Factor(
+                "RVR reporting unserviceable",
+                f"runway {runway.ident} has no RVR reporting, so RVR-based minima "
+                "are not available and a higher visibility is required",
+                0.5))
+
+        if forecast_rvr is not None:
+            if forecast_rvr < minima_rvr:
+                factors.append(Factor(
+                    "below landing minima",
+                    f"forecast visibility {visibility:g} sm is about {forecast_rvr} ft RVR, "
+                    f"below the {minima_rvr} ft {capability} minimum — holding or "
+                    "diversion likely",
+                    0.9 if not (worst and worst.transient) else 0.65))
+            elif forecast_rvr < minima_rvr * 2:
+                factors.append(Factor(
+                    "close to landing minima",
+                    f"forecast visibility {visibility:g} sm is about {forecast_rvr} ft RVR, "
+                    f"against a {minima_rvr} ft {capability} minimum",
+                    0.45))
+
     weather = " ".join(p.weather for p in covering if p.weather)
+    if notams and notams.contaminated and not FREEZING.search(weather):
+        factors.append(Factor("runway contamination",
+                              "runway surface condition reported", 0.45))
+
     if FREEZING.search(weather):
-        factors.append(Factor("freezing precipitation",
-                              f"{weather.strip()} — de-icing and possible holdover limits",
-                              0.9 * profile.deice_burden))
+        factors.append(Factor(
+            "freezing precipitation",
+            f"{weather.strip()} — "
+            + ("contaminated runway and braking action" if arriving
+               else "de-icing and possible holdover limits"),
+            (0.75 if arriving else 0.9) * profile.deice_burden))
     elif FROZEN.search(weather):
-        factors.append(Factor("snow",
-                              f"{weather.strip()} — de-icing and runway clearing",
-                              0.6 * profile.deice_burden))
+        factors.append(Factor(
+            "snow",
+            f"{weather.strip()} — "
+            + ("runway clearing and braking action" if arriving
+               else "de-icing and runway clearing"),
+            (0.5 if arriving else 0.6) * profile.deice_burden))
     if CONVECTIVE.search(weather):
         factors.append(Factor("thunderstorms", weather.strip(), 0.7))
 
     assessment = Assessment(
-        flight=flight, profile=profile, period=prevailing,
+        flight=flight, profile=profile, period=prevailing, covered_by_taf=covered,
         runway=runway.ident if runway else None,
         headwind=headwind, crosswind=crosswind, crosswind_ratio=ratio,
         category=category, factors=factors,
     )
+    if not covered:
+        factors.append(Factor(
+            "outside the forecast window",
+            "scheduled beyond the current TAF; nearest period used as a guide",
+            0.3))
+
+    assessment.outlook = _outlook(assessment, arriving, weather)
     assessment.colour, assessment.reason = _rule_verdict(assessment)
     return assessment
+
+
+#: Direction-specific outlook labels. An arrival's question is whether it can
+#: get in; a departure's is whether it can get out on time.
+def _outlook(a: Assessment, arriving: bool, weather: str) -> str:
+    if not a.covered_by_taf:
+        return "Beyond forecast"
+    names = {f.name for f in a.factors}
+    if arriving:
+        if "below landing minima" in names:
+            return "Below minima"
+        if "close to landing minima" in names:
+            return "Near minima"
+        if a.category in ("IFR", "LIFR"):
+            return "Instrument approach"
+        return "Straightforward approach"
+    if notams and notams.contaminated and not FREEZING.search(weather):
+        factors.append(Factor("runway contamination",
+                              "runway surface condition reported", 0.45))
+
+    if FREEZING.search(weather):
+        return "De-icing, holdover critical"
+    if FROZEN.search(weather):
+        return "De-icing expected"
+    if "crosswind" in names or "gusts" in names:
+        return "Wind-limited departure"
+    return "Normal turnaround"
 
 
 def _rule_verdict(a: Assessment) -> tuple[str, str]:
@@ -156,7 +254,8 @@ def _rule_verdict(a: Assessment) -> tuple[str, str]:
     if not a.factors:
         return colour, "No significant weather expected around the scheduled time."
     lead = max(a.factors, key=lambda f: f.weight)
-    return colour, f"{lead.name.capitalize()}: {lead.detail}."
+    label = lead.name[0].upper() + lead.name[1:]
+    return colour, f"{label}: {lead.detail}."
 
 
 SYSTEM = """You assess weather-related delay risk for flights at a Canadian \
@@ -177,6 +276,12 @@ Rules:
   limiting for a Beech 1900 than for an A330.
 - A TEMPO or PROB group is a possibility, not the prevailing condition.
   Weigh it, do not treat it as certain.
+- Arrivals and departures fail differently. An arrival is limited by
+  whether it can complete the approach: landing minima are assessed against
+  runway visual range, 600 ft RVR for an aircraft equipped and certified for
+  CAT III ILS and 1200 ft for everything else, and the downside is holding
+  or a diversion. A departure is limited by de-icing, holdover time and
+  runway state, so freezing precipitation and snow dominate.
 - Never state or imply that a flight is unsafe, cannot operate, or should
   be cancelled. You assess schedule risk only. Crews and operators decide
   what flies, against their own limits and current official data.

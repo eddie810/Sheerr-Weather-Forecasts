@@ -18,6 +18,31 @@ class Runway:
     heading_true: float
     length_ft: int
     closed: bool = False
+    #: Whether a precision approach serves this end. Used only to pick a
+    #: generic minima benchmark, never as a substitute for the charted
+    #: procedure.
+    precision_approach: bool = False
+
+
+#: Landing minima expressed as runway visual range in feet, which is what
+#: the approach ban is actually assessed against.
+#:
+#:   600 ft RVR  — aircraft equipped and certified for CAT III ILS
+#:  1200 ft RVR  — everything else
+#:
+#: Certification is per operator and per airframe fit, so the capability
+#: flag on each aircraft profile is "commonly equipped", not a statement
+#: about any particular aeroplane. Only current official data is
+#: authoritative; this estimates diversion risk, nothing more.
+CAT3_MINIMA_RVR = 600
+STANDARD_MINIMA_RVR = 1200
+
+#: Statute miles to RVR feet, the conversion used operationally.
+#: Between table points the value is interpolated.
+SM_TO_RVR = [
+    (0.125, 600), (0.25, 1200), (0.375, 1600), (0.5, 2400),
+    (0.625, 3200), (0.75, 4000), (1.0, 5000), (1.25, 6000), (1.5, 6000),
+]
 
 
 @dataclass
@@ -43,7 +68,8 @@ CYYT = Airport(
     timezone="America/St_Johns",
     runways=[
         Runway("10", 86, 8502), Runway("28", 266, 8502),
-        Runway("16", 142, 7005), Runway("34", 322, 7005),
+        Runway("16", 142, 7005, precision_approach=True),
+        Runway("34", 322, 7005),
         Runway("02", 356, 5028, closed=True),
         Runway("20", 176, 5028, closed=True),
     ],
@@ -79,3 +105,24 @@ def best_runway(airport: Airport, wind_dir: float | None,
 
     cross, _, runway, head = min(scored, key=lambda s: (round(s[0], 1), s[1]))
     return runway, head, cross
+
+
+def visibility_to_rvr(statute_miles: float | None) -> int | None:
+    """Convert a TAF visibility in statute miles to RVR in feet."""
+    if statute_miles is None:
+        return None
+    if statute_miles >= SM_TO_RVR[-1][0]:
+        return SM_TO_RVR[-1][1]
+    if statute_miles <= SM_TO_RVR[0][0]:
+        return SM_TO_RVR[0][1]
+    for (lo_sm, lo_rvr), (hi_sm, hi_rvr) in zip(SM_TO_RVR, SM_TO_RVR[1:]):
+        if lo_sm <= statute_miles <= hi_sm:
+            span = hi_sm - lo_sm
+            frac = 0 if span == 0 else (statute_miles - lo_sm) / span
+            return round(lo_rvr + (hi_rvr - lo_rvr) * frac)
+    return SM_TO_RVR[-1][1]
+
+
+def approach_minima_rvr(cat3_capable: bool) -> int:
+    """Landing minima in feet of RVR for an aircraft's capability."""
+    return CAT3_MINIMA_RVR if cat3_capable else STANDARD_MINIMA_RVR

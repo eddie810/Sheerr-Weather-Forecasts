@@ -25,6 +25,15 @@ class AircraftProfile:
     #: and to ground-icing turnarounds than heavier jets.
     wind_sensitivity: float     # 1.0 = baseline; higher is more affected
     deice_burden: float         # relative time cost of a de-icing cycle
+    #: Commonly equipped and certified for CAT III ILS. Fit and certification
+    #: vary by operator, so this ranks types, it does not describe a tail.
+    cat3_capable: bool = False
+
+
+def CAT3(profile: AircraftProfile) -> AircraftProfile:
+    """Mark a type as commonly CAT III capable."""
+    profile.cat3_capable = True
+    return profile
 
 
 PROFILES = {
@@ -34,27 +43,27 @@ PROFILES = {
     "AT75": AircraftProfile("AT75", "ATR 72-500", "turboprop", 35, 1.35, 1.2),
     "B190": AircraftProfile("B190", "Beech 1900", "turboprop", 25, 1.6, 1.3),
     "SF34": AircraftProfile("SF34", "Saab 340", "turboprop", 30, 1.5, 1.3),
-    "CRJ9": AircraftProfile("CRJ9", "CRJ900", "regional jet", 32, 1.15, 1.0),
+    "CRJ9": CAT3(AircraftProfile("CRJ9", "CRJ900", "regional jet", 32, 1.15, 1.0)),
     "CRJ2": AircraftProfile("CRJ2", "CRJ200", "regional jet", 30, 1.25, 1.0),
     "E175": AircraftProfile("E175", "Embraer 175", "regional jet", 38, 1.05, 1.0),
-    "E190": AircraftProfile("E190", "Embraer 190", "regional jet", 38, 1.05, 1.0),
-    "E195": AircraftProfile("E195", "Embraer 195", "regional jet", 38, 1.0, 1.0),
-    "E290": AircraftProfile("E290", "Embraer E190-E2", "regional jet", 38, 1.0, 1.0),
-    "E295": AircraftProfile("E295", "Embraer E195-E2", "regional jet", 38, 1.0, 1.0),
-    "A319": AircraftProfile("A319", "Airbus A319", "narrowbody", 38, 0.95, 0.9),
-    "A320": AircraftProfile("A320", "Airbus A320", "narrowbody", 38, 0.95, 0.9),
-    "A321": AircraftProfile("A321", "Airbus A321", "narrowbody", 38, 0.95, 0.9),
-    "A20N": AircraftProfile("A20N", "Airbus A320neo", "narrowbody", 38, 0.95, 0.9),
-    "A21N": AircraftProfile("A21N", "Airbus A321neo", "narrowbody", 38, 0.95, 0.9),
-    "B737": AircraftProfile("B737", "Boeing 737", "narrowbody", 36, 0.95, 0.9),
-    "B738": AircraftProfile("B738", "Boeing 737-800", "narrowbody", 36, 0.95, 0.9),
-    "B38M": AircraftProfile("B38M", "Boeing 737 MAX 8", "narrowbody", 36, 0.95, 0.9),
-    "B763": AircraftProfile("B763", "Boeing 767-300", "widebody", 35, 0.85, 0.8),
-    "A332": AircraftProfile("A332", "Airbus A330-200", "widebody", 38, 0.85, 0.8),
-    "A333": AircraftProfile("A333", "Airbus A330-300", "widebody", 38, 0.85, 0.8),
-    "B788": AircraftProfile("B788", "Boeing 787-8", "widebody", 40, 0.8, 0.8),
-    "BCS1": AircraftProfile("BCS1", "Airbus A220-100", "narrowbody", 35, 1.0, 0.95),
-    "BCS3": AircraftProfile("BCS3", "Airbus A220-300", "narrowbody", 35, 1.0, 0.95),
+    "E190": CAT3(AircraftProfile("E190", "Embraer 190", "regional jet", 38, 1.05, 1.0)),
+    "E195": CAT3(AircraftProfile("E195", "Embraer 195", "regional jet", 38, 1.0, 1.0)),
+    "E290": CAT3(AircraftProfile("E290", "Embraer E190-E2", "regional jet", 38, 1.0, 1.0)),
+    "E295": CAT3(AircraftProfile("E295", "Embraer E195-E2", "regional jet", 38, 1.0, 1.0)),
+    "A319": CAT3(AircraftProfile("A319", "Airbus A319", "narrowbody", 38, 0.95, 0.9)),
+    "A320": CAT3(AircraftProfile("A320", "Airbus A320", "narrowbody", 38, 0.95, 0.9)),
+    "A321": CAT3(AircraftProfile("A321", "Airbus A321", "narrowbody", 38, 0.95, 0.9)),
+    "A20N": CAT3(AircraftProfile("A20N", "Airbus A320neo", "narrowbody", 38, 0.95, 0.9)),
+    "A21N": CAT3(AircraftProfile("A21N", "Airbus A321neo", "narrowbody", 38, 0.95, 0.9)),
+    "B737": CAT3(AircraftProfile("B737", "Boeing 737", "narrowbody", 36, 0.95, 0.9)),
+    "B738": CAT3(AircraftProfile("B738", "Boeing 737-800", "narrowbody", 36, 0.95, 0.9)),
+    "B38M": CAT3(AircraftProfile("B38M", "Boeing 737 MAX 8", "narrowbody", 36, 0.95, 0.9)),
+    "B763": CAT3(AircraftProfile("B763", "Boeing 767-300", "widebody", 35, 0.85, 0.8)),
+    "A332": CAT3(AircraftProfile("A332", "Airbus A330-200", "widebody", 38, 0.85, 0.8)),
+    "A333": CAT3(AircraftProfile("A333", "Airbus A330-300", "widebody", 38, 0.85, 0.8)),
+    "B788": CAT3(AircraftProfile("B788", "Boeing 787-8", "widebody", 40, 0.8, 0.8)),
+    "BCS1": CAT3(AircraftProfile("BCS1", "Airbus A220-100", "narrowbody", 35, 1.0, 0.95)),
+    "BCS3": CAT3(AircraftProfile("BCS3", "Airbus A220-300", "narrowbody", 35, 1.0, 0.95)),
 }
 
 #: Schedule providers report a human-readable model ("Boeing 737-800"), while

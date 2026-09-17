@@ -110,6 +110,7 @@ def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
         from zoneinfo import ZoneInfo
 
         from .aviation.awc import fetch_metar, fetch_taf
+        from .aviation.notams import fetch_notams
         from .aviation.risk import assess_factors, write_verdict
         from .aviation.runways import CYYT
         from .aviation.schedule import ScheduleError, fetch_schedule, live_sample
@@ -118,6 +119,7 @@ def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
         ap = CYYT
         raw_taf, periods = fetch_taf(ap.icao)
         metar = fetch_metar(ap.icao)
+        notams = fetch_notams(ap.icao)
         start = datetime.now(timezone.utc)
         sample = bool(entry.get("sample"))
         try:
@@ -127,23 +129,32 @@ def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
             flights = live_sample(ap.latitude, ap.longitude)
             sample = True
 
-        assessments = [write_verdict(assess_factors(f, ap, periods)) for f in flights]
+        direction = entry.get("direction", "all")
+        if direction != "all":
+            flights = [f for f in flights if f.direction == direction]
+        if not flights:
+            raise ProviderError(f"no {direction} flights in the window at {ap.icao}")
+
+        assessments = [write_verdict(assess_factors(f, ap, periods, notams))
+                       for f in flights]
         html = render(entry.get("template", "aviation"), "html", {
             "airport": ap, "assessments": assessments, "metar": metar,
-            "raw_taf": raw_taf, "periods": periods,
+            "raw_taf": raw_taf, "notams": notams, "periods": periods,
             "tz": ZoneInfo(ap.timezone),
             "generated_at": datetime.now(ZoneInfo(ap.timezone)),
-            "sample_mode": sample,
+            "sample_mode": sample, "direction": direction,
             "assessed_by": ("claude" if any(a.source == "claude" for a in assessments)
                             else "rule-based"),
             "home": "./index.html", "standalone": True,
         })
-        href = f"aviation-{ap.iata.lower()}.html"
+        suffix = "" if direction == "all" else f"-{direction}s"
+        href = f"aviation-{ap.iata.lower()}{suffix}.html"
         (outdir / href).write_text(html)
         pseudo = _Loc(name=ap.name, latitude=ap.latitude, longitude=ap.longitude,
                       timezone=ap.timezone, slug=href[:-5])
         flagged = sum(1 for a in assessments if a.colour != "green")
-        return BuiltPage(pseudo, f"{ap.iata} delay risk",
+        label = {"arrival": "arrivals", "departure": "departures"}.get(direction, "delay risk")
+        return BuiltPage(pseudo, f"{ap.iata} {label}",
                          f"{len(assessments)} movements"
                          + (f", {flagged} flagged" if flagged else ", all clear"),
                          href, "aviation")

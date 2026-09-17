@@ -1,0 +1,25 @@
+# Aerodrome operational data that is not available from any open API.
+#
+# Canadian approach plates live in the Canada Air Pilot, which NAV CANADA
+# sells — there is no free feed. Figures taken from the plates you hold go
+# here, and the assessment uses them in place of its defaults.
+#
+# Runway geometry comes from OurAirports and NOTAMs from NAV CANADA, so
+# neither needs to be repeated here.
+
+CYYT:
+  name: St. John's International
+
+  # Landing minima as runway visual range, in feet.
+  minima_rvr:
+    cat3: 600           # equipped and certified for CAT III ILS
+    standard: 1200      # everything else
+
+  # Per-runway overrides, when a procedure differs from the defaults above.
+  # runways:
+  #   "16":
+  #     approach: ILS
+  #     minima_rvr: 1200
+  #   "34":
+  #     approach: RNAV
+  #     minima_rvr: 2600
