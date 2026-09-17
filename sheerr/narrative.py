@@ -24,43 +24,40 @@ MODEL = "claude-opus-5"
 #: count as supported -- the model is asked to round to whole units.
 TOLERANCE = 1.0
 
-SYSTEM = """You are a seasoned broadcast meteorologist in Newfoundland, \
-writing the regional forecast for Sheerr Weather. You have called weather on \
-this island for twenty years and you talk like it.
+SYSTEM = """You write public regional forecasts for Sheerr Weather, in the \
+style of an Environment Canada forecast.
 
-VOICE
-Short sentences. Often very short. Break things up — this is written to be
-read aloud, not scanned. Lead with what people will feel when they step
-outside, then fill in the detail.
+Plain statements of fact, in order. No personality, no scene-setting, no
+figures of speech, no dialect. Never address the reader. Never describe what
+something feels like unless the data gives you a feels-like temperature.
+Do not open with a summary line or a flourish.
 
-Confident and plain. No hedging, no filler, no "it's worth noting". You are
-telling people what the weather is doing, not presenting a data summary.
+Say only what the data supports. Include a subject only when the weather
+warrants it: mention accumulation when there is accumulation, mention a
+change in the wind only when the figures show one. Omit anything the brief
+does not give you. A short forecast is correct when there is little to say.
 
-LOCAL GEOGRAPHY
-Name the local areas, not the measuring points. Say "the Southern Shore",
-"the northeast Avalon", "Conception Bay North", "the Cape Shore" — the areas
-the brief gives you. Do not name individual communities unless the brief
-gives you no area for that figure. A forecaster says "windiest on the
-northeast Avalon", never "windiest at the St. John's sampling point".
+Sky comes from the brief in words. Spell wind directions out in full
+(Northwest, not NW). Temperatures in Celsius, wind in km/h.
 
-Use the island's own weather language where it fits naturally and is
-accurate: a blow, a good blow, blowing hard, nor'westerly, sou'westerly,
-sou'easterly, dirty, mauzy, RDF (rain, drizzle and fog), lop on the water,
-a civil day. Never force it. One or two of these in a forecast is plenty —
-a forecast stuffed with dialect sounds like a tourist wrote it.
+Use ONLY figures present in the brief. Never invent, interpolate or round a
+number that is not given. Quote a range as a range. Do not state a
+confidence or probability the brief does not contain.
 
-SKY
-The brief gives you the sky condition in words — sunny, mainly sunny, a mix
-of sun and cloud, mainly cloudy, cloudy. Use those words. Never quote a
-cloud percentage. Nobody says "83 per cent cloud cover" on air.
+Name the local areas the brief gives you rather than the measuring points,
+and only when a figure genuinely differs across the region. If the region is
+uniform, do not name places at all.
 
-FIGURES
-Use ONLY figures present in the brief. Never invent or interpolate a number.
-Quote ranges as ranges. Temperatures in Celsius, wind in km/h.
-Do not state a confidence or probability the brief does not contain.
+Mention an active alert plainly in one short sentence if there is one.
+Report conditions only. Never advise on safety, travel, closures, or
+whether to go ahead with anything.
 
-Mention an active alert plainly if there is one. Report conditions only —
-never advise on safety, closures, travel, or whether to cancel anything."""
+This is the register, not a template to fill. The content follows the
+weather, so a different day says different things in a different order:
+
+  Mostly cloudy with rain showers. Chance of rain 100%. Northwest winds at
+  40 to 50 km/h with gusts to 90 km/h in the afternoon. Winds subside in
+  the evening. High of 18. Rainfall amount: Less than 5 mm expected."""
 
 
 @dataclass
@@ -152,15 +149,22 @@ def build_brief(summary: RegionSummary, day: RegionDay) -> tuple[str, set[float]
             f"Peak gusts: {_fmt(day.gust.low.value)} to {_fmt(day.gust.high.value)} km/h "
             f"(lightest {day.gust.low.area}, strongest {day.gust.high.area})")
         if day.peak_gust_at:
+            from .region import period_of as _period
             lines.append(
-                f"Strongest gusts over {day.gust.high.area}, around "
-                f"{day.peak_gust_at:%-I %p}")
+                f"Strongest gusts over {day.gust.high.area}, "
+                f"{_period(day.peak_gust_at)}")
         if day.peak_window:
             lines.append(_window_phrase(day.peak_window))
 
     if day.dominant_direction:
+        from .region import direction_word, period_of
         lines.append(
-            f"Wind direction: predominantly {day.dominant_direction}")
+            f"Wind direction: predominantly "
+            f"{direction_word(day.dominant_direction) or day.dominant_direction}")
+
+    if day.precip_amount is not None and day.precip_amount >= 0.2:
+        record(day.precip_amount)
+        lines.append(f"Rainfall amount: {day.precip_amount:.0f} mm")
 
     if day.precip_chance:
         record(day.precip_chance.low.value, day.precip_chance.high.value)
@@ -215,48 +219,44 @@ def validate(text: str, allowed: set[float]) -> list[str]:
 
 
 def rule_based(summary: RegionSummary, day: RegionDay) -> Narrative:
-    """Deterministic fallback writer.
+    """Deterministic writer, in the same register as the generated text.
 
     Also the safety net when Claude is unavailable or its output fails
     validation, so the site always has text.
     """
-    sky = (day.sky or "Cloud").capitalize()
-    wind = None
-    if day.gust and day.gust.high.value >= 70:
-        wind = "very windy"
-    elif day.gust and day.gust.high.value >= 50:
-        wind = "windy"
+    from .region import direction_word, period_of
 
-    if wind:
-        # A comma keeps "a mix of sun and cloud" from colliding with "and windy".
-        joiner = ", and " if " and " in sky.lower() else " and "
-        headline = f"{sky}{joiner}{wind} across the {summary.name}."
-    else:
-        headline = f"{sky} across the {summary.name}."
+    headline = (day.sky or "Cloud").capitalize() + "."
 
-    parts = [headline]
+    parts = []
+    if day.precip_chance and day.precip_chance.high.value >= 20:
+        parts.append(f"Chance of precipitation {_fmt(day.precip_chance.high.value)}%.")
+
+    if day.wind_speed:
+        direction = direction_word(day.dominant_direction)
+        lead = f"{direction} winds" if direction else "Winds"
+        wind = f"{lead} {_fmt(day.wind_speed.low.value)} to {_fmt(day.wind_speed.high.value)} km/h"
+        if day.gust and day.gust.high.value >= 40:
+            wind += f" with gusts to {_fmt(day.gust.high.value)} km/h"
+            period = period_of(day.peak_gust_at)
+            if period:
+                wind += f" {period}"
+        parts.append(wind + ".")
+
     if day.high:
         if day.high.uniform:
-            parts.append(f"Highs near {_fmt(day.high.high.value)}C.")
+            parts.append(f"High of {_fmt(day.high.high.value)}.")
         else:
             parts.append(
-                f"Highs {_fmt(day.high.low.value)} to {_fmt(day.high.high.value)}C, "
+                f"Highs {_fmt(day.high.low.value)} to {_fmt(day.high.high.value)}, "
                 f"coolest over {day.high.low.area}.")
-    if day.wind_speed and day.gust:
-        direction = f"{day.dominant_direction} " if day.dominant_direction else ""
-        parts.append(
-            f"{direction}winds {_fmt(day.wind_speed.low.value)} to "
-            f"{_fmt(day.wind_speed.high.value)} km/h, gusting "
-            f"{_fmt(day.gust.low.value)} to {_fmt(day.gust.high.value)} km/h, "
-            f"strongest over {day.gust.high.area}.")
-    if day.peak_window:
-        parts.append(_window_phrase(day.peak_window) + ".")
-    if day.precip_chance and day.precip_chance.high.value >= 30:
-        parts.append(
-            f"Chance of precipitation {_fmt(day.precip_chance.low.value)} to "
-            f"{_fmt(day.precip_chance.high.value)}%.")
+    if day.low:
+        parts.append(f"Low of {_fmt(day.low.low.value)}.")
 
-    return Narrative(headline, " ".join(parts[1:]), "rule-based", [])
+    if day.precip_amount is not None and day.precip_amount >= 0.2:
+        parts.append(f"Rainfall amount {day.precip_amount:.0f} mm.")
+
+    return Narrative(headline, " ".join(parts), "rule-based", [])
 
 
 def write(summary: RegionSummary, day: RegionDay,
@@ -291,13 +291,13 @@ def write(summary: RegionSummary, day: RegionDay,
                 "role": "user",
                 "content": (
                     f"{brief}\n\n"
-                    "Write the regional forecast.\n"
-                    "headline: one sentence, under 15 words, capturing the day.\n"
-                    "discussion: two short paragraphs, as you would read them on "
-                    "air. Cover the sky, temperature, the wind including gusts and "
-                    "when they peak, and the chance of rain. Name the local areas "
-                    "holding the extremes, not the measuring points. Short "
-                    "sentences. Use only the figures above, and the sky in words."
+                    "Write the regional forecast for this day.\n"
+                    "headline: the sky and precipitation in one short statement, "
+                    "e.g. \"Mostly cloudy with rain showers.\"\n"
+                    "discussion: the remaining conditions as plain statements — "
+                    "chance of precipitation, wind and gusts, temperature, and "
+                    "accumulation if there is any. Leave out whatever the brief "
+                    "does not support. No summary line, no commentary."
                 ),
             }],
             output_format=RegionalForecast,

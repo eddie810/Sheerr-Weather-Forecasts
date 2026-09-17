@@ -78,6 +78,12 @@ def wind_desc(speed: Any, unit: str = "km/h") -> str:
     return "storm force"
 
 
+def direction(cardinal: Any) -> str:
+    """Spell a cardinal direction out in full for display."""
+    from .region import direction_word
+    return direction_word(cardinal) or (cardinal or "")
+
+
 def build_env(template_dir: Path | str | None = None) -> Environment:
     env = Environment(
         loader=FileSystemLoader(str(template_dir or TEMPLATE_DIR)),
@@ -88,7 +94,7 @@ def build_env(template_dir: Path | str | None = None) -> Environment:
     )
     env.filters.update({
         "num": num, "pct": pct, "clock": clock, "datestr": datestr,
-        "arrow": arrow, "wind_desc": wind_desc,
+        "arrow": arrow, "wind_desc": wind_desc, "direction": direction,
     })
     return env
 

@@ -26,6 +26,36 @@ SKY_BANDS = [
 ]
 
 
+#: Forecasts spell wind directions out in full; "NW" is chart shorthand.
+DIRECTION_WORDS = {
+    "N": "North", "NNE": "North-northeast", "NE": "Northeast",
+    "ENE": "East-northeast", "E": "East", "ESE": "East-southeast",
+    "SE": "Southeast", "SSE": "South-southeast", "S": "South",
+    "SSW": "South-southwest", "SW": "Southwest", "WSW": "West-southwest",
+    "W": "West", "WNW": "West-northwest", "NW": "Northwest",
+    "NNW": "North-northwest",
+}
+
+
+def direction_word(cardinal: str | None) -> str | None:
+    """"NW" -> "Northwest"."""
+    return DIRECTION_WORDS.get(cardinal) if cardinal else None
+
+
+def period_of(when) -> str | None:
+    """Name the part of the day a forecast would use for a timestamp."""
+    if when is None:
+        return None
+    hour = when.hour
+    if hour < 6:
+        return "overnight"
+    if hour < 12:
+        return "in the morning"
+    if hour < 18:
+        return "in the afternoon"
+    return "in the evening"
+
+
 def sky_condition(cloud_percent: float | None, night: bool = False) -> str | None:
     """Turn a cloud-cover percentage into the phrase a forecast would use."""
     if cloud_percent is None:
@@ -80,6 +110,7 @@ class RegionDay:
     precip_chance: Spread | None = None
     cloud_cover: Spread | None = None
     sky: str | None = None
+    precip_amount: float | None = None
     dominant_direction: str | None = None
     direction_agreement: float = 0.0
     peak_gust_at: datetime | None = None
@@ -172,6 +203,7 @@ def summarise_region(name: str, timezone: str, members: list[Location],
     for offset in range(days):
         day = (now + timedelta(days=offset)).date()
         highs, lows, gusts, speeds, pops, clouds, dirs = [], [], [], [], [], [], []
+        rain_totals: list[float] = []
         peak: tuple[float, datetime, str] | None = None
 
         for member_name, hours in blended.items():
@@ -185,6 +217,9 @@ def summarise_region(name: str, timezone: str, members: list[Location],
             c = [h.cloud_cover for h in rows if h.cloud_cover is not None]
 
             zone = zones.get(member_name)
+            rain = [h.precip_amount for h in rows if h.precip_amount is not None]
+            if rain:
+                rain_totals.append(sum(rain))
             if temps:
                 highs.append((member_name, max(temps), zone))
                 lows.append((member_name, min(temps), zone))
@@ -211,6 +246,10 @@ def summarise_region(name: str, timezone: str, members: list[Location],
                          and h.cloud_cover is not None]
         sky = sky_condition(sum(daytime_cloud) / len(daytime_cloud)) if daytime_cloud else None
 
+        # Take the wettest point: a regional figure quoting the driest would
+        # understate what to expect.
+        rain_mm = max(rain_totals) if rain_totals else None
+
         direction, agreement = _dominant_direction(dirs)
         window = None
         if peak:
@@ -227,7 +266,7 @@ def summarise_region(name: str, timezone: str, members: list[Location],
             high=_spread(highs), low=_spread(lows),
             gust=_spread(gusts), wind_speed=_spread(speeds),
             precip_chance=_spread(pops), cloud_cover=_spread(clouds),
-            sky=sky, dominant_direction=direction, direction_agreement=agreement,
+            sky=sky, precip_amount=rain_mm, dominant_direction=direction, direction_agreement=agreement,
             peak_gust_at=peak[1].astimezone(zone_tz) if peak else None,
             peak_gust_where=peak[2] if peak else None,
             peak_window=window,

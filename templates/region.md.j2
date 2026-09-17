@@ -11,17 +11,15 @@ _{{ summary.members | length }} points sampled: {{ summary.member_names | join("
 {% for entry in narratives %}
 ## {{ entry.day.day_of_week }}, {{ entry.day.date.strftime('%B %-d') }}
 
-**{{ entry.narrative.headline }}**
-
-{{ entry.narrative.discussion }}
+{{ entry.narrative.headline }} {{ entry.narrative.discussion }}
 
 | | |
 |---|---|
-{% if entry.day.high %}| Highs | {{ entry.day.high.low.value | num }}–{{ entry.day.high.high.value | num }}{{ units.temp }} (coolest {{ entry.day.high.low.where }}) |
+{% if entry.day.high %}| Highs | {{ entry.day.high.low.value | num }}–{{ entry.day.high.high.value | num }}{{ units.temp }} (coolest {{ entry.day.high.low.area }}) |
 {% endif %}
-{% if entry.day.gust %}| Peak gusts | {{ entry.day.gust.low.value | num }}–{{ entry.day.gust.high.value | num }} {{ units.speed }} (strongest {{ entry.day.gust.high.where }}) |
+{% if entry.day.gust %}| Peak gusts | {{ entry.day.gust.low.value | num }}–{{ entry.day.gust.high.value | num }} {{ units.speed }} (strongest {{ entry.day.gust.high.area }}) |
 {% endif %}
-{% if entry.day.wind_speed %}| Sustained | {{ entry.day.wind_speed.low.value | num }}–{{ entry.day.wind_speed.high.value | num }} {{ units.speed }}{% if entry.day.dominant_direction %} {{ entry.day.dominant_direction }}{% endif %} |
+{% if entry.day.wind_speed %}| Sustained | {{ entry.day.wind_speed.low.value | num }}–{{ entry.day.wind_speed.high.value | num }} {{ units.speed }}{% if entry.day.dominant_direction %} {{ entry.day.dominant_direction | direction }}{% endif %} |
 {% endif %}
 
 {% endfor %}
