@@ -1,0 +1,94 @@
+{% extends "_layout.html.j2" %}
+{% block title %}{{ airport.iata }} Delay Risk{% endblock %}
+
+{% block content %}
+<div class="sheet">
+  <header>
+    <div class="eyebrow">Sheerr Weather · Aviation{% if home %} · <a href="{{ home }}" style="color:inherit">All forecasts</a>{% endif %}</div>
+    <h1>{{ airport.name }} <span style="color:var(--ink-faint)">{{ airport.iata }}</span></h1>
+    <div class="when">Weather delay risk · {{ assessments | length }} movements</div>
+  </header>
+
+  {% if sample_mode %}
+  <section class="alert">
+    <h2>Demonstration data</h2>
+    <p>These are aircraft currently airborne near {{ airport.iata }}, not a published
+    schedule. Times are "now" and an overflight cannot be told from an arrival.</p>
+  </section>
+  {% endif %}
+
+  <section>
+    <h2 class="sec">Now at {{ airport.icao }}</h2>
+    <div class="readout">
+      <div class="cell">
+        <div class="k">Flight category</div>
+        <div class="v" style="font-size:1.3rem">{{ metar.fltCat or "—" }}</div>
+      </div>
+      <div class="cell">
+        <div class="k">Wind</div>
+        <div class="v">{{ metar.wdir | num }}°/{{ metar.wspd | num }}</div>
+        <div class="n">knots</div>
+      </div>
+      <div class="cell">
+        <div class="k">Visibility</div>
+        <div class="v">{{ metar.visib }}</div>
+        <div class="n">statute miles</div>
+      </div>
+      <div class="cell">
+        <div class="k">Temperature</div>
+        <div class="v">{{ metar.temp | num }}°C</div>
+        {% if metar.dewp is not none %}<div class="n">Dew point {{ metar.dewp | num }}°C</div>{% endif %}
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="sec">Flights</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th></th><th>Flight</th><th>Time</th><th>Aircraft</th>
+          <th>Cat</th><th>Rwy</th><th>Xwind</th><th>Assessment</th>
+        </tr></thead>
+        <tbody>
+        {% for a in assessments %}
+          <tr>
+            <td><span style="display:inline-block;width:.7rem;height:.7rem;border-radius:50%;
+              background:var(--{{ {'green':'calm','yellow':'breezy','orange':'windy'}[a.colour] }})"></span></td>
+            <td><strong>{{ a.flight.callsign or a.flight.number }}</strong>
+              {% if a.flight.other_airport %}<br><span style="color:var(--ink-faint);font-size:.75rem">{{ a.flight.direction[:3] }} {{ a.flight.other_airport }}</span>{% endif %}</td>
+            <td class="num">{{ a.flight.scheduled.astimezone(tz).strftime('%H:%M') }}</td>
+            <td>{{ a.profile.name }}</td>
+            <td class="num">{{ a.category }}</td>
+            <td class="num">{{ a.runway or "—" }}</td>
+            <td class="num">{{ a.crosswind | num }}</td>
+            <td style="min-width:18rem">{{ a.reason }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:.78rem;color:var(--ink-soft);margin:.9rem 0 0">
+      <span style="color:var(--calm)">●</span> weather unlikely to affect the schedule ·
+      <span style="color:var(--breezy)">●</span> could plausibly delay ·
+      <span style="color:var(--windy)">●</span> likely to delay, de-ice, hold or divert
+    </p>
+  </section>
+
+  <section>
+    <h2 class="sec">Terminal forecast</h2>
+    <div class="scroll"><pre style="margin:0;padding:1rem;font-family:'IBM Plex Mono',monospace;
+      font-size:.8rem;line-height:1.6;white-space:pre-wrap;word-break:break-word">{{ raw_taf }}</pre></div>
+  </section>
+
+  <footer>
+    <div>Generated {{ generated_at | datestr }} at {{ generated_at | clock }} {{ generated_at.strftime('%Z') }}.</div>
+    <div>Assessments written by {% if assessed_by == "claude" %}Claude and checked against the source figures{% else %}rule{% endif %}.</div>
+    <div>TAF and METAR from the NOAA Aviation Weather Center. Runway data from OurAirports.</div>
+    <div style="margin-top:.5rem;color:var(--ink-soft)"><strong>Not an operational product.</strong>
+      This estimates schedule risk only. It is not a statement about whether any flight is
+      safe or legal to operate — crews and operators decide that against their own limits
+      and current official data.</div>
+  </footer>
+</div>
+{% endblock %}

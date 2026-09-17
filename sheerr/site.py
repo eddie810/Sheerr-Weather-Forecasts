@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import shutil
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -77,7 +77,7 @@ def build_site(config: Config, site_config: dict[str, Any], outdir: Path,
                  "description": meta.get("description"),
                  "refresh_hours": meta.get("refresh_hours", 3)},
         "events": [p for p in built if p.kind == "event"],
-        "regions": [p for p in built if p.kind == "region"],
+        "regions": [p for p in built if p.kind in ("region", "aviation")],
         "forecasts": [p for p in built if p.kind == "forecast"],
         "failures": failed,
         "built_at": _index_time(built, config),
@@ -105,6 +105,48 @@ def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
                 site_defaults: dict | None = None) -> BuiltPage | None:
     site_defaults = site_defaults or {}
     kind = entry.get("type", "forecast")
+
+    if kind == "aviation":
+        from zoneinfo import ZoneInfo
+
+        from .aviation.awc import fetch_metar, fetch_taf
+        from .aviation.risk import assess_factors, write_verdict
+        from .aviation.runways import CYYT
+        from .aviation.schedule import ScheduleError, fetch_schedule, live_sample
+        from .models import Location as _Loc
+
+        ap = CYYT
+        raw_taf, periods = fetch_taf(ap.icao)
+        metar = fetch_metar(ap.icao)
+        start = datetime.now(timezone.utc)
+        sample = bool(entry.get("sample"))
+        try:
+            flights = fetch_schedule(ap.icao, start, int(entry.get("hours", 12)))
+        except ScheduleError:
+            # No key or quota exhausted: show live traffic rather than nothing.
+            flights = live_sample(ap.latitude, ap.longitude)
+            sample = True
+
+        assessments = [write_verdict(assess_factors(f, ap, periods)) for f in flights]
+        html = render(entry.get("template", "aviation"), "html", {
+            "airport": ap, "assessments": assessments, "metar": metar,
+            "raw_taf": raw_taf, "periods": periods,
+            "tz": ZoneInfo(ap.timezone),
+            "generated_at": datetime.now(ZoneInfo(ap.timezone)),
+            "sample_mode": sample,
+            "assessed_by": ("claude" if any(a.source == "claude" for a in assessments)
+                            else "rule-based"),
+            "home": "./index.html", "standalone": True,
+        })
+        href = f"aviation-{ap.iata.lower()}.html"
+        (outdir / href).write_text(html)
+        pseudo = _Loc(name=ap.name, latitude=ap.latitude, longitude=ap.longitude,
+                      timezone=ap.timezone, slug=href[:-5])
+        flagged = sum(1 for a in assessments if a.colour != "green")
+        return BuiltPage(pseudo, f"{ap.iata} delay risk",
+                         f"{len(assessments)} movements"
+                         + (f", {flagged} flagged" if flagged else ", all clear"),
+                         href, "aviation")
 
     if kind == "region":
         from .cli import build_region_context

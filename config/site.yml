@@ -28,6 +28,12 @@ pages:
     days: 5
     narrative_days: 3
 
+  # Aviation delay risk. Uses AERODATABOX_API_KEY for published schedules;
+  # falls back to live traffic if the key is missing or the quota is spent.
+  - type: aviation
+    airport: CYYT
+    hours: 12
+
   # Event briefings. `when` accepts an ISO timestamp for a fixed date, or a
   # phrase like "saturday 2pm" that rolls forward each week.
   - type: event
