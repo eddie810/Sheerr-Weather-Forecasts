@@ -22,6 +22,9 @@ class Location:
     timezone: str = "auto"
     region: str | None = None
     slug: str | None = None
+    #: Local area a broadcaster would name instead of the point itself,
+    #: e.g. "the Southern Shore" rather than "Witless Bay".
+    zone: str | None = None
 
     def __post_init__(self) -> None:
         if not self.slug:

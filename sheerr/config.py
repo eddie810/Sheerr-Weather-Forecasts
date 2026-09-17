@@ -65,6 +65,7 @@ class Config:
                 longitude=float(entry["longitude"]),
                 timezone=entry.get("timezone", "auto"),
                 region=str(entry["region"]) if entry.get("region") is not None else None,
+                zone=entry.get("zone"),
                 slug=key,
             )
 

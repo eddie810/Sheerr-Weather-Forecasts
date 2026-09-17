@@ -19,6 +19,7 @@ locations:
     latitude: 47.2814
     longitude: -52.8306
     timezone: America/St_Johns
+    zone: "the Southern Shore"
 
   st-johns:
     name: St. John's
@@ -26,6 +27,7 @@ locations:
     latitude: 47.5615
     longitude: -52.7126
     timezone: America/St_Johns
+    zone: "the northeast Avalon"
 
   halifax:
     name: Halifax
@@ -41,12 +43,13 @@ locations:
     longitude: -79.3832
     timezone: America/Toronto
 
-  cape-race:
-    name: Cape Race
+  trepassey:
+    name: Trepassey
     region: "NL"
-    latitude: 46.6597
-    longitude: -53.0761
+    latitude: 46.737
+    longitude: -53.365
     timezone: America/St_Johns
+    zone: "the Southern Shore"
 
   carbonear:
     name: Carbonear
@@ -54,6 +57,7 @@ locations:
     latitude: 47.7350
     longitude: -53.2158
     timezone: America/St_Johns
+    zone: "Conception Bay North"
 
   placentia:
     name: Placentia
@@ -61,6 +65,7 @@ locations:
     latitude: 47.2411
     longitude: -53.9597
     timezone: America/St_Johns
+    zone: "the Cape Shore"
 
   cape-st-marys:
     name: Cape St. Mary's
@@ -68,6 +73,7 @@ locations:
     latitude: 46.8214
     longitude: -54.1811
     timezone: America/St_Johns
+    zone: "the Cape Shore"
 
   bonavista:
     name: Bonavista
@@ -75,6 +81,7 @@ locations:
     latitude: 48.657
     longitude: -53.112
     timezone: America/St_Johns
+    zone: "the Bonavista Peninsula"
 
 # Regions group locations into one summarised forecast.
 # Every member must exist under `locations:` above.
@@ -86,7 +93,7 @@ regions:
     members:
       - st-johns
       - witless-bay
-      - cape-race
+      - trepassey
       - carbonear
       - placentia
       - cape-st-marys

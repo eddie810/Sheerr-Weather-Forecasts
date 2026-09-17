@@ -165,6 +165,25 @@ regions:
     members: [st-johns, witless-bay, cape-race, carbonear, placentia, cape-st-marys]
 ```
 
+### Local zones
+
+Each location carries a `zone` — the area a broadcaster would name on air
+rather than the measuring point itself:
+
+```yaml
+  witless-bay:
+    name: Witless Bay
+    zone: "the Southern Shore"
+```
+
+Regional forecasts name the zone, not the point, so the text reads
+"windiest on the northeast Avalon" rather than naming a sampling site.
+Several points can share a zone.
+
+Cloud cover is converted to Environment Canada sky wording (sunny, mainly
+sunny, a mix of sun and cloud, mainly cloudy, cloudy) before it reaches the
+writer. Percentages are never passed through, so they cannot be quoted.
+
 ### Written discussion
 
 Claude writes the regional discussion from a structured brief of the
