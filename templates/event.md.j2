@@ -32,6 +32,12 @@ _Note: {{ note }}._
 _No source had hourly data for this time._
 {% endif %}
 
+{% if forecast_text %}
+## {{ event.event_time.strftime('%A') }}'s forecast
+
+{{ forecast_text.headline }} {{ forecast_text.discussion }}
+
+{% endif %}
 ## Hour by hour ({{ event.window_start | clock }} – {{ event.window_end | clock }})
 
 | Time | Conditions | Temp | Rain | Cloud | Wind | Gusts |

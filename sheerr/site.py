@@ -187,10 +187,16 @@ def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
                 row.slot = slot
                 window.append(row)
 
+        from .cli import day_narrative
+        forecast_text, forecast_day = day_narrative(
+            location, forecasts, event_time.date(), days=max(days, 2))
+
         html = render(entry.get("template", "event"), "html", {
             "event": event,
             "blended": blended,
             "window": window,
+            "forecast_text": forecast_text,
+            "forecast_day": forecast_day,
             "sources": {f: blended.source_of(f) for f in
                         ["temperature", "precip_chance", "cloud_cover",
                          "wind_speed", "wind_gust", "wind_direction"]

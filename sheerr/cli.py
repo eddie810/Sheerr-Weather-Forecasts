@@ -118,6 +118,23 @@ def cmd_forecast(args, config: Config) -> None:
     write_out(render(args.template, args.format, context), args.output)
 
 
+def day_narrative(location, forecasts, target_date, days: int = 5):
+    """Written forecast for one location on one day.
+
+    A single point is a region of one: every spread collapses to a single
+    value, so the writer quotes plain figures and names no places.
+    """
+    from . import narrative as narrative_mod
+    from .region import summarise_region
+
+    summary = summarise_region(location.name, location.timezone, [location],
+                               {location.slug: forecasts}, days=days)
+    day = next((d for d in summary.days if d.date == target_date), None)
+    if day is None:
+        return None, None
+    return narrative_mod.write(summary, day), day
+
+
 def cmd_event(args, config: Config) -> None:
     location = resolve_location(args, config)
     providers = build_providers(args.provider)
@@ -162,10 +179,15 @@ def cmd_event(args, config: Config) -> None:
         write_out(json.dumps(payload, indent=2, default=_json_default), args.output)
         return
 
+    forecast_text, forecast_day = day_narrative(
+        location, forecasts, event_time.date(), days=max(args.days, 2))
+
     context = {
         "event": event,
         "blended": blended,
         "window": window,
+        "forecast_text": forecast_text,
+        "forecast_day": forecast_day,
         "sources": {f: blended.source_of(f) for f in
                     ["temperature", "precip_chance", "cloud_cover",
                      "wind_speed", "wind_gust", "wind_direction"]

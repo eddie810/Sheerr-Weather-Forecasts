@@ -110,6 +110,18 @@ def _fmt(value: float | None, unit: str = "") -> str:
     return "—" if value is None else f"{value:.0f}{unit}"
 
 
+def _range(spread, unit: str = "") -> str:
+    """Format a spread, collapsing to one value when the bounds match.
+
+    A single-point forecast is a region of one, so every spread collapses;
+    "51 to 51 km/h" would be the giveaway.
+    """
+    low, high = round(spread.low.value), round(spread.high.value)
+    if low == high:
+        return f"{low}{unit}"
+    return f"{low} to {high}{unit}"
+
+
 def build_brief(summary: RegionSummary, day: RegionDay) -> tuple[str, set[float]]:
     """Render the day's aggregates as a brief, plus the figures it permits."""
     allowed: set[float] = set()
@@ -131,23 +143,20 @@ def build_brief(summary: RegionSummary, day: RegionDay) -> tuple[str, set[float]
     if day.high and day.low:
         record(day.high.low.value, day.high.high.value,
                day.low.low.value, day.low.high.value)
-        lines.append(
-            f"Highs: {_fmt(day.high.low.value)} to {_fmt(day.high.high.value)} C "
-            f"(coolest {day.high.low.area}, warmest {day.high.high.area})")
-        lines.append(
-            f"Lows: {_fmt(day.low.low.value)} to {_fmt(day.low.high.value)} C")
+        where = (f" (coolest {day.high.low.area}, warmest {day.high.high.area})"
+                 if day.high.low.area != day.high.high.area else "")
+        lines.append(f"Highs: {_range(day.high)} C{where}")
+        lines.append(f"Lows: {_range(day.low)} C")
 
     if day.wind_speed:
         record(day.wind_speed.low.value, day.wind_speed.high.value)
-        lines.append(
-            f"Sustained wind: {_fmt(day.wind_speed.low.value)} to "
-            f"{_fmt(day.wind_speed.high.value)} km/h")
+        lines.append(f"Sustained wind: {_range(day.wind_speed)} km/h")
 
     if day.gust:
         record(day.gust.low.value, day.gust.high.value)
-        lines.append(
-            f"Peak gusts: {_fmt(day.gust.low.value)} to {_fmt(day.gust.high.value)} km/h "
-            f"(lightest {day.gust.low.area}, strongest {day.gust.high.area})")
+        where = (f" (lightest {day.gust.low.area}, strongest {day.gust.high.area})"
+                 if day.gust.low.area != day.gust.high.area else "")
+        lines.append(f"Peak gusts: {_range(day.gust)} km/h{where}")
         if day.peak_gust_at:
             from .region import period_of as _period
             lines.append(
@@ -168,9 +177,7 @@ def build_brief(summary: RegionSummary, day: RegionDay) -> tuple[str, set[float]
 
     if day.precip_chance:
         record(day.precip_chance.low.value, day.precip_chance.high.value)
-        lines.append(
-            f"Chance of precipitation: {_fmt(day.precip_chance.low.value)}% to "
-            f"{_fmt(day.precip_chance.high.value)}%")
+        lines.append(f"Chance of precipitation: {_range(day.precip_chance)}%")
 
     if summary.alerts:
         lines.append("")
@@ -230,12 +237,12 @@ def rule_based(summary: RegionSummary, day: RegionDay) -> Narrative:
 
     parts = []
     if day.precip_chance and day.precip_chance.high.value >= 20:
-        parts.append(f"Chance of precipitation {_fmt(day.precip_chance.high.value)}%.")
+        parts.append(f"Chance of precipitation {_range(day.precip_chance)}%.")
 
     if day.wind_speed:
         direction = direction_word(day.dominant_direction)
         lead = f"{direction} winds" if direction else "Winds"
-        wind = f"{lead} {_fmt(day.wind_speed.low.value)} to {_fmt(day.wind_speed.high.value)} km/h"
+        wind = f"{lead} {_range(day.wind_speed)} km/h"
         if day.gust and day.gust.high.value >= 40:
             wind += f" with gusts to {_fmt(day.gust.high.value)} km/h"
             period = period_of(day.peak_gust_at)
@@ -248,8 +255,7 @@ def rule_based(summary: RegionSummary, day: RegionDay) -> Narrative:
             parts.append(f"High of {_fmt(day.high.high.value)}.")
         else:
             parts.append(
-                f"Highs {_fmt(day.high.low.value)} to {_fmt(day.high.high.value)}, "
-                f"coolest over {day.high.low.area}.")
+                f"Highs {_range(day.high)}, coolest over {day.high.low.area}.")
     if day.low:
         parts.append(f"Low of {_fmt(day.low.low.value)}.")
 

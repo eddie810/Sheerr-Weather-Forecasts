@@ -52,6 +52,16 @@
     {% for note in blended.notes %}<p style="font-size:.78rem;color:var(--ink-faint);margin:.7rem 0 0">Note: {{ note }}.</p>{% endfor %}
   </section>
 
+  {% if forecast_text %}
+  <section>
+    <h2 class="sec">{{ event.event_time.strftime('%A') }}'s forecast</h2>
+    <p style="margin:0;max-width:64ch;font-size:1.02rem;line-height:1.6">{{ forecast_text.headline }} {{ forecast_text.discussion }}</p>
+    {% if forecast_text.source != "claude" %}
+    <p style="font-size:.72rem;color:var(--ink-faint);margin:.6rem 0 0">Written by rule{% if "validation" in forecast_text.source %} — generated text cited an unsupported figure{% endif %}.</p>
+    {% endif %}
+  </section>
+  {% endif %}
+
   <section>
     <h2 class="sec">Hour by hour</h2>
     <div class="scroll">
