@@ -13,3 +13,6 @@ __pycache__/
 venv/
 *.egg-info/
 .pytest_cache/
+
+# Generated site (built by CI, not committed)
+_site/
