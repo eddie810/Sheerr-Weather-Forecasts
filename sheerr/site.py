@@ -180,6 +180,16 @@ def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
         html = render(entry.get("template", "region"), "html", context)
         href = f"region-{entry['region']}.html"
         (outdir / href).write_text(html)
+
+        # A scoped fragment for embedding in another site (Squarespace and
+        # the like cannot run this build, but can fetch a fragment).
+        if entry.get("embed", True):
+            embed_dir = outdir / "embed"
+            embed_dir.mkdir(exist_ok=True)
+            fragment = dict(context)
+            fragment.update({"standalone": False, "home": None})
+            (embed_dir / f"region-{entry['region']}.html").write_text(
+                render("region-embed", "html", fragment))
         lead = summary.days[0] if summary.days else None
         subtitle = (f"{len(summary.members)} points"
                     + (f" · gusts to {lead.gust.high.value:.0f}" if lead and lead.gust else ""))

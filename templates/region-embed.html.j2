@@ -1,0 +1,125 @@
+{# Embeddable regional forecast.
+
+   A fragment, not a page: no doctype, no <body>, and every selector scoped
+   under .sw-forecast so it cannot collide with the host site's CSS or be
+   overridden by it. Typography is inherited from the host so it matches the
+   surrounding page; only layout and colour are ours. #}
+<div class="sw-forecast" data-region="{{ summary.name }}">
+<style>
+  .sw-forecast {
+    --sw-ink:#16212b; --sw-soft:#4a5c66; --sw-faint:#7d8d95;
+    --sw-rule:#e0e6e6; --sw-card:#fff; --sw-accent:#2d6a72; --sw-accent-bg:#eef4f4;
+    --sw-warn-bg:#fdf4e8; --sw-warn-rule:#e8c89a; --sw-warn-ink:#8a5418;
+    --sw-calm:#6b8f7a; --sw-breezy:#c08a2e; --sw-windy:#c2631f; --sw-severe:#a32f2f;
+    color:var(--sw-ink) !important; line-height:1.6; max-width:52rem; margin:0 auto;
+    box-sizing:border-box;
+  }
+  .sw-forecast *, .sw-forecast *::before, .sw-forecast *::after { box-sizing:inherit; }
+  @media (prefers-color-scheme:dark) {
+    .sw-forecast:not([data-theme="light"]) {
+      --sw-ink:#e8eeef; --sw-soft:#a9bcc3; --sw-faint:#7b8f97;
+      --sw-rule:#2a3a42; --sw-card:#17242c; --sw-accent:#6fb3b8; --sw-accent-bg:#1c3036;
+      --sw-warn-bg:#2a2013; --sw-warn-rule:#5c4622; --sw-warn-ink:#e8c08a;
+    }
+  }
+
+  .sw-forecast .sw-head { border-bottom:2px solid var(--sw-accent); padding-bottom:.6rem; margin-bottom:1.1rem; }
+  .sw-forecast .sw-eyebrow {
+    font-size:.7rem; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--sw-faint) !important; font-weight:700; margin:0 0 .2rem;
+  }
+  .sw-forecast .sw-title { font-size:1.6rem; font-weight:700; margin:0; line-height:1.2; color:var(--sw-ink) !important; }
+  .sw-forecast .sw-sub { font-size:.86rem; color:var(--sw-soft) !important; margin:.3rem 0 0; }
+
+  .sw-forecast .sw-alert {
+    background:var(--sw-warn-bg); border:1px solid var(--sw-warn-rule);
+    border-left:4px solid var(--sw-warn-ink); border-radius:3px;
+    padding:.9rem 1.1rem; margin:0 0 1.2rem;
+  }
+  .sw-forecast .sw-alert h3 { font-size:.9rem; margin:0 0 .4rem; color:var(--sw-warn-ink) !important; }
+  .sw-forecast .sw-alert p { margin:.3rem 0; font-size:.86rem; color:var(--sw-soft); white-space:pre-line; }
+
+  .sw-forecast .sw-day { border-top:1px solid var(--sw-rule); padding:1.1rem 0 .3rem; }
+  .sw-forecast .sw-day:first-of-type { border-top:0; padding-top:0; }
+  .sw-forecast .sw-day h3 {
+    font-size:.74rem; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--sw-accent) !important; margin:0 0 .5rem; font-weight:700;
+  }
+  .sw-forecast .sw-text { font-size:1.02rem; margin:0 0 .9rem; color:var(--sw-ink) !important; }
+
+  .sw-forecast .sw-figs {
+    display:grid; gap:1px; background:var(--sw-rule);
+    border:1px solid var(--sw-rule); border-radius:4px; overflow:hidden;
+    grid-template-columns:repeat(auto-fit,minmax(8.5rem,1fr));
+  }
+  .sw-forecast .sw-fig { background:var(--sw-card); padding:.7rem .85rem; }
+  .sw-forecast .sw-k {
+    font-size:.64rem; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--sw-faint) !important; font-weight:700; display:block; margin-bottom:.2rem;
+  }
+  .sw-forecast .sw-v { font-size:1.2rem; font-weight:600; font-variant-numeric:tabular-nums; }
+  .sw-forecast .sw-n { font-size:.74rem; color:var(--sw-soft) !important; display:block; margin-top:.15rem; }
+  .sw-forecast .sw-calm{color:var(--sw-calm) !important} .sw-forecast .sw-breezy{color:var(--sw-breezy) !important}
+  .sw-forecast .sw-windy{color:var(--sw-windy) !important} .sw-forecast .sw-severe{color:var(--sw-severe) !important}
+
+  .sw-forecast .sw-foot {
+    border-top:1px solid var(--sw-rule); margin-top:1.3rem; padding-top:.8rem;
+    font-size:.74rem; color:var(--sw-faint) !important;
+  }
+  .sw-forecast .sw-foot p { margin:.2rem 0; }
+  @media (max-width:420px) { .sw-forecast .sw-title { font-size:1.35rem; } }
+</style>
+
+{% macro gust_class(v) %}{% if v is none %}sw-calm{% elif v >= 80 %}sw-severe{% elif v >= 60 %}sw-windy{% elif v >= 40 %}sw-breezy{% else %}sw-calm{% endif %}{% endmacro %}
+
+  <div class="sw-head">
+    <p class="sw-eyebrow">Regional Forecast</p>
+    <p class="sw-title">{{ summary.name }}</p>
+    <p class="sw-sub">Issued {{ summary.generated_at | datestr }} at {{ summary.generated_at | clock }} {{ summary.generated_at.strftime('%Z') }}</p>
+  </div>
+
+  {% for a in summary.alerts %}
+  <div class="sw-alert">
+    <h3>{{ a.eventDescription or "Weather alert" }}</h3>
+    {% if a.description %}<p>{{ a.description | trim }}</p>{% else %}<p>{{ a.headlineText }}</p>{% endif %}
+  </div>
+  {% endfor %}
+
+  {% for entry in narratives %}
+  <div class="sw-day">
+    <h3>{{ entry.day.day_of_week }}, {{ entry.day.date.strftime('%B %-d') }}</h3>
+    <p class="sw-text">{{ entry.narrative.headline }} {{ entry.narrative.discussion }}</p>
+    <div class="sw-figs">
+      {% if entry.day.high %}
+      <div class="sw-fig"><span class="sw-k">High</span>
+        <span class="sw-v">{% if entry.day.high.uniform %}{{ entry.day.high.high.value | num }}{% else %}{{ entry.day.high.low.value | num }}–{{ entry.day.high.high.value | num }}{% endif %}{{ units.temp }}</span>
+        {% if not entry.day.high.uniform %}<span class="sw-n">Coolest {{ entry.day.high.low.area }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if entry.day.low %}
+      <div class="sw-fig"><span class="sw-k">Low</span>
+        <span class="sw-v">{{ entry.day.low.low.value | num }}–{{ entry.day.low.high.value | num }}{{ units.temp }}</span></div>
+      {% endif %}
+      {% if entry.day.gust %}
+      <div class="sw-fig"><span class="sw-k">Gusts</span>
+        <span class="sw-v {{ gust_class(entry.day.gust.high.value) | trim }}">{{ entry.day.gust.low.value | num }}–{{ entry.day.gust.high.value | num }}</span>
+        <span class="sw-n">{{ units.speed }} · strongest {{ entry.day.gust.high.area }}</span></div>
+      {% endif %}
+      {% if entry.day.wind_speed %}
+      <div class="sw-fig"><span class="sw-k">Wind</span>
+        <span class="sw-v">{{ entry.day.wind_speed.low.value | num }}–{{ entry.day.wind_speed.high.value | num }}</span>
+        <span class="sw-n">{{ units.speed }}{% if entry.day.dominant_direction %} {{ entry.day.dominant_direction | direction | lower }}{% endif %}</span></div>
+      {% endif %}
+      {% if entry.day.precip_chance %}
+      <div class="sw-fig"><span class="sw-k">Chance of rain</span>
+        <span class="sw-v">{{ entry.day.precip_chance.low.value | num }}–{{ entry.day.precip_chance.high.value | num }}%</span></div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+
+  <div class="sw-foot">
+    <p>Sampled across {{ summary.members | length }} points: {{ summary.member_names | join(", ") }}.</p>
+    <p>{{ attributions | join(" · ") }}</p>
+  </div>
+</div>
