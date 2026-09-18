@@ -13,7 +13,7 @@
      bright blue is kept for rules and marks. */
   .sw-forecast {
     --sw-brand:#37c3ff; --sw-accent:#0072a3; --sw-accent-bg:#e0f6ff;
-    --sw-ink:#1b2733; --sw-soft:#4d5d6b; --sw-faint:#7a8894;
+    --sw-ink:#000; --sw-soft:#4d5d6b; --sw-faint:#7a8894;
     --sw-rule:#e4e9ed; --sw-card:#fff;
     --sw-warn-bg:#fdf4e8; --sw-warn-rule:#e8c89a; --sw-warn-ink:#8a5418;
     --sw-calm:#3f8a5f; --sw-breezy:#b5811f; --sw-windy:#c2631f; --sw-severe:#a32f2f;
@@ -23,17 +23,8 @@
     box-sizing:border-box; font-family:var(--sw-serif);
   }
   .sw-forecast *, .sw-forecast *::before, .sw-forecast *::after { box-sizing:inherit; }
-  /* Deliberately NOT tied to prefers-color-scheme: this fragment sits in
-     someone else's page and cannot know what colour that page is. A phone
-     in dark mode would otherwise put pale text on a white host. Opt in by
-     setting data-theme="dark" on the wrapper when the host really is dark. */
-  .sw-forecast[data-theme="dark"] {
-    --sw-ink:#e9eef3; --sw-soft:#aebecb; --sw-faint:#7e8f9d;
-    --sw-rule:#27343f; --sw-card:#17242c;
-    --sw-accent:#37c3ff; --sw-accent-bg:#132833;
-    --sw-warn-bg:#2a2013; --sw-warn-rule:#5c4622; --sw-warn-ink:#e8c08a;
-    --sw-calm:#6fc191; --sw-breezy:#dcab55; --sw-windy:#e08a4c; --sw-severe:#e0706b;
-  }
+  /* One palette only. The host page is always light, so there is no dark
+     variant and nothing that can turn the text pale. */
 
   .sw-forecast .sw-head {
     border-bottom:3px solid var(--sw-brand); padding-bottom:.6rem; margin-bottom:1.1rem;
@@ -146,7 +137,6 @@
   .sw-forecast .sw-i-cloud { fill:#b9c6d1; }
   .sw-forecast .sw-i-rain { stroke:var(--sw-brand); stroke-width:2.2; stroke-linecap:round; fill:none; }
   .sw-forecast .sw-i-snow { stroke:#9fd4ef; stroke-width:1.8; stroke-linecap:round; fill:none; }
-  .sw-forecast[data-theme="dark"] .sw-i-cloud { fill:#7e8e9c; }
   .sw-forecast .sw-wd-hi {
     font-family:var(--sw-sans); font-size:1.02rem; font-weight:700;
     font-variant-numeric:tabular-nums;
