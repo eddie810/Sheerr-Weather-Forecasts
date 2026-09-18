@@ -8,6 +8,7 @@ across the area, which point holds each extreme, and when conditions peak.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from decimal import Decimal, ROUND_HALF_UP
 from datetime import date as Date, datetime, timedelta
 from typing import Any
 
@@ -35,6 +36,20 @@ DIRECTION_WORDS = {
     "W": "West", "WNW": "West-northwest", "NW": "Northwest",
     "NNW": "North-northwest",
 }
+
+
+def round5(value: float | None) -> float | None:
+    """Round to the nearest 5, with halves going up.
+
+    Public forecasts quote wind and probability of precipitation in fives;
+    "18 to 37 km/h" reads as false precision on a two-day forecast.
+
+    Uses Decimal rather than round(), which is banker's rounding and would
+    send 45 down to 40 — the opposite of the intended rule.
+    """
+    if value is None:
+        return None
+    return float(Decimal(value / 5).quantize(Decimal("1"), rounding=ROUND_HALF_UP) * 5)
 
 
 def direction_word(cardinal: str | None) -> str | None:
@@ -241,6 +256,9 @@ def summarise_region(name: str, timezone: str, members: list[Location],
             rain = [h.precip_amount for h in rows if h.precip_amount is not None]
             if rain:
                 rain_totals.append(sum(rain))
+            g = [(round5(v), t) for v, t in g]
+            s = [round5(v) for v in s]
+            p = [round5(v) for v in p]
             if temps:
                 highs.append((member_name, max(temps), zone))
                 lows.append((member_name, min(temps), zone))

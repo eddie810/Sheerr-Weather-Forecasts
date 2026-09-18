@@ -177,7 +177,7 @@ def build_brief(summary: RegionSummary, day: RegionDay) -> tuple[str, set[float]
 
     if day.precip_chance:
         record(day.precip_chance.low.value, day.precip_chance.high.value)
-        lines.append(f"Chance of precipitation: {_range(day.precip_chance)}%")
+        lines.append(f"Chance of precipitation: {day.precip_chance.high.value:.0f}%")
 
     if summary.alerts:
         lines.append("")
@@ -237,7 +237,7 @@ def rule_based(summary: RegionSummary, day: RegionDay) -> Narrative:
 
     parts = []
     if day.precip_chance and day.precip_chance.high.value >= 20:
-        parts.append(f"Chance of precipitation {_range(day.precip_chance)}%.")
+        parts.append(f"Chance of precipitation {day.precip_chance.high.value:.0f}%.")
 
     if day.wind_speed:
         direction = direction_word(day.dominant_direction)

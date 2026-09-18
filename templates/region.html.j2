@@ -67,7 +67,7 @@
       {% if entry.day.precip_chance %}
       <div class="cell">
         <div class="k">Chance of rain</div>
-        <div class="v">{{ entry.day.precip_chance.low.value | num }}–{{ entry.day.precip_chance.high.value | num }}%</div>
+        <div class="v">{{ entry.day.precip_chance.high.value | num }}%</div>
       </div>
       {% endif %}
     </div>
