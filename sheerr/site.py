@@ -121,7 +121,12 @@ def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
         raw_taf, periods = fetch_taf(ap.icao)
         metar = fetch_metar(ap.icao)
         notams = fetch_notams(ap.icao)
-        start = datetime.now(timezone.utc)
+        # A board shows the day, not a rolling window: start at a fixed
+        # local hour so this morning's flights stay on it.
+        local_now = datetime.now(ZoneInfo(ap.timezone))
+        start_hour = int(entry.get("start_hour", 5))
+        start = local_now.replace(hour=start_hour, minute=0, second=0,
+                                  microsecond=0).astimezone(timezone.utc)
         sample = bool(entry.get("sample"))
         try:
             flights = fetch_schedule(ap.icao, start, int(entry.get("hours", 12)))

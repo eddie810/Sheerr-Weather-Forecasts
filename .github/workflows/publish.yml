@@ -63,6 +63,14 @@ jobs:
           key: ecmwf-${{ steps.ecmwf.outputs.run }}
           restore-keys: ecmwf-
 
+      # Published schedules barely move within a day, so hourly builds reuse
+      # them rather than spending the API quota on the same answer.
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/schedule-cache
+          key: schedule-${{ steps.ecmwf.outputs.run }}
+          restore-keys: schedule-
+
       - name: Build site
         env:
           TWC_API_KEY: ${{ secrets.TWC_API_KEY }}
@@ -81,6 +89,7 @@ jobs:
           # Cache ECMWF GRIB messages within the run so all locations share
           # one download of each global field.
           SHEERR_ECMWF_CACHE: ${{ runner.temp }}/ecmwf-cache
+          SHEERR_SCHEDULE_CACHE: ${{ runner.temp }}/schedule-cache
         run: |
           if [ -z "$TWC_API_KEY" ]; then
             echo "::error::TWC_API_KEY secret is not set. Add it under"\

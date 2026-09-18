@@ -32,12 +32,14 @@ pages:
   # falls back to live traffic if the key is missing or the quota is spent.
   - type: aviation
     airport: CYYT
-    hours: 12
+    hours: 48          # two days
+    start_hour: 5      # from 5 AM local, so the morning bank stays on the board
     direction: departure
 
   - type: aviation
     airport: CYYT
-    hours: 12
+    hours: 48
+    start_hour: 5
     direction: arrival
 
   # Event briefings. `when` accepts an ISO timestamp for a fixed date, or a

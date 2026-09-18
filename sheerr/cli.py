@@ -288,7 +288,9 @@ def cmd_aviation(args, config: Config) -> None:
     metar = fetch_metar(airport.icao)
     notams = fetch_notams(airport.icao)
 
-    start = datetime.now(_tz.utc)
+    local_now = datetime.now(ZoneInfo(airport.timezone))
+    start = local_now.replace(hour=args.start_hour, minute=0, second=0,
+                              microsecond=0).astimezone(_tz.utc)
     try:
         flights = (live_sample(airport.latitude, airport.longitude)
                    if args.sample
@@ -406,7 +408,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     a = sub.add_parser("aviation", help="Weather-delay risk for flights at an airport")
     a.add_argument("airport", nargs="?", default="CYYT")
-    a.add_argument("--hours", type=int, default=12, help="Schedule window (default 12)")
+    a.add_argument("--hours", type=int, default=48,
+                   help="Schedule window in hours (default 48)")
+    a.add_argument("--start-hour", type=int, default=5,
+                   help="Local hour the board starts from (default 5)")
     a.add_argument("--sample", action="store_true",
                    help="Use live ADS-B traffic instead of a schedule (no key needed)")
     a.add_argument("--direction", default="all",

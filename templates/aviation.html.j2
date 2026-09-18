@@ -68,6 +68,12 @@
   .ac { color:var(--dim); }
   .why { color:var(--dim); font-size:.78rem; max-width:26rem; white-space:normal; }
 
+  .st { font-weight:600; letter-spacing:.04em; white-space:nowrap; }
+  .st-green{color:var(--clear)} .st-amber{color:var(--monitor)} .st-red{color:var(--risk)}
+  .st-rev { font-size:.72rem; color:var(--dim); }
+  tr.cancelled td { opacity:.6; }
+  tr.cancelled td:nth-child(2) { text-decoration:line-through; }
+
   .chip {
     display:inline-block; padding:.2rem .55rem; font-size:.68rem; font-weight:600;
     letter-spacing:.12em; text-transform:uppercase; border:1px solid currentColor;
@@ -173,7 +179,7 @@
         <th>Time</th><th>Flight</th>
         <th>{{ "From" if direction == "arrival" else "To" }}</th>
         <th>Aircraft</th><th>Conditions</th><th class="adv-cell">Rwy</th><th class="adv-cell">Xwind</th>
-        <th>Status</th><th>Outlook</th><th>Detail</th>
+        <th>Airline</th><th>Weather</th><th>Outlook</th><th>Detail</th>
       </tr></thead>
       <tbody>
       {% for a in assessments %}
@@ -185,7 +191,9 @@
           <td data-l="Conditions"><span class="normal-only">{{ a.plain_category }}</span><span class="adv-only">{{ a.category }}</span></td>
           <td class="adv-cell" data-l="Runway">{{ a.runway or "—" }}</td>
           <td class="adv-cell" data-l="Crosswind">{{ a.crosswind | num }} kt</td>
-          <td data-l="Status"><span class="chip c-{{ a.colour }}">{{ {"green":"Clear","yellow":"Monitor","orange":"At risk"}[a.colour] }}</span></td>
+          <td data-l="Airline"><span class="st st-{{ a.flight.status_state }}">{{ a.flight.status_label }}</span>
+            {% if a.flight.revised %}<br><span class="st-rev">now {{ a.flight.revised.astimezone(tz).strftime('%H:%M') }}</span>{% endif %}</td>
+          <td data-l="Weather"><span class="chip c-{{ a.colour }}">{{ {"green":"Clear","yellow":"Monitor","orange":"At risk"}[a.colour] }}</span></td>
           <td class="outlook" data-l="Outlook"><span class="normal-only">{{ a.plain_outlook }}</span><span class="adv-only">{{ a.outlook }}</span></td>
           <td class="why" data-l="Detail"><span class="normal-only">{{ a.reason }}</span><span class="adv-only">{{ a.reason_technical or a.reason }}</span></td>
         </tr>

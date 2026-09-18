@@ -12,13 +12,50 @@ now, and cannot tell an arrival from an overflight.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
+import tempfile
+import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import requests
 
 ADB_HOST = "aerodatabox.p.rapidapi.com"
+
+#: How long a fetched schedule chunk stays usable. Published schedules
+#: barely move within a day, while the weather assessed against them changes
+#: every hour — so the schedule is cached and the assessment is not. Without
+#: this, hourly builds would exhaust a free API tier within a day.
+SCHEDULE_TTL_SECONDS = int(os.environ.get("SHEERR_SCHEDULE_TTL", 12 * 3600))
+
+
+def _cache_dir() -> Path:
+    path = Path(os.environ.get("SHEERR_SCHEDULE_CACHE")
+                or Path(tempfile.gettempdir()) / "sheerr-schedule-cache")
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _cached(key: str) -> dict | None:
+    path = _cache_dir() / f"{key}.json"
+    if not path.exists():
+        return None
+    if time.time() - path.stat().st_mtime > SCHEDULE_TTL_SECONDS:
+        return None
+    try:
+        return json.loads(path.read_text())
+    except ValueError:
+        return None
+
+
+def _store(key: str, payload: dict) -> None:
+    try:
+        (_cache_dir() / f"{key}.json").write_text(json.dumps(payload))
+    except OSError:
+        pass        # A cache miss is survivable; a failed build is not.
 ADSB_URL = "https://api.adsb.lol/v2/lat/{lat}/lon/{lon}/dist/{dist}"
 
 
@@ -37,6 +74,50 @@ class Flight:
     registration: str | None
     status: str | None = None
     other_city: str | None = None    # city name, for "St. John's (YYT)"
+    #: What the airline currently expects, as distinct from the schedule.
+    revised: datetime | None = None
+
+    @property
+    def delay_minutes(self) -> int | None:
+        """Minutes late against the published schedule, when known."""
+        if not self.revised:
+            return None
+        return round((self.revised - self.scheduled).total_seconds() / 60)
+
+    @property
+    def cancelled(self) -> bool:
+        return (self.status or "").strip().lower() in {"canceled", "cancelled"}
+
+    @property
+    def status_label(self) -> str:
+        """What the airline says, in words a passenger reads on a board."""
+        if self.cancelled:
+            return "Cancelled"
+        delay = self.delay_minutes
+        if delay is not None and delay >= 15:
+            hours, mins = divmod(delay, 60)
+            late = f"{hours}h {mins:02d}m" if hours else f"{delay} min"
+            return f"Delayed {late}"
+        if delay is not None and delay <= -15:
+            return "Early"
+        raw = (self.status or "").strip().lower()
+        return {"expected": "On time", "enroute": "En route", "en route": "En route",
+                "arrived": "Landed", "departed": "Departed",
+                "checkin": "On time", "boarding": "Boarding",
+                "gateclosed": "Gate closed", "unknown": ""}.get(raw,
+                (self.status or "").strip() or "On time")
+
+    @property
+    def status_state(self) -> str:
+        """green / amber / red, for how the status is shown."""
+        if self.cancelled:
+            return "red"
+        delay = self.delay_minutes
+        if delay is not None and delay >= 60:
+            return "red"
+        if delay is not None and delay >= 15:
+            return "amber"
+        return "green"
 
     @property
     def other_label(self) -> str:
@@ -70,8 +151,18 @@ def fetch_schedule(icao: str, start: datetime, hours: int = 12,
     remaining, cursor = hours, start
     while remaining > 0:
         span = min(remaining, 12)
-        url = (f"https://{ADB_HOST}/flights/airports/icao/{icao}/"
-               f"{cursor:%Y-%m-%dT%H:%M}/{cursor + timedelta(hours=span):%Y-%m-%dT%H:%M}")
+        window = f"{cursor:%Y-%m-%dT%H:%M}/{cursor + timedelta(hours=span):%Y-%m-%dT%H:%M}"
+        key = hashlib.sha1(f"{icao}|{window}".encode()).hexdigest()[:16]
+
+        payload = _cached(key)
+        if payload is not None:
+            flights += _parse(payload.get("departures") or [], "departure")
+            flights += _parse(payload.get("arrivals") or [], "arrival")
+            cursor += timedelta(hours=span)
+            remaining -= span
+            continue
+
+        url = f"https://{ADB_HOST}/flights/airports/icao/{icao}/{window}"
         response = requests.get(
             url,
             headers={"X-RapidAPI-Key": key, "X-RapidAPI-Host": ADB_HOST},
@@ -89,6 +180,7 @@ def fetch_schedule(icao: str, start: datetime, hours: int = 12,
                                 f"{response.text[:160]}")
 
         payload = response.json()
+        _store(key, payload)
         flights += _parse(payload.get("departures") or [], "departure")
         flights += _parse(payload.get("arrivals") or [], "arrival")
         cursor += timedelta(hours=span)
@@ -101,8 +193,10 @@ def _parse(rows: list[dict], direction: str) -> list[Flight]:
     out = []
     for row in rows:
         movement = row.get("movement") or {}
-        when = ((movement.get("scheduledTime") or {}).get("utc")
-                or (movement.get("revisedTime") or {}).get("utc"))
+        scheduled = (movement.get("scheduledTime") or {}).get("utc")
+        revised = ((movement.get("revisedTime") or {}).get("utc")
+                   or (movement.get("actualTime") or {}).get("utc"))
+        when = scheduled or revised
         if not when:
             continue
         aircraft = row.get("aircraft") or {}
@@ -123,6 +217,7 @@ def _parse(rows: list[dict], direction: str) -> list[Flight]:
             aircraft_type=aircraft.get("model"),
             registration=aircraft.get("reg"),
             status=row.get("status"),
+            revised=_utc(revised) if revised and scheduled else None,
         ))
     return out
 
