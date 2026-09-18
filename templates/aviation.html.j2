@@ -63,7 +63,7 @@
   table.board tr:nth-child(even) td { background:#11171e; }
   table.board tr:last-child td { border-bottom:none; }
   .flt { font-weight:600; letter-spacing:.08em; font-size:.95rem; color:var(--ink); }
-  .port { color:var(--amber); letter-spacing:.1em; }
+  .port { color:var(--amber); letter-spacing:.04em; }
   .time { font-size:1.05rem; font-weight:600; letter-spacing:.06em; color:var(--ink); }
   .ac { color:var(--dim); }
   .why { color:var(--dim); font-size:.78rem; max-width:26rem; white-space:normal; }
@@ -90,7 +90,46 @@
     font-size:.72rem; color:var(--dim); line-height:1.7;
   }
   .fids footer strong { color:var(--amber); }
-  @media (max-width:520px) { .why { display:none } }
+  .toggle { display:inline-flex; border:1px solid var(--rule); }
+  .toggle button {
+    font:inherit; font-size:.68rem; letter-spacing:.12em; text-transform:uppercase;
+    padding:.3rem .7rem; background:transparent; color:var(--dim);
+    border:0; cursor:pointer;
+  }
+  .toggle button.on { background:var(--amber); color:#0a0d11; font-weight:600; }
+  .toggle button:focus-visible { outline:2px solid var(--amber); outline-offset:2px; }
+
+  .outlook { color:var(--ink); font-size:.78rem; white-space:nowrap; }
+  /* Advanced detail is hidden until asked for, and the runway and crosswind
+     columns come with it. */
+  .adv-only, .fids.adv .normal-only { display:none; }
+  .fids.adv .adv-only { display:inline; }
+  .fids:not(.adv) .adv-cell { display:none; }
+
+  /* On a phone a nine-column board cannot be read sideways, so each flight
+     becomes a stacked card with its own labels. */
+  .fids, .fids * { box-sizing:border-box; }
+  @media (max-width:760px) {
+    .board-wrap { overflow-x:visible; border:0; background:transparent; }
+    table.board, table.board tbody, table.board tr, table.board td { display:block; width:100%; }
+    table.board { min-width:0; }
+    table.board thead { display:none; }
+    table.board tr {
+      border:1px solid var(--rule); background:var(--panel);
+      margin-bottom:.7rem; padding:.55rem .2rem;
+    }
+    table.board tr:nth-child(even) td { background:transparent; }
+    table.board td {
+      border-bottom:0; padding:.28rem .8rem;
+      display:flex; gap:1rem; align-items:baseline; justify-content:space-between;
+    }
+    table.board td::before {
+      content:attr(data-l); color:var(--amber); font-size:.62rem;
+      letter-spacing:.14em; text-transform:uppercase; flex:0 0 auto;
+    }
+    table.board td.why, table.board td.outlook { white-space:normal; text-align:right; }
+    .why { max-width:none; }
+  }
 </style>
 
 <div class="fids">
@@ -107,6 +146,10 @@
     <span>Vis <b>{{ metar.visib }}sm</b></span>
     <span>Temp <b>{{ metar.temp | num }}°C</b></span>
     {% if home %}<span><a href="{{ home }}">All forecasts</a></span>{% endif %}
+    <span class="toggle" role="group" aria-label="Detail level">
+      <button type="button" id="mode-normal" class="on" aria-pressed="true">Normal</button><button
+              type="button" id="mode-advanced" aria-pressed="false">Advanced</button>
+    </span>
   </div>
 
   {% if sample_mode %}
@@ -129,22 +172,22 @@
       <thead><tr>
         <th>Time</th><th>Flight</th>
         <th>{{ "From" if direction == "arrival" else "To" }}</th>
-        <th>Aircraft</th><th>Cond</th><th>Rwy</th><th>Xwind</th>
+        <th>Aircraft</th><th>Conditions</th><th class="adv-cell">Rwy</th><th class="adv-cell">Xwind</th>
         <th>Status</th><th>Outlook</th><th>Detail</th>
       </tr></thead>
       <tbody>
       {% for a in assessments %}
         <tr>
-          <td class="time">{{ a.flight.scheduled.astimezone(tz).strftime('%H:%M') }}</td>
-          <td class="flt">{{ a.flight.callsign or a.flight.number }}</td>
-          <td class="port">{{ a.flight.other_airport or "—" }}</td>
-          <td class="ac">{{ a.profile.name }}</td>
-          <td>{{ a.category }}</td>
-          <td>{{ a.runway or "—" }}</td>
-          <td>{{ a.crosswind | num }}kt</td>
-          <td><span class="chip c-{{ a.colour }}">{{ {"green":"Clear","yellow":"Monitor","orange":"At risk"}[a.colour] }}</span></td>
-          <td style="color:var(--ink);font-size:.78rem;white-space:nowrap">{{ a.outlook }}</td>
-          <td class="why">{{ a.reason }}</td>
+          <td class="time" data-l="Time">{{ a.flight.scheduled.astimezone(tz).strftime('%H:%M') }}</td>
+          <td class="flt" data-l="Flight">{{ a.flight.callsign or a.flight.number }}</td>
+          <td class="port" data-l="{{ "From" if direction == "arrival" else "To" }}">{{ a.flight.other_label }}</td>
+          <td class="ac" data-l="Aircraft">{{ a.profile.name }}</td>
+          <td data-l="Conditions"><span class="normal-only">{{ a.plain_category }}</span><span class="adv-only">{{ a.category }}</span></td>
+          <td class="adv-cell" data-l="Runway">{{ a.runway or "—" }}</td>
+          <td class="adv-cell" data-l="Crosswind">{{ a.crosswind | num }} kt</td>
+          <td data-l="Status"><span class="chip c-{{ a.colour }}">{{ {"green":"Clear","yellow":"Monitor","orange":"At risk"}[a.colour] }}</span></td>
+          <td class="outlook" data-l="Outlook"><span class="normal-only">{{ a.plain_outlook }}</span><span class="adv-only">{{ a.outlook }}</span></td>
+          <td class="why" data-l="Detail"><span class="normal-only">{{ a.reason }}</span><span class="adv-only">{{ a.reason_technical or a.reason }}</span></td>
         </tr>
       {% endfor %}
       </tbody>
@@ -167,4 +210,30 @@
     <div style="margin-top:.5rem"><strong>Not an operational product.</strong> This estimates schedule risk only. It is not a statement about whether any flight is safe or legal to operate — crews and operators decide that against their own limits and current official data.</div>
   </footer>
 </div>
+
+<script>
+  (function () {
+    var board = document.querySelector('.fids');
+    var normal = document.getElementById('mode-normal');
+    var advanced = document.getElementById('mode-advanced');
+    if (!board || !normal || !advanced) return;
+
+    function apply(mode) {
+      var adv = mode === 'advanced';
+      board.classList.toggle('adv', adv);
+      advanced.classList.toggle('on', adv);
+      normal.classList.toggle('on', !adv);
+      advanced.setAttribute('aria-pressed', String(adv));
+      normal.setAttribute('aria-pressed', String(!adv));
+      try { localStorage.setItem('sheerr-fids-mode', mode); } catch (e) {}
+    }
+
+    normal.addEventListener('click', function () { apply('normal'); });
+    advanced.addEventListener('click', function () { apply('advanced'); });
+
+    var saved = null;
+    try { saved = localStorage.getItem('sheerr-fids-mode'); } catch (e) {}
+    if (saved === 'advanced') apply('advanced');
+  })();
+</script>
 {% endblock %}

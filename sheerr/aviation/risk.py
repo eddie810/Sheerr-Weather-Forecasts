@@ -27,6 +27,33 @@ from .schedule import Flight
 #: Bands the colour code maps to.
 GREEN, YELLOW, ORANGE = "green", "yellow", "orange"
 
+#: Flight categories in words. The codes are precise but meaningless to
+#: anyone outside aviation, and this board is read by passengers too.
+CATEGORY_PLAIN = {
+    "VFR": "Clear",
+    "MVFR": "Some cloud",
+    "IFR": "Low cloud",
+    "LIFR": "Fog or very low cloud",
+}
+
+#: Outlooks in words a passenger would use.
+OUTLOOK_PLAIN = {
+    "Straightforward approach": "Normal landing",
+    "Instrument approach": "Cloudy landing",
+    "Near minima": "Borderline to land",
+    "Below minima": "May divert",
+    "Normal turnaround": "Normal",
+    "De-icing expected": "De-icing needed",
+    "De-icing, holdover critical": "De-icing delays likely",
+    "Wind-limited departure": "Strong winds",
+    "Contaminated runway": "Snow or ice on runway",
+    "Beyond forecast": "Too far ahead to say",
+}
+
+#: Knots are the aviation unit; km/h is the one most readers think in.
+def kmh(knots: float | None) -> float | None:
+    return None if knots is None else knots * 1.852
+
 #: Present-weather codes that drive winter delays at a Canadian airport.
 FREEZING = re.compile(r"\b(FZRA|FZDZ|FZFG)\b")
 FROZEN = re.compile(r"\b(\+?SN|SG|PL|GS|GR|IC|-SN|SHSN|BLSN|DRSN)\b")
@@ -36,11 +63,19 @@ CONVECTIVE = re.compile(r"\b(TS|TSRA|VCTS|SQ)\b")
 
 @dataclass
 class Factor:
-    """One contributor to the assessment."""
+    """One contributor to the assessment.
+
+    `detail` is written for a passenger; `technical` keeps the aviation
+    figures for anyone who wants them. The board shows one or the other.
+    """
 
     name: str
     detail: str
     weight: float       # 0-1, how strongly it pushes toward disruption
+    technical: str = ""
+
+    def text(self, advanced: bool = False) -> str:
+        return (self.technical or self.detail) if advanced else self.detail
 
 
 @dataclass
@@ -62,7 +97,17 @@ class Assessment:
     factors: list[Factor] = field(default_factory=list)
     colour: str = GREEN
     reason: str = ""
+    reason_technical: str = ""
     source: str = "rule-based"
+
+    @property
+    def plain_category(self) -> str:
+        return CATEGORY_PLAIN.get(self.category, self.category)
+
+    @property
+    def plain_outlook(self) -> str:
+        """The outlook without the aviation vocabulary."""
+        return OUTLOOK_PLAIN.get(self.outlook, self.outlook)
 
     @property
     def score(self) -> float:
@@ -110,20 +155,28 @@ def assess_factors(flight: Flight, airport: Airport, periods: list[TafPeriod],
     if ratio >= 0.55:
         factors.append(Factor(
             "crosswind",
-            f"{crosswind:.0f} kt across runway {runway.ident if runway else '?'}, "
-            f"{ratio:.0%} of the {profile.name}'s "
-            + (f"{effective_limit:.0f} kt contaminated-runway limit "
-               f"(CRFI {crfi:.2f} of a {profile.crosswind_kt} kt dry limit)"
-               if crfi is not None else
-               f"{profile.crosswind_kt} kt demonstrated crosswind"),
+            f"Strong sidewind across the runway — about {kmh(crosswind):.0f} km/h "
+            f"({crosswind:.0f} kt), which is {ratio:.0%} of what a {profile.name} "
+            + ("normally handles on a slippery runway"
+               if crfi is not None else "normally handles"),
             min(1.0, (ratio - 0.35) * 1.6) * profile.wind_sensitivity,
+            technical=(
+                f"{crosswind:.0f} kt crosswind on runway "
+                f"{runway.ident if runway else '?'}, {ratio:.0%} of the "
+                f"{profile.name}'s "
+                + (f"{effective_limit:.0f} kt contaminated limit "
+                   f"(CRFI {crfi:.2f} of {profile.crosswind_kt} kt dry)"
+                   if crfi is not None
+                   else f"{profile.crosswind_kt} kt demonstrated crosswind")),
         ))
 
     if gust and wind_speed and gust - wind_speed >= 15:
         factors.append(Factor(
             "gusts",
-            f"gusting {gust:.0f} kt against {wind_speed:.0f} kt sustained",
+            f"Gusty — wind jumping to about {kmh(gust):.0f} km/h from "
+            f"{kmh(wind_speed):.0f} km/h, which makes landing and takeoff bumpier",
             min(0.7, (gust - wind_speed) / 40) * profile.wind_sensitivity,
+            technical=f"{wind_speed:.0f}G{gust:.0f} kt, {gust - wind_speed:.0f} kt spread",
         ))
 
     # Worst category across every group in effect, transient ones included.
@@ -135,16 +188,30 @@ def assess_factors(flight: Flight, airport: Airport, periods: list[TafPeriod],
     weights = {"VFR": 0.0, "MVFR": 0.3, "IFR": 0.6, "LIFR": 0.85}
     if weights[category] > 0:
         worst = next((p for p in covering if p.category == category), None)
-        detail = f"{category}"
+        detail = CATEGORY_PLAIN.get(category, category)
+        if worst:
+            bits = []
+            if worst.ceiling is not None:
+                bits.append(f"cloud down to {worst.ceiling:,} ft")
+            if worst.visibility is not None:
+                bits.append(f"visibility about {worst.visibility:g} mile"
+                            + ("s" if worst.visibility != 1 else ""))
+            if bits:
+                detail += " — " + " and ".join(bits)
+            if worst.transient:
+                detail += ", though only for part of the time"
+        tech = category
         if worst:
             if worst.ceiling is not None:
-                detail += f", ceiling {worst.ceiling} ft"
+                tech += f", ceiling {worst.ceiling} ft"
             if worst.visibility is not None:
-                detail += f", visibility {worst.visibility:g} sm"
+                tech += f", visibility {worst.visibility:g} sm"
             if worst.transient:
-                detail += " (temporary or probable group)"
-        factors.append(Factor("ceiling and visibility", detail,
-                              weights[category] * (0.75 if worst and worst.transient else 1.0)))
+                tech += f" ({worst.change or 'TEMPO'} group)"
+        factors.append(Factor(
+            "ceiling and visibility", detail,
+            weights[category] * (0.75 if worst and worst.transient else 1.0),
+            technical=tech))
 
     # Arrivals and departures fail for different reasons. An arrival is
     # limited by whether it can complete the approach; a departure by
@@ -162,46 +229,56 @@ def assess_factors(flight: Flight, airport: Airport, periods: list[TafPeriod],
         if rvr_out:
             factors.append(Factor(
                 "RVR reporting unserviceable",
-                f"runway {runway.ident} has no RVR reporting, so RVR-based minima "
-                "are not available and a higher visibility is required",
-                0.5))
+                f"The visibility sensors on runway {runway.ident} are out of service, "
+                "so aircraft need clearer conditions than usual before they can land",
+                0.5,
+                technical=f"RVR {runway.ident} unserviceable per NOTAM"))
 
         if forecast_rvr is not None:
             if forecast_rvr < minima_rvr:
                 factors.append(Factor(
                     "below landing minima",
-                    f"forecast visibility {visibility:g} sm is about {forecast_rvr} ft RVR, "
-                    f"below the {minima_rvr} ft {capability} minimum — holding or "
-                    "diversion likely",
-                    0.9 if not (worst and worst.transient) else 0.65))
+                    f"Too poor to land — visibility of about {visibility:g} mile"
+                    + ("s" if visibility != 1 else "")
+                    + f" is below what a {profile.name} needs, so this flight may "
+                    "circle and wait or divert to another airport",
+                    0.9 if not (worst and worst.transient) else 0.65,
+                    technical=(f"{visibility:g} sm is about {forecast_rvr} ft RVR, "
+                               f"below the {minima_rvr} ft {capability} minimum")))
             elif forecast_rvr < minima_rvr * 2:
                 factors.append(Factor(
                     "close to landing minima",
-                    f"forecast visibility {visibility:g} sm is about {forecast_rvr} ft RVR, "
-                    f"against a {minima_rvr} ft {capability} minimum",
-                    0.45))
+                    f"Borderline for landing — visibility of about {visibility:g} mile"
+                    + ("s" if visibility != 1 else "")
+                    + f" is close to the limit for a {profile.name}",
+                    0.45,
+                    technical=(f"{visibility:g} sm is about {forecast_rvr} ft RVR "
+                               f"against a {minima_rvr} ft {capability} minimum")))
 
     weather = " ".join(p.weather for p in covering if p.weather)
     if notams and notams.contaminated and not FREEZING.search(weather):
         factors.append(Factor("runway contamination",
-                              "runway surface condition reported", 0.45))
+                              "Snow or ice reported on the runway", 0.45))
 
     if FREEZING.search(weather):
         factors.append(Factor(
             "freezing precipitation",
-            f"{weather.strip()} — "
-            + ("contaminated runway and braking action" if arriving
-               else "de-icing and possible holdover limits"),
+            "Freezing rain or drizzle — "
+            + ("the runway will be slippery" if arriving
+               else "aircraft must be sprayed with de-icing fluid before takeoff, "
+                    "and there is a time limit on how long it lasts"),
             (0.75 if arriving else 0.9) * profile.deice_burden))
     elif FROZEN.search(weather):
         factors.append(Factor(
             "snow",
-            f"{weather.strip()} — "
-            + ("runway clearing and braking action" if arriving
-               else "de-icing and runway clearing"),
+            "Snow — "
+            + ("the runway needs clearing and will be slippery" if arriving
+               else "aircraft need de-icing and the runway needs clearing"),
             (0.5 if arriving else 0.6) * profile.deice_burden))
     if CONVECTIVE.search(weather):
-        factors.append(Factor("thunderstorms", weather.strip(), 0.7))
+        factors.append(Factor("thunderstorms",
+                              "Thunderstorms, which stop ground handling and "
+                              "can close the airspace around the airport", 0.7))
 
     assessment = Assessment(
         flight=flight, profile=profile, period=prevailing, covered_by_taf=covered,
@@ -212,7 +289,8 @@ def assess_factors(flight: Flight, airport: Airport, periods: list[TafPeriod],
     if not covered:
         factors.append(Factor(
             "outside the forecast window",
-            "scheduled beyond the current TAF; nearest period used as a guide",
+            "This flight is further ahead than the airport forecast reaches, "
+            "so the assessment is a rough guide only",
             0.3))
 
     assessment.outlook = _outlook(assessment, arriving, weather)
@@ -250,10 +328,12 @@ def _rule_verdict(a: Assessment) -> tuple[str, str]:
     score = a.score
     colour = ORANGE if score >= 0.6 else YELLOW if score >= 0.28 else GREEN
     if not a.factors:
-        return colour, "No significant weather expected around the scheduled time."
+        a.reason_technical = "No significant weather in the forecast period."
+        return colour, "Nothing in the forecast that should affect this flight."
     lead = max(a.factors, key=lambda f: f.weight)
     label = lead.name[0].upper() + lead.name[1:]
-    return colour, f"{label}: {lead.detail}."
+    a.reason_technical = f"{label}: {lead.technical or lead.detail}"
+    return colour, lead.detail
 
 
 SYSTEM = """You assess weather-related delay risk for flights at a Canadian \

@@ -36,6 +36,15 @@ class Flight:
     aircraft_type: str | None    # ICAO type code, e.g. DH8D
     registration: str | None
     status: str | None = None
+    other_city: str | None = None    # city name, for "St. John's (YYT)"
+
+    @property
+    def other_label(self) -> str:
+        """The far end as "City (CODE)", degrading to whichever part exists."""
+        city, code = self.other_city, self.other_airport
+        if city and code:
+            return f"{city} ({code})"
+        return city or code or "—"
 
 
 class ScheduleError(RuntimeError):
@@ -106,6 +115,11 @@ def _parse(rows: list[dict], direction: str) -> list[Flight]:
             scheduled=_utc(when),
             other_airport=(movement.get("airport") or {}).get("iata"),
             other_name=(movement.get("airport") or {}).get("name"),
+            # AeroDataBox names the city separately; fall back through the
+            # short name to the full airport name when it is absent.
+            other_city=((movement.get("airport") or {}).get("municipalityName")
+                        or (movement.get("airport") or {}).get("shortName")
+                        or (movement.get("airport") or {}).get("name")),
             aircraft_type=aircraft.get("model"),
             registration=aircraft.get("reg"),
             status=row.get("status"),
