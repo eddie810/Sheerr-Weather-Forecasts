@@ -50,9 +50,9 @@
         {% if not entry.day.high.uniform %}<div class="n">Coolest {{ entry.day.high.low.area }}</div>{% endif %}
       </div>
       {% endif %}
-      {% if entry.day.low %}
+      {% if entry.day.low and entry.day.night_only %}
       <div class="cell">
-        <div class="k">Lows</div>
+        <div class="k">Overnight low</div>
         <div class="v">{{ entry.day.low.low.value | num }}–{{ entry.day.low.high.value | num }}{{ units.temp }}</div>
       </div>
       {% endif %}

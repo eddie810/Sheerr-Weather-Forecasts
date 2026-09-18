@@ -16,6 +16,7 @@ _{{ summary.members | length }} points sampled: {{ summary.member_names | join("
 | | |
 |---|---|
 {% if entry.day.high and not entry.day.night_only %}| Highs | {{ entry.day.high.low.value | num }}–{{ entry.day.high.high.value | num }}{{ units.temp }} (coolest {{ entry.day.high.low.area }}) |
+{% endif %}{% if entry.day.low and entry.day.night_only %}| Overnight low | {{ entry.day.low.low.value | num }}–{{ entry.day.low.high.value | num }}{{ units.temp }} |
 {% endif %}
 {% if entry.day.gust %}| Peak gusts | {{ entry.day.gust.low.value | num }}–{{ entry.day.gust.high.value | num }} {{ units.speed }} (strongest {{ entry.day.gust.high.area }}) |
 {% endif %}

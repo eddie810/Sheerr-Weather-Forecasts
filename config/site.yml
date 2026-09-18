@@ -26,7 +26,9 @@ pages:
   - type: region
     region: avalon
     days: 7
-    narrative_days: 3
+    # Written periods, not days: Today, Tonight, Saturday, Saturday night,
+    # Sunday — about the run a public forecast issues in detail.
+    narrative_days: 5
 
   # Aviation delay risk. Uses AERODATABOX_API_KEY for published schedules;
   # falls back to live traffic if the key is missing or the quota is spent.

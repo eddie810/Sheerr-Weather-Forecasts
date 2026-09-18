@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from decimal import Decimal, ROUND_HALF_UP
-from datetime import date as Date, datetime, timedelta
+from datetime import date as Date, datetime, time, timedelta
 from typing import Any
 
 from .blend import blend_hours, source_labels
@@ -30,6 +30,12 @@ SKY_BANDS = [
 #: The hour a forecast stops saying "Today" and starts saying "Tonight",
 #: in the region's own local time.
 EVENING_HOUR = 18
+
+#: Local hours a public forecast divides the day on: the day period runs
+#: from DAY_START, the night period from NIGHT_START through to DAY_START
+#: the following morning.
+DAY_START = 6
+NIGHT_START = 18
 
 #: Forecasts spell wind directions out in full; "NW" is chart shorthand.
 DIRECTION_WORDS = {
@@ -185,8 +191,12 @@ class RegionSummary:
     name: str
     timezone: str
     members: list[Location]
+    #: Day and night periods, the way a public forecast is issued.
     days: list[RegionDay]
-    generated_at: datetime
+    #: Whole calendar days, for the seven-day strip. A strip wants one
+    #: column per day with a high and a low, not a run of half-periods.
+    outlook: list[RegionDay] = field(default_factory=list)
+    generated_at: datetime = None       # type: ignore[assignment]
     alerts: list[dict[str, Any]] = field(default_factory=list)
     sources: dict[str, str] = field(default_factory=dict)
     missing: list[str] = field(default_factory=list)
@@ -308,15 +318,20 @@ def summarise_region(name: str, timezone: str, members: list[Location],
                     seen_alerts.add(key)
                     alerts.append(a)
 
-    region_days: list[RegionDay] = []
-    for offset in range(days):
-        day = (now + timedelta(days=offset)).date()
+    def aggregate(start: datetime, end: datetime, kind: str) -> RegionDay | None:
+        """Summarise every member across one period.
+
+        `start` and `end` are local, end-exclusive. A day period runs from
+        DAY_START to NIGHT_START; a night period runs from NIGHT_START to
+        DAY_START the following morning, so it belongs to the evening it
+        began in rather than the date most of it falls on.
+        """
         highs, lows, gusts, speeds, pops, clouds, dirs = [], [], [], [], [], [], []
         rain_totals: list[float] = []
         peak: tuple[float, datetime, str] | None = None
 
         for member_name, hours in blended.items():
-            rows = [h for h in hours if h.slot.astimezone(zone_tz).date() == day]
+            rows = [h for h in hours if start <= h.slot.astimezone(zone_tz) < end]
             if not rows:
                 continue
             temps = [h.temperature for h in rows if h.temperature is not None]
@@ -350,13 +365,19 @@ def summarise_region(name: str, timezone: str, members: list[Location],
                 clouds.append((member_name, sum(c) / len(c), zone))
 
         if not (highs or gusts):
-            continue
+            return None
 
-        daytime_cloud = [h.cloud_cover for hours in blended.values() for h in hours
-                         if h.slot.astimezone(zone_tz).date() == day
-                         and 9 <= h.slot.astimezone(zone_tz).hour <= 17
-                         and h.cloud_cover is not None]
-        sky = sky_condition(sum(daytime_cloud) / len(daytime_cloud)) if daytime_cloud else None
+        # Sky is described from the daylight hours; at night it is the
+        # period's own cloud, since there is no daytime to speak of.
+        cloud_hours = [h.cloud_cover for hours in blended.values() for h in hours
+                       if start <= h.slot.astimezone(zone_tz) < end
+                       and h.cloud_cover is not None
+                       and (kind == "night"
+                            or 9 <= h.slot.astimezone(zone_tz).hour <= 17)]
+        # At night the sky is described as clear or cloudy, never as a mix
+        # of sun and cloud.
+        sky = (sky_condition(sum(cloud_hours) / len(cloud_hours), night=(kind == "night"))
+               if cloud_hours else None)
 
         # Take the wettest point: a regional figure quoting the driest would
         # understate what to expect.
@@ -367,35 +388,76 @@ def summarise_region(name: str, timezone: str, members: list[Location],
         if peak:
             # Hours within 85% of the regional peak, to describe when it bites.
             hot = [h.slot for hours in blended.values() for h in hours
-                   if h.slot.astimezone(zone_tz).date() == day
+                   if start <= h.slot.astimezone(zone_tz) < end
                    and (h.wind_gust or 0) >= peak[0] * 0.85]
             if hot:
                 window = (min(hot).astimezone(zone_tz), max(hot).astimezone(zone_tz))
 
-        # Label the way a forecast does: today is "Today" until the evening
-        # and "Tonight" after it, tomorrow and beyond are named days.
-        if offset == 0:
-            evening = now.hour >= EVENING_HOUR
-            label, night_only = ("Tonight", True) if evening else ("Today", False)
-        else:
-            label, night_only = day.strftime("%A"), False
-
-        region_days.append(RegionDay(
-            date=day,
-            day_of_week=day.strftime("%A"),
-            label=label,
-            night_only=night_only,
+        return RegionDay(
+            date=start.date(),
+            day_of_week=start.strftime("%A"),
+            night_only=(kind == "night"),
             high=_spread(highs), low=_spread(lows),
             gust=_spread(gusts), wind_speed=_spread(speeds),
             precip_chance=_spread(pops), cloud_cover=_spread(clouds),
-            sky=sky, precip_amount=rain_mm, dominant_direction=direction, direction_agreement=agreement,
+            sky=sky, precip_amount=rain_mm, dominant_direction=direction,
+            direction_agreement=agreement,
             peak_gust_at=peak[1].astimezone(zone_tz) if peak else None,
             peak_gust_where=peak[2] if peak else None,
             peak_window=window,
-        ))
+        )
 
+    def at(day: Date, hour: int) -> datetime:
+        return datetime.combine(day, time(hour), tzinfo=zone_tz)
+
+    # A public forecast is a run of day and night periods, not calendar
+    # days: Today, Tonight, Saturday, Saturday night. The first period is
+    # whichever one is still ahead — after the evening there is no "Today"
+    # left to issue.
+    region_days: list[RegionDay] = []
+    local_today = now.astimezone(zone_tz).date()
+    for offset in range(days + 1):
+        day = local_today + timedelta(days=offset)
+        for kind in ("day", "night"):
+            if kind == "day":
+                start, end = at(day, DAY_START), at(day, NIGHT_START)
+            else:
+                start = at(day, NIGHT_START)
+                end = at(day + timedelta(days=1), DAY_START)
+            # Periods already over are not forecast.
+            if end <= now.astimezone(zone_tz):
+                continue
+            period = aggregate(start, end, kind)
+            if period is None:
+                continue
+            # Today's own periods are named for the present, not the
+            # weekday: a forecast issued this morning says "Today" and
+            # "Tonight", never "Friday" and "Friday night".
+            if day == local_today:
+                period.label = "Tonight" if kind == "night" else "Today"
+            elif kind == "night":
+                period.label = f"{day:%A} night"
+            else:
+                period.label = day.strftime("%A")
+            region_days.append(period)
+        if len(region_days) >= days * 2:
+            break
+    # The first day may contribute only a night period, so the loop can run
+    # one day long. `days` means days, not periods.
+    region_days = region_days[:days * 2]
+
+    # The seven-day strip is a different shape: one entry per calendar day,
+    # carrying both the high and the low.
+    outlook: list[RegionDay] = []
+    for offset in range(days):
+        day = local_today + timedelta(days=offset)
+        whole = aggregate(at(day, 0), at(day + timedelta(days=1), 0), "day")
+        if whole is None:
+            continue
+        whole.label = "Today" if offset == 0 else day.strftime("%A")
+        outlook.append(whole)
     return RegionSummary(
         name=name, timezone=timezone, members=members, days=region_days,
-        generated_at=now, alerts=alerts, sources=labels,
+        outlook=outlook, generated_at=now, alerts=alerts, sources=labels,
         missing=[m.name for m in members if m.name not in blended],
     )

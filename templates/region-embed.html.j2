@@ -243,10 +243,6 @@
         {% if not entry.day.high.uniform %}<span class="sw-n">Coolest {{ entry.day.high.low.area }}</span>{% endif %}
       </div>
       {% endif %}
-      {% if entry.day.low and not entry.day.night_only %}
-      <div class="sw-fig"><span class="sw-k">Low</span>
-        <span class="sw-v">{{ entry.day.low.low.value | num }}–{{ entry.day.low.high.value | num }}{{ units.temp }}</span></div>
-      {% endif %}
       {% if entry.day.gust %}
       <div class="sw-fig"><span class="sw-k">Gusts</span>
         <span class="sw-v {{ gust_class(entry.day.gust.high.value) | trim }}">{{ entry.day.gust.low.value | num }}–{{ entry.day.gust.high.value | num }}</span>
@@ -265,12 +261,13 @@
   </div>
   {% endfor %}
 
-  {% if summary.days | length > 1 %}
+  {% set strip = summary.outlook or summary.days %}
+  {% if strip | length > 1 %}
   <p class="sw-week-title">The week ahead</p>
   <div class="sw-week">
-    {% for day in summary.days[:7] %}
+    {% for day in strip[:7] %}
     <div class="sw-wd">
-      <span class="sw-wd-name">{{ "Today" if loop.first and not day.night_only else ("Tonight" if loop.first else day.date.strftime('%a')) }}</span>
+      <span class="sw-wd-name">{{ "Today" if loop.first else day.date.strftime('%a') }}</span>
       <span class="sw-wd-date">{{ day.date.strftime('%-d %b') }}</span>
       {{ wx_icon(day.icon) }}
       <span class="sw-wd-hi">{{ day.high.high.value | num if day.high else "—" }}°</span>
