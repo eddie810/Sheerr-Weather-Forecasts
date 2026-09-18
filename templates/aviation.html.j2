@@ -61,6 +61,10 @@
     font-variant-numeric:tabular-nums; vertical-align:top; color:var(--ink);
   }
   table.board tr:nth-child(even) td { background:#11171e; }
+  /* The day heading is a row too, so it shifts the stripe by one within
+     each group. Count from the heading instead. */
+  tr.daybreak ~ tr:nth-child(even) td { background:transparent; }
+  tr.daybreak ~ tr:nth-child(odd) td { background:#11171e; }
   table.board tr:last-child td { border-bottom:none; }
   .flt { font-weight:600; letter-spacing:.08em; font-size:.95rem; color:var(--ink); }
   .port { color:var(--amber); letter-spacing:.04em; }
@@ -73,6 +77,15 @@
   /* No published schedule behind the row, so no carrier status to report. */
   .st-none{color:var(--dim); font-weight:400;}
   .st-rev { font-size:.72rem; color:var(--dim); }
+  .dir-panel[hidden] { display:none; }
+  /* A 24-hour window crosses midnight, so each day is named rather than
+     leaving the reader to work out which "07:35" they are looking at. */
+  tr.daybreak th {
+    text-align:left; padding:.9rem .8rem .35rem; font-size:.7rem;
+    letter-spacing:.18em; text-transform:uppercase; color:var(--amber);
+    font-weight:600; border-bottom:1px solid var(--rule); background:transparent;
+  }
+  tbody:first-of-type tr.daybreak th { padding-top:.35rem; }
   tr.cancelled td { opacity:.6; }
   tr.cancelled td:nth-child(2) { text-decoration:line-through; }
 
@@ -127,6 +140,14 @@
       margin-bottom:.7rem; padding:.55rem .2rem;
     }
     table.board tr:nth-child(even) td { background:transparent; }
+    /* Cards carry their own background, so no row striping survives here —
+       including the per-group striping the day headings introduce. */
+    table.board tr.daybreak ~ tr td { background:transparent; }
+    /* A heading is not a flight, so it does not get the card treatment. */
+    table.board tr.daybreak {
+      border:0; background:transparent; margin:.9rem 0 .3rem; padding:0;
+    }
+    table.board tr.daybreak th { display:block; width:100%; padding:0 .2rem .3rem; }
     table.board td {
       border-bottom:0; padding:.28rem .8rem;
       display:flex; gap:1rem; align-items:baseline; justify-content:space-between;
@@ -143,7 +164,7 @@
 <div class="fids">
   <div class="fids-head">
     <h1>{{ airport.name }}</h1>
-    <span class="mode">{{ {"arrival":"Arrivals","departure":"Departures"}.get(direction, "All Movements") }}</span>
+    <span class="mode" id="board-title">{{ boards[0].title if boards else "All Movements" }}</span>
     <span class="clock">{{ generated_at | datestr }} · {{ generated_at | clock }} {{ generated_at.strftime('%Z') }}</span>
   </div>
 
@@ -154,6 +175,13 @@
     <span>Vis <b>{{ metar.visib }}sm</b></span>
     <span>Temp <b>{{ metar.temp | num }}°C</b></span>
     {% if home %}<span><a href="{{ home }}">All forecasts</a></span>{% endif %}
+    {% if boards | length > 1 %}
+    <span class="toggle" role="group" aria-label="Arrivals or departures">
+      {% for board in boards %}<button type="button" class="dir-btn{{ " on" if loop.first }}"
+              data-dir="{{ board.direction }}"
+              aria-pressed="{{ "true" if loop.first else "false" }}">{{ board.title }}</button>{% endfor %}
+    </span>
+    {% endif %}
     <span class="toggle" role="group" aria-label="Detail level">
       <button type="button" id="mode-normal" class="on" aria-pressed="true">Normal</button><button
               type="button" id="mode-advanced" aria-pressed="false">Advanced</button>
@@ -175,20 +203,24 @@
   </div>
   {% endif %}
 
-  <div class="board-wrap">
+  {% for board in boards %}
+  {% set far = "From" if board.direction == "arrival" else "To" %}
+  <div class="board-wrap dir-panel" data-dir="{{ board.direction }}"{% if not loop.first %} hidden{% endif %}>
     <table class="board">
       <thead><tr>
         <th>Time</th><th>Flight</th>
-        <th>{{ "From" if direction == "arrival" else "To" }}</th>
+        <th>{{ far }}</th>
         <th>Aircraft</th><th>Conditions</th><th class="adv-cell">Rwy</th><th class="adv-cell">Xwind</th>
         <th>Airline</th><th>Weather</th><th>Outlook</th><th>Detail</th>
       </tr></thead>
+      {% for label, rows in board.sections %}
       <tbody>
-      {% for a in assessments %}
+        <tr class="daybreak"><th colspan="11" scope="rowgroup">{{ label }}</th></tr>
+      {% for a in rows %}
         <tr>
           <td class="time" data-l="Time">{{ a.flight.scheduled.astimezone(tz).strftime('%H:%M') }}</td>
           <td class="flt" data-l="Flight">{{ a.flight.callsign or a.flight.number }}</td>
-          <td class="port" data-l="{{ "From" if direction == "arrival" else "To" }}">{{ a.flight.other_label }}</td>
+          <td class="port" data-l="{{ far }}">{{ a.flight.other_label }}</td>
           <td class="ac" data-l="Aircraft">{{ a.profile.name }}</td>
           <td data-l="Conditions"><span class="normal-only">{{ a.plain_category }}</span><span class="adv-only">{{ a.category }}</span></td>
           <td class="adv-cell" data-l="Runway">{{ a.runway or "—" }}</td>
@@ -201,8 +233,10 @@
         </tr>
       {% endfor %}
       </tbody>
+      {% endfor %}
     </table>
   </div>
+  {% endfor %}
 
   <div class="legend">
     <span class="chip c-green">Clear</span> weather unlikely to affect the schedule
@@ -244,6 +278,42 @@
     var saved = null;
     try { saved = localStorage.getItem('sheerr-fids-mode'); } catch (e) {}
     if (saved === 'advanced') apply('advanced');
+  })();
+
+  (function () {
+    var buttons = Array.prototype.slice.call(document.querySelectorAll('.dir-btn'));
+    var panels = Array.prototype.slice.call(document.querySelectorAll('.dir-panel'));
+    var title = document.getElementById('board-title');
+    if (buttons.length < 2 || !panels.length) return;
+
+    function show(dir) {
+      var matched = false;
+      panels.forEach(function (panel) {
+        var on = panel.getAttribute('data-dir') === dir;
+        panel.hidden = !on;
+        if (on) matched = true;
+      });
+      if (!matched) return;
+      buttons.forEach(function (button) {
+        var on = button.getAttribute('data-dir') === dir;
+        button.classList.toggle('on', on);
+        button.setAttribute('aria-pressed', String(on));
+        if (on && title) title.textContent = button.textContent;
+      });
+      try { localStorage.setItem('sheerr-fids-dir', dir); } catch (e) {}
+    }
+
+    buttons.forEach(function (button) {
+      button.addEventListener('click', function () {
+        show(button.getAttribute('data-dir'));
+      });
+    });
+
+    var saved = null;
+    try { saved = localStorage.getItem('sheerr-fids-dir'); } catch (e) {}
+    // Only restore a direction this page actually has, so a stored value
+    // from another board cannot leave every panel hidden.
+    if (saved) show(saved);
   })();
 </script>
 {% endblock %}

@@ -278,7 +278,7 @@ def cmd_aviation(args, config: Config) -> None:
     from .aviation.notams import fetch_notams
     from .aviation.risk import assess_factors, write_verdict
     from .aviation.runways import CYYT
-    from .aviation.schedule import (ScheduleError, board_order,
+    from .aviation.schedule import (ScheduleError, board_order, day_sections,
                                 fetch_schedule, live_sample)
 
     airport = CYYT   # only CYYT is modelled so far
@@ -299,15 +299,34 @@ def cmd_aviation(args, config: Config) -> None:
     except ScheduleError as exc:
         raise SystemExit(f"error: {exc}")
 
-    if args.direction != "all" and not args.sample:
-        flights = [f for f in flights if f.direction == args.direction]
-
     if not flights:
         raise SystemExit("error: no flights returned for that window")
-    flights = board_order(flights, datetime.now(_tz.utc))
 
-    assessments = [write_verdict(assess_factors(f, airport, periods, notams))
-                   for f in flights]
+    if args.direction == "both" and not args.sample:
+        wanted = [("departure", "Departures"), ("arrival", "Arrivals")]
+    elif args.direction in ("arrival", "departure") and not args.sample:
+        wanted = [(args.direction,
+                   "Arrivals" if args.direction == "arrival" else "Departures")]
+    else:
+        wanted = [("all", "All movements")]
+
+    now_utc = datetime.now(_tz.utc)
+    tz = ZoneInfo(airport.timezone)
+    assessments, boards = [], []
+    for which, title in wanted:
+        subset = (flights if which == "all"
+                  else [f for f in flights if f.direction == which])
+        if not subset:
+            raise SystemExit(f"error: no {which} flights returned for that window")
+        rows = [write_verdict(assess_factors(f, airport, periods, notams))
+                for f in board_order(subset, now_utc)]
+        assessments += rows
+        boards.append({
+            "direction": which, "title": title,
+            "sections": day_sections(rows, now_utc, tz,
+                                     lambda a: a.flight.revised or a.flight.scheduled),
+            "count": len(rows),
+        })
 
     if args.format == "json":
         payload = [{
@@ -325,11 +344,12 @@ def cmd_aviation(args, config: Config) -> None:
     context = {
         "airport": airport,
         "assessments": assessments,
+        "boards": boards,
         "metar": metar,
         "raw_taf": raw_taf, "notams": notams,
         "periods": periods,
-        "tz": ZoneInfo(airport.timezone),
-        "generated_at": datetime.now(ZoneInfo(airport.timezone)),
+        "tz": tz,
+        "generated_at": datetime.now(tz),
         "sample_mode": args.sample,
         "direction": args.direction,
         # A file opened directly in a browser needs a doctype, or quirks
@@ -417,8 +437,9 @@ def build_parser() -> argparse.ArgumentParser:
     a.add_argument("--sample", action="store_true",
                    help="Use live ADS-B traffic instead of a schedule (no key needed)")
     a.add_argument("--direction", default="all",
-                   choices=["all", "arrival", "departure"],
-                   help="Limit to arrivals or departures (default both)")
+                   choices=["all", "arrival", "departure", "both"],
+                   help="One list ('all'), just one direction, or 'both' as "
+                        "two boards switched in the page")
     a.add_argument("--template", default="aviation")
     a.add_argument("--format", default="md", choices=["md", "html", "json"])
     a.add_argument("--output", "-o")

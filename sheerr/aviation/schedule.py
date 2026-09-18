@@ -216,6 +216,42 @@ def board_order(flights: list[Flight], now: datetime) -> list[Flight]:
     return upcoming + past
 
 
+def day_sections(items: list, now: datetime, tz, when) -> list[tuple[str, list]]:
+    """Group board rows under a heading per day.
+
+    A 24-hour window crosses midnight, so "07:35" alone is ambiguous once
+    the board runs into tomorrow. Rows are grouped and each group is
+    labelled with the day it belongs to.
+
+    Flights already away sit below the upcoming ones (see `board_order`),
+    which would otherwise make the days read today, tomorrow, then today
+    again. They get one heading of their own instead.
+    """
+    sections: list[tuple[str, list]] = []
+    today = now.astimezone(tz).date()
+
+    def heading(day) -> str:
+        if day == today:
+            return f"Today · {day:%A, %B %-d}"
+        if (day - today).days == 1:
+            return f"Tomorrow · {day:%A, %B %-d}"
+        return f"{day:%A, %B %-d}"
+
+    current: str | None = None
+    for item in items:
+        moment = when(item)
+        if moment < now:
+            label = ("Earlier today" if moment.astimezone(tz).date() == today
+                     else f"Earlier · {moment.astimezone(tz):%A, %B %-d}")
+        else:
+            label = heading(moment.astimezone(tz).date())
+        if label != current:
+            sections.append((label, []))
+            current = label
+        sections[-1][1].append(item)
+    return sections
+
+
 def _parse(rows: list[dict], direction: str) -> list[Flight]:
     out = []
     for row in rows:

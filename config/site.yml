@@ -34,13 +34,13 @@ pages:
     airport: CYYT
     hours: 24          # the operating day
     start_hour: 5      # from 5 AM local, so the morning bank stays on the board
-    direction: departure
-
-  - type: aviation
-    airport: CYYT
-    hours: 24
-    start_hour: 5
-    direction: arrival
+    # One board, switched between departures and arrivals in the page.
+    direction: both
+    # The two separate pages this replaced; kept as redirects so links
+    # already shared still land somewhere.
+    also_at:
+      - aviation-yyt-departures.html
+      - aviation-yyt-arrivals.html
 
   # Event briefings. `when` accepts an ISO timestamp for a fixed date, or a
   # phrase like "saturday 2pm" that rolls forward each week.

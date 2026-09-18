@@ -101,6 +101,22 @@ def _index_time(built: list[BuiltPage], config: Config) -> datetime:
     return datetime.now().astimezone()
 
 
+def _redirect(target: str, title: str) -> str:
+    """A standing-still page that sends a reader on to `target`.
+
+    GitHub Pages serves static files only, so a moved page needs a stub
+    rather than a 301. The link is spelled out for anyone who arrives with
+    JavaScript off or a redirect blocked.
+    """
+    return (
+        "<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\">\n"
+        f"<meta http-equiv=\"refresh\" content=\"0; url={target}\">\n"
+        f"<link rel=\"canonical\" href=\"{target}\">\n"
+        f"<title>{title}</title>\n</head>\n"
+        f"<body><p>This board has moved to <a href=\"{target}\">{title}</a>.</p></body></html>\n"
+    )
+
+
 def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
                 fetch_all, units_for, attributions: set[str],
                 site_defaults: dict | None = None) -> BuiltPage | None:
@@ -114,7 +130,7 @@ def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
         from .aviation.notams import fetch_notams
         from .aviation.risk import assess_factors, write_verdict
         from .aviation.runways import CYYT
-        from .aviation.schedule import (ScheduleError, board_order,
+        from .aviation.schedule import (ScheduleError, board_order, day_sections,
                                 fetch_schedule, live_sample)
         from .models import Location as _Loc
 
@@ -140,18 +156,37 @@ def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
             flights = live_sample(ap.latitude, ap.longitude)
             sample = True
 
-        direction = entry.get("direction", "all")
-        # Live ADS-B cannot tell an arrival from a departure, so filtering a
-        # sampled list by direction would empty the page rather than degrade
-        # it. Show the sample and let the banner explain what it is.
-        if direction != "all" and not sample:
-            flights = [f for f in flights if f.direction == direction]
+        direction = str(entry.get("direction", "all"))
         if not flights:
-            raise ProviderError(f"no {direction} flights in the window at {ap.icao}")
-        flights = board_order(flights, datetime.now(timezone.utc))
+            raise ProviderError(f"no flights in the window at {ap.icao}")
 
-        assessments = [write_verdict(assess_factors(f, ap, periods, notams))
-                       for f in flights]
+        # Live ADS-B cannot tell an arrival from a departure, so splitting a
+        # sampled list by direction would empty the board rather than degrade
+        # it. Show the sample whole and let the banner explain what it is.
+        if direction == "both" and not sample:
+            wanted = [("departure", "Departures"), ("arrival", "Arrivals")]
+        elif direction in ("arrival", "departure") and not sample:
+            wanted = [(direction, "Arrivals" if direction == "arrival" else "Departures")]
+        else:
+            wanted = [("all", "All movements")]
+
+        now_utc = datetime.now(timezone.utc)
+        tz = ZoneInfo(ap.timezone)
+        assessments, boards = [], []
+        for which, title in wanted:
+            subset = (flights if which == "all"
+                      else [f for f in flights if f.direction == which])
+            if not subset:
+                raise ProviderError(f"no {which} flights in the window at {ap.icao}")
+            rows = [write_verdict(assess_factors(f, ap, periods, notams))
+                    for f in board_order(subset, now_utc)]
+            assessments += rows
+            boards.append({
+                "direction": which, "title": title,
+                "sections": day_sections(rows, now_utc, tz,
+                                         lambda a: a.flight.revised or a.flight.scheduled),
+                "count": len(rows),
+            })
         # Name the types the table could not resolve, so they can be added
         # rather than quietly graded as unknown.
         from .aviation.aircraft import unmatched_models
@@ -160,22 +195,29 @@ def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
             print("::warning::unrecognised aircraft models at "
                   f"{ap.icao}: {', '.join(unknown_types)}")
         html = render(entry.get("template", "aviation"), "html", {
-            "airport": ap, "assessments": assessments, "metar": metar,
+            "airport": ap, "assessments": assessments, "boards": boards,
+            "metar": metar,
             "raw_taf": raw_taf, "notams": notams, "periods": periods,
-            "tz": ZoneInfo(ap.timezone),
+            "tz": tz,
             "generated_at": datetime.now(ZoneInfo(ap.timezone)),
             "sample_mode": sample, "direction": direction,
             "assessed_by": ("claude" if any(a.source == "claude" for a in assessments)
                             else "rule-based"),
             "home": "./index.html", "standalone": True,
         })
-        suffix = "" if direction == "all" else f"-{direction}s"
+        suffix = "" if direction in ("all", "both") else f"-{direction}s"
         href = f"aviation-{ap.iata.lower()}{suffix}.html"
         (outdir / href).write_text(html)
+        # Pages this one replaced. A link already shared should still land
+        # here rather than on a 404.
+        for old_name in entry.get("also_at") or []:
+            if old_name != href:
+                (outdir / str(old_name)).write_text(_redirect(href, f"{ap.iata} flights"))
         pseudo = _Loc(name=ap.name, latitude=ap.latitude, longitude=ap.longitude,
                       timezone=ap.timezone, slug=href[:-5])
         flagged = sum(1 for a in assessments if a.colour != "green")
-        label = {"arrival": "arrivals", "departure": "departures"}.get(direction, "delay risk")
+        label = {"arrival": "arrivals", "departure": "departures",
+                 "both": "arrivals and departures"}.get(direction, "delay risk")
         return BuiltPage(pseudo, f"{ap.iata} {label}",
                          f"{len(assessments)} movements"
                          + (f", {flagged} flagged" if flagged else ", all clear"),
