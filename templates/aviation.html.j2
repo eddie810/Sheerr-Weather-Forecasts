@@ -1,109 +1,170 @@
 {% extends "_layout.html.j2" %}
-{% block title %}{{ airport.iata }} {{ {"arrival":"Arrivals","departure":"Departures"}.get(direction, "Delay Risk") }}{% endblock %}
+{% block title %}{{ airport.iata }} {{ {"arrival":"Arrivals","departure":"Departures"}.get(direction, "Board") }}{% endblock %}
 
 {% block content %}
-<div class="sheet">
-  <header>
-    <div class="eyebrow">Sheerr Weather · Aviation{% if home %} · <a href="{{ home }}" style="color:inherit">All forecasts</a>{% endif %}</div>
-    <h1>{{ airport.name }} <span style="color:var(--ink-faint)">{{ airport.iata }}</span></h1>
-    <div class="when">
-      {% if direction == "arrival" %}Arrivals · risk of holding or diversion
-      {% elif direction == "departure" %}Departures · risk of de-icing and ground delay
-      {% else %}Weather delay risk{% endif %}
-      · {{ assessments | length }} {{ "movements" if direction == "all" else "flights" }}</div>
-  </header>
+{# A flight information display board commits to one visual world: dark,
+   monospace, amber. Every colour is painted explicitly so the page holds
+   on either host ground rather than borrowing the viewer's theme. #}
+<style>
+  .fids {
+    --board:#0a0d11; --panel:#141a21; --rule:#232c36;
+    --ink:#e9eef2; --dim:#8899a6; --amber:#ffb000;
+    --clear:#3fbf7f; --monitor:#ffc233; --risk:#ff8746;
+    background:var(--board); color:var(--ink);
+    font-family:"IBM Plex Mono",ui-monospace,monospace;
+    min-height:100%; margin:0 auto; max-width:78rem;
+    padding-inline:16px; padding-block:1.5rem 3rem;
+  }
+  .fids a { color:var(--amber); }
+
+  .fids-head {
+    display:flex; flex-wrap:wrap; align-items:baseline; gap:.4rem 1.4rem;
+    border-bottom:2px solid var(--amber); padding-bottom:.7rem; margin-bottom:.2rem;
+  }
+  .fids-head h1 {
+    font-family:"IBM Plex Mono",monospace; font-size:clamp(1.3rem,4.5vw,2.1rem);
+    font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+    margin:0; color:var(--amber); text-wrap:balance;
+  }
+  .fids-head .mode {
+    font-size:clamp(1rem,3.5vw,1.5rem); letter-spacing:.22em;
+    text-transform:uppercase; color:var(--ink);
+  }
+  .fids-head .clock { margin-left:auto; font-size:.86rem; color:var(--dim); letter-spacing:.08em; }
+
+  .strip {
+    display:flex; flex-wrap:wrap; gap:.4rem 1.6rem; padding:.7rem 0 1.1rem;
+    font-size:.76rem; letter-spacing:.1em; text-transform:uppercase; color:var(--dim);
+  }
+  .strip b { color:var(--ink); font-weight:600; letter-spacing:.06em; }
+
+  .notice {
+    border:1px solid var(--amber); border-left-width:4px; background:#1a150a;
+    padding:.8rem 1rem; margin-bottom:1.2rem;
+  }
+  .notice h2 {
+    font-size:.74rem; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--amber); margin:0 0 .45rem; font-weight:600;
+  }
+  .notice p { margin:.25rem 0; font-size:.82rem; color:var(--ink); }
+
+  .board-wrap { overflow-x:auto; border:1px solid var(--rule); background:var(--panel); }
+  table.board { border-collapse:collapse; width:100%; min-width:44rem; font-size:.86rem;
+                color:#e9eef2; }
+  table.board th {
+    background:#0e131a; color:var(--amber); text-align:left; font-weight:600;
+    font-size:.68rem; letter-spacing:.16em; text-transform:uppercase;
+    padding:.75rem .85rem; border-bottom:2px solid var(--amber); white-space:nowrap;
+  }
+  table.board td {
+    padding:.72rem .85rem; border-bottom:1px solid var(--rule);
+    font-variant-numeric:tabular-nums; vertical-align:top; color:var(--ink);
+  }
+  table.board tr:nth-child(even) td { background:#11171e; }
+  table.board tr:last-child td { border-bottom:none; }
+  .flt { font-weight:600; letter-spacing:.08em; font-size:.95rem; color:var(--ink); }
+  .port { color:var(--amber); letter-spacing:.1em; }
+  .time { font-size:1.05rem; font-weight:600; letter-spacing:.06em; color:var(--ink); }
+  .ac { color:var(--dim); }
+  .why { color:var(--dim); font-size:.78rem; max-width:26rem; white-space:normal; }
+
+  .chip {
+    display:inline-block; padding:.2rem .55rem; font-size:.68rem; font-weight:600;
+    letter-spacing:.12em; text-transform:uppercase; border:1px solid currentColor;
+    white-space:nowrap;
+  }
+  .c-green{color:var(--clear)} .c-yellow{color:var(--monitor)} .c-orange{color:var(--risk)}
+
+  .panel { border:1px solid var(--rule); background:var(--panel); margin-top:1.4rem; }
+  .panel h2 {
+    font-size:.7rem; letter-spacing:.16em; text-transform:uppercase; color:var(--amber);
+    margin:0; padding:.7rem .9rem; border-bottom:1px solid var(--rule); font-weight:600;
+  }
+  .panel pre {
+    margin:0; padding:.9rem; font-family:inherit; font-size:.78rem; line-height:1.65;
+    color:var(--ink); white-space:pre-wrap; word-break:break-word;
+  }
+  .legend { display:flex; flex-wrap:wrap; gap:.5rem 1.2rem; padding:.9rem 0 0; font-size:.72rem; color:var(--dim); }
+  .fids footer {
+    margin-top:1.6rem; padding-top:1rem; border-top:1px solid var(--rule);
+    font-size:.72rem; color:var(--dim); line-height:1.7;
+  }
+  .fids footer strong { color:var(--amber); }
+  @media (max-width:520px) { .why { display:none } }
+</style>
+
+<div class="fids">
+  <div class="fids-head">
+    <h1>{{ airport.name }}</h1>
+    <span class="mode">{{ {"arrival":"Arrivals","departure":"Departures"}.get(direction, "All Movements") }}</span>
+    <span class="clock">{{ generated_at | datestr }} · {{ generated_at | clock }} {{ generated_at.strftime('%Z') }}</span>
+  </div>
+
+  <div class="strip">
+    <span>{{ airport.icao }}</span>
+    <span>Cond <b>{{ metar.fltCat or "—" }}</b></span>
+    <span>Wind <b>{{ metar.wdir | num }}°/{{ metar.wspd | num }}kt</b></span>
+    <span>Vis <b>{{ metar.visib }}sm</b></span>
+    <span>Temp <b>{{ metar.temp | num }}°C</b></span>
+    {% if home %}<span><a href="{{ home }}">All forecasts</a></span>{% endif %}
+  </div>
 
   {% if sample_mode %}
-  <section class="alert">
+  <div class="notice">
     <h2>Demonstration data</h2>
-    <p>These are aircraft currently airborne near {{ airport.iata }}, not a published
-    schedule. Times are "now", an overflight cannot be told from an arrival, and
-    {% if direction != "all" %}the list is not filtered to {{ direction }}s because
-    live traffic carries no direction{% else %}no direction is known{% endif %}.</p>
-  </section>
+    <p>Aircraft airborne near {{ airport.iata }}, not a published schedule. Times are "now",
+    an overflight cannot be told from an arrival, and the list is not filtered by direction.</p>
+  </div>
   {% endif %}
-
-  <section>
-    <h2 class="sec">Now at {{ airport.icao }}</h2>
-    <div class="readout">
-      <div class="cell">
-        <div class="k">Flight category</div>
-        <div class="v" style="font-size:1.3rem">{{ metar.fltCat or "—" }}</div>
-      </div>
-      <div class="cell">
-        <div class="k">Wind</div>
-        <div class="v">{{ metar.wdir | num }}°/{{ metar.wspd | num }}</div>
-        <div class="n">knots</div>
-      </div>
-      <div class="cell">
-        <div class="k">Visibility</div>
-        <div class="v">{{ metar.visib }}</div>
-        <div class="n">statute miles</div>
-      </div>
-      <div class="cell">
-        <div class="k">Temperature</div>
-        <div class="v">{{ metar.temp | num }}°C</div>
-        {% if metar.dewp is not none %}<div class="n">Dew point {{ metar.dewp | num }}°C</div>{% endif %}
-      </div>
-    </div>
-  </section>
 
   {% if notams and notams.significant %}
-  <section class="alert">
-    <h2>Aerodrome NOTAMs affecting operations</h2>
+  <div class="notice">
+    <h2>Aerodrome NOTAMs</h2>
     {% for line in notams.summary() %}<p>{{ line }}</p>{% endfor %}
-    <div class="src">NAV CANADA flight planning service</div>
-  </section>
+  </div>
   {% endif %}
 
-  <section>
-    <h2 class="sec">{{ {"arrival":"Arrivals","departure":"Departures"}.get(direction, "Flights") }}</h2>
-    <div class="scroll">
-      <table>
-        <thead><tr>
-          <th></th><th>Flight</th><th>Time</th><th>Aircraft</th>
-          <th>Cat</th><th>Rwy</th><th>Xwind</th><th>Outlook</th><th>Assessment</th>
-        </tr></thead>
-        <tbody>
-        {% for a in assessments %}
-          <tr>
-            <td><span style="display:inline-block;width:.7rem;height:.7rem;border-radius:50%;
-              background:var(--{{ {'green':'calm','yellow':'breezy','orange':'windy'}[a.colour] }})"></span></td>
-            <td><strong>{{ a.flight.callsign or a.flight.number }}</strong>
-              {% if a.flight.other_airport %}<br><span style="color:var(--ink-faint);font-size:.75rem">{{ a.flight.direction[:3] }} {{ a.flight.other_airport }}</span>{% endif %}</td>
-            <td class="num">{{ a.flight.scheduled.astimezone(tz).strftime('%H:%M') }}</td>
-            <td>{{ a.profile.name }}</td>
-            <td class="num">{{ a.category }}</td>
-            <td class="num">{{ a.runway or "—" }}</td>
-            <td class="num">{{ a.crosswind | num }}</td>
-            <td style="white-space:nowrap">{{ a.outlook }}</td>
-            <td style="min-width:18rem">{{ a.reason }}</td>
-          </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    <p style="font-size:.78rem;color:var(--ink-soft);margin:.9rem 0 0">
-      <span style="color:var(--calm)">●</span> weather unlikely to affect the schedule ·
-      <span style="color:var(--breezy)">●</span> could plausibly delay ·
-      <span style="color:var(--windy)">●</span> likely to delay, de-ice, hold or divert
-    </p>
-  </section>
+  <div class="board-wrap">
+    <table class="board">
+      <thead><tr>
+        <th>Time</th><th>Flight</th>
+        <th>{{ "From" if direction == "arrival" else "To" }}</th>
+        <th>Aircraft</th><th>Cond</th><th>Rwy</th><th>Xwind</th>
+        <th>Status</th><th>Outlook</th><th>Detail</th>
+      </tr></thead>
+      <tbody>
+      {% for a in assessments %}
+        <tr>
+          <td class="time">{{ a.flight.scheduled.astimezone(tz).strftime('%H:%M') }}</td>
+          <td class="flt">{{ a.flight.callsign or a.flight.number }}</td>
+          <td class="port">{{ a.flight.other_airport or "—" }}</td>
+          <td class="ac">{{ a.profile.name }}</td>
+          <td>{{ a.category }}</td>
+          <td>{{ a.runway or "—" }}</td>
+          <td>{{ a.crosswind | num }}kt</td>
+          <td><span class="chip c-{{ a.colour }}">{{ {"green":"Clear","yellow":"Monitor","orange":"At risk"}[a.colour] }}</span></td>
+          <td style="color:var(--ink);font-size:.78rem;white-space:nowrap">{{ a.outlook }}</td>
+          <td class="why">{{ a.reason }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
-  <section>
-    <h2 class="sec">Terminal forecast</h2>
-    <div class="scroll"><pre style="margin:0;padding:1rem;font-family:'IBM Plex Mono',monospace;
-      font-size:.8rem;line-height:1.6;white-space:pre-wrap;word-break:break-word">{{ raw_taf }}</pre></div>
-  </section>
+  <div class="legend">
+    <span class="chip c-green">Clear</span> weather unlikely to affect the schedule
+    <span class="chip c-yellow">Monitor</span> could plausibly delay
+    <span class="chip c-orange">At risk</span> likely to delay, de-ice, hold or divert
+  </div>
+
+  <div class="panel">
+    <h2>Terminal aerodrome forecast — {{ airport.icao }}</h2>
+    <pre>{{ raw_taf }}</pre>
+  </div>
 
   <footer>
-    <div>Generated {{ generated_at | datestr }} at {{ generated_at | clock }} {{ generated_at.strftime('%Z') }}.</div>
-    <div>Assessments written by {% if assessed_by == "claude" %}Claude and checked against the source figures{% else %}rule{% endif %}.</div>
-    <div>TAF and METAR from the NOAA Aviation Weather Center. Runway data from OurAirports.</div>
-    <div style="margin-top:.5rem;color:var(--ink-soft)"><strong>Not an operational product.</strong>
-      This estimates schedule risk only. It is not a statement about whether any flight is
-      safe or legal to operate — crews and operators decide that against their own limits
-      and current official data.</div>
+    <div>Assessments {% if assessed_by == "claude" %}written by Claude and checked against the source figures{% else %}generated by rule{% endif %}. TAF and METAR from the NOAA Aviation Weather Center. NOTAMs from NAV CANADA. Runway data from OurAirports.</div>
+    <div style="margin-top:.5rem"><strong>Not an operational product.</strong> This estimates schedule risk only. It is not a statement about whether any flight is safe or legal to operate — crews and operators decide that against their own limits and current official data.</div>
   </footer>
 </div>
 {% endblock %}

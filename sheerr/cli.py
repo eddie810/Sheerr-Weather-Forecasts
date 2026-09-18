@@ -328,6 +328,9 @@ def cmd_aviation(args, config: Config) -> None:
         "generated_at": datetime.now(ZoneInfo(airport.timezone)),
         "sample_mode": args.sample,
         "direction": args.direction,
+        # A file opened directly in a browser needs a doctype, or quirks
+        # mode changes how it renders.
+        "standalone": bool(args.output),
         "assessed_by": ("claude" if any(a.source == "claude" for a in assessments)
                         else "rule-based"),
     }
