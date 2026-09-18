@@ -122,6 +122,11 @@ def _range(spread, unit: str = "") -> str:
     return f"{low} to {high}{unit}"
 
 
+def _clock_phrase(when):
+    from .region import clock_phrase
+    return clock_phrase(when)
+
+
 def build_brief(summary: RegionSummary, day: RegionDay) -> tuple[str, set[float]]:
     """Render the day's aggregates as a brief, plus the figures it permits."""
     allowed: set[float] = set()
@@ -141,6 +146,17 @@ def build_brief(summary: RegionSummary, day: RegionDay) -> tuple[str, set[float]
 
     if day.sky:
         lines.append(f"Sky: {day.sky}")
+
+    # Timing is given in words, never as a clock reading: a digit here
+    # would be a figure the prose is then allowed to invent around.
+    if day.precip_underway:
+        lines.append("Precipitation: already underway as this period opens")
+    elif day.precip_start:
+        lines.append("Precipitation begins: "
+                     + (_clock_phrase(day.precip_start) or "during the period"))
+    if day.precip_end:
+        lines.append("Precipitation ends: "
+                     + (_clock_phrase(day.precip_end) or "before the period ends"))
 
     if day.night_only and day.low:
         record(day.low.low.value, day.low.high.value)
@@ -234,13 +250,28 @@ def rule_based(summary: RegionSummary, day: RegionDay) -> Narrative:
     Also the safety net when Claude is unavailable or its output fails
     validation, so the site always has text.
     """
-    from .region import direction_word, period_of
+    from .region import clock_phrase, direction_word, period_of
 
     headline = (day.sky or "Cloud").capitalize() + "."
 
     parts = []
     if day.precip_chance and day.precip_chance.high.value >= 20:
-        parts.append(f"Chance of precipitation {day.precip_chance.high.value:.0f}%.")
+        chance = f"Chance of precipitation {day.precip_chance.high.value:.0f}%"
+        # A period can be wet without being wet throughout. Say when it
+        # arrives, rather than leaving a reader to assume it is already
+        # raining because the chance is high.
+        timing = []
+        if day.precip_start and not day.precip_underway:
+            begins = clock_phrase(day.precip_start)
+            if begins:
+                timing.append(f"beginning {begins}")
+        if day.precip_end:
+            ends = clock_phrase(day.precip_end)
+            if ends:
+                timing.append(f"ending {ends}")
+        if timing:
+            chance += ", " + " and ".join(timing)
+        parts.append(chance + ".")
 
     if day.wind_speed:
         direction = direction_word(day.dominant_direction)

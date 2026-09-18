@@ -81,6 +81,45 @@ def period_of(when) -> str | None:
     return "in the evening"
 
 
+def clock_phrase(when) -> str | None:
+    """Name a time the way a forecast times the start of precipitation.
+
+    Coarser than a clock and deliberately so: "near midnight" carries the
+    uncertainty an hourly timestamp pretends away.
+    """
+    if when is None:
+        return None
+    hour = when.hour
+    if hour >= 23 or hour == 0:
+        return "near midnight"
+    if hour < 5:
+        return "after midnight"
+    if hour < 8:
+        return "early in the morning"
+    if hour < 12:
+        return "in the morning"
+    if hour < 17:
+        return "in the afternoon"
+    if hour < 20:
+        return "in the evening"
+    return "late in the evening"
+
+
+#: An hour counts as wet at this much accumulation, or at this chance when
+#: no amount is given. Below it the hour is damp at most.
+WET_MM = 0.1
+WET_POP = 60
+
+
+def _is_wet(hour) -> bool:
+    """Is precipitation actually falling in this hour?"""
+    if hour.precip_amount is not None and hour.precip_amount >= WET_MM:
+        return True
+    if hour.precip_amount is None and (hour.precip_chance or 0) >= WET_POP:
+        return True
+    return False
+
+
 def sky_condition(cloud_percent: float | None, night: bool = False) -> str | None:
     """Turn a cloud-cover percentage into the phrase a forecast would use."""
     if cloud_percent is None:
@@ -136,6 +175,13 @@ class RegionDay:
     cloud_cover: Spread | None = None
     sky: str | None = None
     precip_amount: float | None = None
+    #: When precipitation starts and stops within this period, local time.
+    #: A period reading "chance of rain 100%" with nothing falling for six
+    #: hours is telling the truth badly.
+    precip_start: datetime | None = None
+    precip_end: datetime | None = None
+    #: Already raining when the period opened, so there is no start to give.
+    precip_underway: bool = False
     #: "Today", "Tonight" or the weekday, as a public forecast labels it.
     label: str = ""
     #: True once the day's high has passed and only the overnight low is
@@ -383,6 +429,29 @@ def summarise_region(name: str, timezone: str, members: list[Location],
         # understate what to expect.
         rain_mm = max(rain_totals) if rain_totals else None
 
+        # When precipitation arrives, on the hour that most of the region
+        # has it rather than the first point to see a shower. The earliest
+        # single member would time the whole Avalon off one drizzly hour on
+        # the Cape Shore.
+        reporting = [h for h in blended.values() if h]
+        wet_by_hour: dict[datetime, int] = {}
+        for hours in reporting:
+            for h in hours:
+                local = h.slot.astimezone(zone_tz)
+                if start <= local < end and _is_wet(h):
+                    wet_by_hour[local] = wet_by_hour.get(local, 0) + 1
+        needed = max(1, len(reporting) // 2)
+        wet_hours = sorted(t for t, n in wet_by_hour.items() if n >= needed)
+        precip_start = wet_hours[0] if wet_hours else None
+        precip_end = None
+        if wet_hours:
+            last = wet_hours[-1]
+            # Only call it an ending if it stops before the period does.
+            if last + timedelta(hours=1) < end:
+                precip_end = last + timedelta(hours=1)
+        # Raining as the period opened: there is no beginning to report.
+        underway = bool(precip_start and precip_start <= start)
+
         direction, agreement = _dominant_direction(dirs)
         window = None
         if peak:
@@ -402,6 +471,8 @@ def summarise_region(name: str, timezone: str, members: list[Location],
             precip_chance=_spread(pops), cloud_cover=_spread(clouds),
             sky=sky, precip_amount=rain_mm, dominant_direction=direction,
             direction_agreement=agreement,
+            precip_start=precip_start, precip_end=precip_end,
+            precip_underway=underway,
             peak_gust_at=peak[1].astimezone(zone_tz) if peak else None,
             peak_gust_where=peak[2] if peak else None,
             peak_window=window,

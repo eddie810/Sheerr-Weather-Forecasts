@@ -49,6 +49,12 @@ def clock(value: Any, fmt: str = "%-I:%M %p") -> str:
     return value.strftime(fmt)
 
 
+def clock_words(value: Any) -> str:
+    """Time of day in words, for a forecast's own way of timing things."""
+    from .region import clock_phrase
+    return clock_phrase(value) or ""
+
+
 def datestr(value: Any, fmt: str = "%A, %B %-d") -> str:
     if not isinstance(value, datetime):
         try:
@@ -107,6 +113,7 @@ def build_env(template_dir: Path | str | None = None) -> Environment:
     env.filters.update({
         "num": num, "pct": pct, "clock": clock, "datestr": datestr,
         "arrow": arrow, "wind_desc": wind_desc, "direction": direction, "alert_lead": alert_lead, "alert_locations": alert_locations,
+        "clock_words": clock_words,
     })
     return env
 

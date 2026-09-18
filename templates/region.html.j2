@@ -74,6 +74,9 @@
       <div class="cell">
         <div class="k">Chance of rain</div>
         <div class="v">{{ entry.day.precip_chance.high.value | num }}%</div>
+        {% if entry.day.precip_start and not entry.day.precip_underway %}<div class="n">Beginning {{ entry.day.precip_start | clock_words }}</div>
+        {% elif entry.day.precip_underway and entry.day.precip_end %}<div class="n">Ending {{ entry.day.precip_end | clock_words }}</div>
+        {% elif entry.day.precip_underway %}<div class="n">Already underway</div>{% endif %}
       </div>
       {% endif %}
     </div>
