@@ -251,7 +251,8 @@ def rule_based(summary: RegionSummary, day: RegionDay) -> Narrative:
     Also the safety net when Claude is unavailable or its output fails
     validation, so the site always has text.
     """
-    from .region import clock_phrase, direction_word, period_of
+    from .region import (clock_phrase, direction_word, period_of,
+                         phrases_far_apart)
 
     headline = (day.sky or "Cloud").capitalize() + "."
 
@@ -268,10 +269,8 @@ def rule_based(summary: RegionSummary, day: RegionDay) -> Narrative:
         # "Beginning near midnight and ending after midnight" is accurate
         # and useless. An ending is only worth giving when it is far enough
         # from the start to mean something different.
-        if begins and ends:
-            brief = (day.precip_end - day.precip_start) < timedelta(hours=3)
-            if brief or ends == begins:
-                ends = None
+        if begins and ends and not phrases_far_apart(begins, ends):
+            ends = None
         if begins:
             timing.append(f"beginning {begins}")
         if ends:

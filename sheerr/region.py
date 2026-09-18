@@ -105,6 +105,21 @@ def clock_phrase(when) -> str | None:
     return "late in the evening"
 
 
+#: "Near midnight" and "after midnight" both name the same moment, so a
+#: spell running 23:30 to 03:30 would otherwise be timed twice over. Every
+#: other pair of phrases marks a real difference — morning to afternoon is
+#: worth saying — so only these two collapse.
+_MIDNIGHT_PHRASES = {"near midnight", "after midnight"}
+
+
+def phrases_far_apart(start_phrase: str | None, end_phrase: str | None) -> bool:
+    """Are these two times of day distinct enough to be worth saying both?"""
+    if not start_phrase or not end_phrase or start_phrase == end_phrase:
+        return False
+    return not (start_phrase in _MIDNIGHT_PHRASES
+                and end_phrase in _MIDNIGHT_PHRASES)
+
+
 #: An hour counts as wet at this much accumulation, or at this chance when
 #: no amount is given. Below it the hour is damp at most.
 WET_MM = 0.1
