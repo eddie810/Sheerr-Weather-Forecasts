@@ -5,31 +5,52 @@
    overridden by it. Typography is inherited from the host so it matches the
    surrounding page; only layout and colour are ours. #}
 <div class="sw-forecast" data-region="{{ summary.name }}">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=Montserrat:wght@400;600;700&display=swap">
 <style>
+  /* Sheerr Weather brand: the site's sky blue #37c3ff, with Montserrat for
+     labels and Lora for reading text. The pure brand blue is only 2.0:1 on
+     white, so text uses a darkened variant of the same hue (5.3:1) and the
+     bright blue is kept for rules and marks. */
   .sw-forecast {
-    --sw-ink:#16212b; --sw-soft:#4a5c66; --sw-faint:#7d8d95;
-    --sw-rule:#e0e6e6; --sw-card:#fff; --sw-accent:#2d6a72; --sw-accent-bg:#eef4f4;
+    --sw-brand:#37c3ff; --sw-accent:#0072a3; --sw-accent-bg:#e0f6ff;
+    --sw-ink:#1b2733; --sw-soft:#4d5d6b; --sw-faint:#7a8894;
+    --sw-rule:#e4e9ed; --sw-card:#fff;
     --sw-warn-bg:#fdf4e8; --sw-warn-rule:#e8c89a; --sw-warn-ink:#8a5418;
-    --sw-calm:#6b8f7a; --sw-breezy:#c08a2e; --sw-windy:#c2631f; --sw-severe:#a32f2f;
-    color:var(--sw-ink) !important; line-height:1.6; max-width:52rem; margin:0 auto;
-    box-sizing:border-box;
+    --sw-calm:#3f8a5f; --sw-breezy:#b5811f; --sw-windy:#c2631f; --sw-severe:#a32f2f;
+    --sw-sans:"Montserrat","Helvetica Neue",Helvetica,Arial,sans-serif;
+    --sw-serif:"Lora",Georgia,"Times New Roman",serif;
+    color:var(--sw-ink) !important; line-height:1.65; max-width:52rem; margin:0 auto;
+    box-sizing:border-box; font-family:var(--sw-serif);
   }
   .sw-forecast *, .sw-forecast *::before, .sw-forecast *::after { box-sizing:inherit; }
   @media (prefers-color-scheme:dark) {
     .sw-forecast:not([data-theme="light"]) {
-      --sw-ink:#e8eeef; --sw-soft:#a9bcc3; --sw-faint:#7b8f97;
-      --sw-rule:#2a3a42; --sw-card:#17242c; --sw-accent:#6fb3b8; --sw-accent-bg:#1c3036;
+      --sw-ink:#e9eef3; --sw-soft:#aebecb; --sw-faint:#7e8f9d;
+      --sw-rule:#27343f; --sw-card:#17242c;
+      /* On a dark ground the brand blue itself reads at 7.9:1, so it is
+         used directly rather than darkened. */
+      --sw-accent:#37c3ff; --sw-accent-bg:#132833;
       --sw-warn-bg:#2a2013; --sw-warn-rule:#5c4622; --sw-warn-ink:#e8c08a;
+      --sw-calm:#6fc191; --sw-breezy:#dcab55; --sw-windy:#e08a4c; --sw-severe:#e0706b;
     }
   }
 
-  .sw-forecast .sw-head { border-bottom:2px solid var(--sw-accent); padding-bottom:.6rem; margin-bottom:1.1rem; }
-  .sw-forecast .sw-eyebrow {
-    font-size:.7rem; letter-spacing:.14em; text-transform:uppercase;
-    color:var(--sw-faint) !important; font-weight:700; margin:0 0 .2rem;
+  .sw-forecast .sw-head {
+    border-bottom:3px solid var(--sw-brand); padding-bottom:.6rem; margin-bottom:1.1rem;
   }
-  .sw-forecast .sw-title { font-size:1.6rem; font-weight:700; margin:0; line-height:1.2; color:var(--sw-ink) !important; }
-  .sw-forecast .sw-sub { font-size:.86rem; color:var(--sw-soft) !important; margin:.3rem 0 0; }
+  .sw-forecast .sw-eyebrow {
+    font-family:var(--sw-sans); font-size:.66rem; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--sw-accent) !important;
+    font-weight:700; margin:0 0 .3rem;
+  }
+  .sw-forecast .sw-title {
+    font-family:var(--sw-sans); font-size:1.55rem; font-weight:700; margin:0;
+    line-height:1.2; letter-spacing:-.01em; color:var(--sw-ink) !important;
+  }
+  .sw-forecast .sw-sub {
+    font-family:var(--sw-sans); font-size:.8rem; color:var(--sw-soft) !important;
+    margin:.3rem 0 0;
+  }
 
   .sw-forecast .sw-alert {
     background:var(--sw-warn-bg); border:1px solid var(--sw-warn-rule);
@@ -42,25 +63,32 @@
   }
   .sw-forecast .sw-alert > summary::-webkit-details-marker { display:none; }
   .sw-forecast .sw-alert > summary::after {
-    content:"Read the full statement ▸"; display:block; margin-top:.35rem;
-    font-size:.72rem; letter-spacing:.04em; opacity:.85;
+    content:"Read the full statement ▸"; display:block; margin-top:.4rem;
+    font-family:var(--sw-sans); font-size:.68rem; letter-spacing:.08em;
+    text-transform:uppercase; opacity:.85;
   }
   .sw-forecast .sw-alert[open] > summary::after { content:"Hide the full statement ▾"; }
   .sw-forecast .sw-alert-name {
-    display:block; font-size:.9rem; font-weight:700; color:var(--sw-warn-ink) !important;
+    display:block; font-family:var(--sw-sans); font-size:.86rem; font-weight:700;
+    letter-spacing:.02em; color:var(--sw-warn-ink) !important;
   }
   .sw-forecast .sw-alert-lead {
-    display:block; font-size:.84rem; color:var(--sw-soft) !important; margin-top:.15rem;
+    display:block; font-family:var(--sw-serif); font-size:.88rem;
+    color:var(--sw-soft) !important; margin-top:.2rem;
   }
   .sw-forecast .sw-alert p { margin:.3rem 0; font-size:.86rem; color:var(--sw-soft); white-space:pre-line; }
 
   .sw-forecast .sw-day { border-top:1px solid var(--sw-rule); padding:1.1rem 0 .3rem; }
   .sw-forecast .sw-day:first-of-type { border-top:0; padding-top:0; }
   .sw-forecast .sw-day h3 {
-    font-size:.74rem; letter-spacing:.12em; text-transform:uppercase;
-    color:var(--sw-accent) !important; margin:0 0 .5rem; font-weight:700;
+    font-family:var(--sw-sans); font-size:.7rem; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--sw-accent) !important;
+    margin:0 0 .5rem; font-weight:700;
   }
-  .sw-forecast .sw-text { font-size:1.02rem; margin:0 0 .9rem; color:var(--sw-ink) !important; }
+  .sw-forecast .sw-text {
+    font-family:var(--sw-serif); font-size:1.06rem; line-height:1.7;
+    margin:0 0 .95rem; color:var(--sw-ink) !important;
+  }
 
   .sw-forecast .sw-figs {
     display:grid; gap:1px; background:var(--sw-rule);
@@ -69,17 +97,24 @@
   }
   .sw-forecast .sw-fig { background:var(--sw-card); padding:.7rem .85rem; }
   .sw-forecast .sw-k {
-    font-size:.64rem; letter-spacing:.1em; text-transform:uppercase;
-    color:var(--sw-faint) !important; font-weight:700; display:block; margin-bottom:.2rem;
+    font-family:var(--sw-sans); font-size:.62rem; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--sw-faint) !important; font-weight:700;
+    display:block; margin-bottom:.25rem;
   }
-  .sw-forecast .sw-v { font-size:1.2rem; font-weight:600; font-variant-numeric:tabular-nums; }
-  .sw-forecast .sw-n { font-size:.74rem; color:var(--sw-soft) !important; display:block; margin-top:.15rem; }
+  .sw-forecast .sw-v {
+    font-family:var(--sw-sans); font-size:1.18rem; font-weight:600;
+    font-variant-numeric:tabular-nums; letter-spacing:-.01em;
+  }
+  .sw-forecast .sw-n {
+    font-family:var(--sw-sans); font-size:.72rem; color:var(--sw-soft) !important;
+    display:block; margin-top:.2rem;
+  }
   .sw-forecast .sw-calm{color:var(--sw-calm) !important} .sw-forecast .sw-breezy{color:var(--sw-breezy) !important}
   .sw-forecast .sw-windy{color:var(--sw-windy) !important} .sw-forecast .sw-severe{color:var(--sw-severe) !important}
 
   .sw-forecast .sw-foot {
     border-top:1px solid var(--sw-rule); margin-top:1.3rem; padding-top:.8rem;
-    font-size:.74rem; color:var(--sw-faint) !important;
+    font-family:var(--sw-sans); font-size:.72rem; color:var(--sw-faint) !important;
   }
   .sw-forecast .sw-foot p { margin:.2rem 0; }
   @media (max-width:420px) { .sw-forecast .sw-title { font-size:1.35rem; } }
