@@ -122,6 +122,55 @@
   .sw-forecast .sw-calm{color:var(--sw-calm) !important} .sw-forecast .sw-breezy{color:var(--sw-breezy) !important}
   .sw-forecast .sw-windy{color:var(--sw-windy) !important} .sw-forecast .sw-severe{color:var(--sw-severe) !important}
 
+
+  /* Seven-day strip */
+  .sw-forecast .sw-week {
+    display:grid; gap:1px; background:var(--sw-rule);
+    border:1px solid var(--sw-rule); border-radius:4px; overflow:hidden;
+    grid-template-columns:repeat(7,1fr); margin-top:.6rem;
+  }
+  .sw-forecast .sw-wd {
+    background:var(--sw-card); padding:.7rem .3rem .8rem; text-align:center;
+  }
+  .sw-forecast .sw-wd-name {
+    font-family:var(--sw-sans); font-size:.62rem; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--sw-faint) !important; font-weight:700;
+  }
+  .sw-forecast .sw-wd-date {
+    font-family:var(--sw-sans); font-size:.6rem; color:var(--sw-faint) !important;
+    display:block; margin-top:.1rem;
+  }
+  .sw-forecast .sw-icon { width:32px; height:32px; display:block; margin:.45rem auto .35rem; }
+  .sw-forecast .sw-i-sun { fill:#f2a33c; }
+  .sw-forecast .sw-i-ray { stroke:#f2a33c; stroke-width:2; stroke-linecap:round; fill:none; }
+  .sw-forecast .sw-i-cloud { fill:#b9c6d1; }
+  .sw-forecast .sw-i-rain { stroke:var(--sw-brand); stroke-width:2.2; stroke-linecap:round; fill:none; }
+  .sw-forecast .sw-i-snow { stroke:#9fd4ef; stroke-width:1.8; stroke-linecap:round; fill:none; }
+  @media (prefers-color-scheme:dark) {
+    .sw-forecast:not([data-theme="light"]) .sw-i-cloud { fill:#7e8e9c; }
+  }
+  .sw-forecast .sw-wd-hi {
+    font-family:var(--sw-sans); font-size:1.02rem; font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+  .sw-forecast .sw-wd-lo {
+    font-family:var(--sw-sans); font-size:.86rem; color:var(--sw-soft) !important;
+    font-variant-numeric:tabular-nums;
+  }
+  .sw-forecast .sw-wd-pop {
+    font-family:var(--sw-sans); font-size:.62rem; color:var(--sw-accent) !important;
+    display:block; margin-top:.25rem; font-weight:600; min-height:.9rem;
+  }
+  .sw-forecast .sw-week-title {
+    font-family:var(--sw-sans); font-size:.68rem; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--sw-accent) !important; font-weight:700;
+    margin:1.6rem 0 0;
+  }
+  @media (max-width:560px) {
+    .sw-forecast .sw-week { grid-template-columns:repeat(4,1fr); }
+    .sw-forecast .sw-icon { width:28px; height:28px; }
+  }
+  @media (max-width:360px) { .sw-forecast .sw-week { grid-template-columns:repeat(3,1fr); } }
   .sw-forecast .sw-foot {
     border-top:1px solid var(--sw-rule); margin-top:1.3rem; padding-top:.8rem;
     font-family:var(--sw-sans); font-size:.72rem; color:var(--sw-faint) !important;
@@ -129,6 +178,43 @@
   .sw-forecast .sw-foot p { margin:.2rem 0; }
   @media (max-width:420px) { .sw-forecast .sw-title { font-size:1.35rem; } }
 </style>
+
+
+{# Icons are inline SVG: no network request, crisp at any size, and they
+   take their colours from the surrounding theme. #}
+{% macro wx_icon(kind) %}
+<svg class="sw-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+  {% if kind == "sun" %}
+    <circle cx="16" cy="16" r="6.5" class="sw-i-sun"/>
+    <g class="sw-i-ray">
+      <path d="M16 2.5v3.5M16 26v3.5M29.5 16H26M6 16H2.5M25.5 6.5l-2.5 2.5M9 23l-2.5 2.5M25.5 25.5L23 23M9 9L6.5 6.5"/>
+    </g>
+  {% elif kind == "sun-cloud" %}
+    <circle cx="13" cy="12.5" r="5.5" class="sw-i-sun"/>
+    <g class="sw-i-ray"><path d="M13 1.5v3M24.5 12.5h-3M21.2 4.3l-2.1 2.1M4.8 4.3l2.1 2.1M1.5 12.5h3"/></g>
+    <path class="sw-i-cloud" d="M12 26h11a4.5 4.5 0 0 0 .6-9 6.2 6.2 0 0 0-11.9 1.3A4 4 0 0 0 12 26z"/>
+  {% elif kind == "part-cloud" %}
+    <circle cx="11.5" cy="11.5" r="5" class="sw-i-sun"/>
+    <g class="sw-i-ray"><path d="M11.5 1v3M20 11.5h-3M18 5l-2 2M5 5l2 2M3 11.5h3"/></g>
+    <path class="sw-i-cloud" d="M11 27h12a5 5 0 0 0 .6-10 6.8 6.8 0 0 0-13-1.4A4.4 4.4 0 0 0 11 27z"/>
+  {% elif kind == "mostly-cloud" %}
+    <circle cx="10" cy="10.5" r="4" class="sw-i-sun"/>
+    <path class="sw-i-cloud" d="M10 27h13a5.2 5.2 0 0 0 .6-10.4 7.2 7.2 0 0 0-13.9-1.5A4.6 4.6 0 0 0 10 27z"/>
+  {% elif kind == "cloud" %}
+    <path class="sw-i-cloud" d="M9.5 25h13.5a5.4 5.4 0 0 0 .6-10.8 7.5 7.5 0 0 0-14.4-1.5A4.8 4.8 0 0 0 9.5 25z"/>
+  {% elif kind in ("rain", "showers") %}
+    <path class="sw-i-cloud" d="M9.5 20h13.5a5.4 5.4 0 0 0 .6-10.8 7.5 7.5 0 0 0-14.4-1.5A4.8 4.8 0 0 0 9.5 20z"/>
+    <g class="sw-i-rain"><path d="M12 23.5l-1.5 4.5M18 23.5l-1.5 4.5M24 23.5l-1.5 4.5"/></g>
+  {% elif kind == "snow" %}
+    <path class="sw-i-cloud" d="M9.5 20h13.5a5.4 5.4 0 0 0 .6-10.8 7.5 7.5 0 0 0-14.4-1.5A4.8 4.8 0 0 0 9.5 20z"/>
+    <g class="sw-i-snow"><path d="M12 24v4M10.3 25l3.4 2M13.7 25l-3.4 2M22 24v4M20.3 25l3.4 2M23.7 25l-3.4 2"/></g>
+  {% else %}
+    <path class="sw-i-cloud" d="M9.5 20h13.5a5.4 5.4 0 0 0 .6-10.8 7.5 7.5 0 0 0-14.4-1.5A4.8 4.8 0 0 0 9.5 20z"/>
+    <g class="sw-i-rain"><path d="M12 23.5l-1.5 4.5M22 23.5l-1.5 4.5"/></g>
+    <g class="sw-i-snow"><path d="M17 24v4M15.3 25l3.4 2M18.7 25l-3.4 2"/></g>
+  {% endif %}
+</svg>
+{% endmacro %}
 
 {% macro gust_class(v) %}{% if v is none %}sw-calm{% elif v >= 80 %}sw-severe{% elif v >= 60 %}sw-windy{% elif v >= 40 %}sw-breezy{% else %}sw-calm{% endif %}{% endmacro %}
 
@@ -187,6 +273,22 @@
     </div>
   </div>
   {% endfor %}
+
+  {% if summary.days | length > 1 %}
+  <p class="sw-week-title">The week ahead</p>
+  <div class="sw-week">
+    {% for day in summary.days[:7] %}
+    <div class="sw-wd">
+      <span class="sw-wd-name">{{ day.date.strftime('%a') }}</span>
+      <span class="sw-wd-date">{{ day.date.strftime('%-d %b') }}</span>
+      {{ wx_icon(day.icon) }}
+      <span class="sw-wd-hi">{{ day.high.high.value | num if day.high else "—" }}°</span>
+      <span class="sw-wd-lo">{{ day.low.low.value | num if day.low else "—" }}°</span>
+      <span class="sw-wd-pop">{% if day.precip_chance and day.precip_chance.high.value >= 20 %}{{ day.precip_chance.high.value | num }}%{% endif %}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
 
   <div class="sw-foot">
     <p>Sampled across {{ summary.members | length }} points: {{ summary.member_names | join(", ") }}.</p>

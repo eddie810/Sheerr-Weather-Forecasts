@@ -126,6 +126,41 @@ class RegionDay:
     cloud_cover: Spread | None = None
     sky: str | None = None
     precip_amount: float | None = None
+
+    @property
+    def icon(self) -> str:
+        """Which icon best describes the day.
+
+        Precipitation wins over sky when it is likely enough to be the
+        story; below that the sky condition decides. Snow is chosen on the
+        day's high rather than its low, since what falls during the day is
+        what people see.
+        """
+        pop = self.precip_chance.high.value if self.precip_chance else 0
+        high = self.high.high.value if self.high else None
+        wet = pop >= 60 and (self.precip_amount or 0) >= 0.5
+
+        if wet:
+            if high is not None and high <= 1:
+                return "snow"
+            if high is not None and high <= 3:
+                return "rain-snow"
+            return "rain"
+
+        sky = (self.sky or "").lower()
+        if pop >= 40 and "cloud" in sky:
+            return "showers"
+        if sky.startswith("sunny"):
+            return "sun"
+        if sky.startswith("mainly sunny"):
+            return "sun-cloud"
+        if sky.startswith("a mix"):
+            return "part-cloud"
+        if sky.startswith("mainly cloudy"):
+            return "mostly-cloud"
+        if sky.startswith("cloudy"):
+            return "cloud"
+        return "part-cloud"
     dominant_direction: str | None = None
     direction_agreement: float = 0.0
     peak_gust_at: datetime | None = None

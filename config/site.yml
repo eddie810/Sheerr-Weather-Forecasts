@@ -25,7 +25,7 @@ pages:
   # Regional forecasts: several points summarised as one.
   - type: region
     region: avalon
-    days: 5
+    days: 7
     narrative_days: 3
 
   # Aviation delay risk. Uses AERODATABOX_API_KEY for published schedules;
