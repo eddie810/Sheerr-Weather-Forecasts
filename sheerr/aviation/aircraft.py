@@ -44,6 +44,10 @@ PROFILES = {
     "DH8B": AircraftProfile("DH8B", "Dash 8-200", "turboprop", 32, 1.45, 1.25),
     "DH8A": AircraftProfile("DH8A", "Dash 8-100", "turboprop", 32, 1.45, 1.25),
     "DHC6": AircraftProfile("DHC6", "Twin Otter", "turboprop", 25, 1.7, 1.35),
+    # Medevac, charter and bush work out of St. John's. Light airframes:
+    # the wind that merely bumps a Dash 8 can stop these.
+    "B350": AircraftProfile("B350", "King Air 350", "turboprop", 25, 1.6, 1.3),
+    "DHC3": AircraftProfile("DHC3", "DHC-3 Otter", "turboprop", 20, 1.8, 1.4),
     "AT43": AircraftProfile("AT43", "ATR 42", "turboprop", 33, 1.4, 1.2),
     "AT72": AircraftProfile("AT72", "ATR 72", "turboprop", 35, 1.35, 1.2),
     "AT75": AircraftProfile("AT75", "ATR 72-500", "turboprop", 35, 1.35, 1.2),
@@ -103,6 +107,8 @@ MODEL_PATTERNS: list[tuple[str, str]] = [
     (r"(dhc-?8|dash\s*8|q)-?200|\bdh8b\b", "DH8B"),
     (r"(dhc-?8|dash\s*8|q)-?(100|101|102|103)\b|\bdh8a\b", "DH8A"),
     (r"dhc-?6|twin\s*otter|\bdhc6\b", "DHC6"),
+    (r"dhc-?3|\bdhc3\b", "DHC3"),
+    (r"king\s*air|\bb350\b|\bbe20\b|beech(craft)?\s*350", "B350"),
     (r"195[\s-]*e2|e195-?e2|\be295\b", "E295"),
     (r"190[\s-]*e2|e190-?e2|\be290\b", "E290"),
     (r"e-?195|embraer\s*195", "E195"),
