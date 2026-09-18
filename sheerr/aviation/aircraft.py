@@ -10,7 +10,7 @@ another, never as an operational figure.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 
 @dataclass
@@ -39,6 +39,12 @@ def CAT3(profile: AircraftProfile) -> AircraftProfile:
 PROFILES = {
     "DH8D": AircraftProfile("DH8D", "Dash 8-400", "turboprop", 32, 1.35, 1.2),
     "DH8C": AircraftProfile("DH8C", "Dash 8-300", "turboprop", 32, 1.4, 1.2),
+    # PAL and Air Borealis fly the smaller Dash 8s and the Twin Otter on the
+    # provincial routes, so they turn up on a St. John's board.
+    "DH8B": AircraftProfile("DH8B", "Dash 8-200", "turboprop", 32, 1.45, 1.25),
+    "DH8A": AircraftProfile("DH8A", "Dash 8-100", "turboprop", 32, 1.45, 1.25),
+    "DHC6": AircraftProfile("DHC6", "Twin Otter", "turboprop", 25, 1.7, 1.35),
+    "AT43": AircraftProfile("AT43", "ATR 42", "turboprop", 33, 1.4, 1.2),
     "AT72": AircraftProfile("AT72", "ATR 72", "turboprop", 35, 1.35, 1.2),
     "AT75": AircraftProfile("AT75", "ATR 72-500", "turboprop", 35, 1.35, 1.2),
     "B190": AircraftProfile("B190", "Beech 1900", "turboprop", 25, 1.6, 1.3),
@@ -58,10 +64,15 @@ PROFILES = {
     "B737": CAT3(AircraftProfile("B737", "Boeing 737", "narrowbody", 36, 0.95, 0.9)),
     "B738": CAT3(AircraftProfile("B738", "Boeing 737-800", "narrowbody", 36, 0.95, 0.9)),
     "B38M": CAT3(AircraftProfile("B38M", "Boeing 737 MAX 8", "narrowbody", 36, 0.95, 0.9)),
+    "B39M": CAT3(AircraftProfile("B39M", "Boeing 737 MAX 9", "narrowbody", 36, 0.95, 0.9)),
     "B763": CAT3(AircraftProfile("B763", "Boeing 767-300", "widebody", 35, 0.85, 0.8)),
     "A332": CAT3(AircraftProfile("A332", "Airbus A330-200", "widebody", 38, 0.85, 0.8)),
     "A333": CAT3(AircraftProfile("A333", "Airbus A330-300", "widebody", 38, 0.85, 0.8)),
     "B788": CAT3(AircraftProfile("B788", "Boeing 787-8", "widebody", 40, 0.8, 0.8)),
+    "B77W": CAT3(AircraftProfile("B77W", "Boeing 777-300ER", "widebody", 38, 0.8, 0.8)),
+    # Offshore rotary out of St. John's. Wind matters less than icing and
+    # ceiling do, and it holds to its own limits rather than a runway's.
+    "S92": AircraftProfile("S92", "Sikorsky S-92", "helicopter", 45, 1.1, 1.4),
     "BCS1": CAT3(AircraftProfile("BCS1", "Airbus A220-100", "narrowbody", 35, 1.0, 0.95)),
     "BCS3": CAT3(AircraftProfile("BCS3", "Airbus A220-300", "narrowbody", 35, 1.0, 0.95)),
 }
@@ -71,6 +82,7 @@ PROFILES = {
 #: Ordered most specific first: a MAX 8 must not fall through to plain 737.
 MODEL_PATTERNS: list[tuple[str, str]] = [
     (r"737.*max\s*8|737-8\s*max|\bb38m\b", "B38M"),
+    (r"737.*max\s*9|737-9\s*max|\bb39m\b", "B39M"),
     (r"737-?800|737-8\b", "B738"),
     (r"\b737\b", "B737"),
     (r"a220-?300|\bbcs3\b|cs300", "BCS3"),
@@ -84,8 +96,13 @@ MODEL_PATTERNS: list[tuple[str, str]] = [
     (r"a330-?200|\ba332\b", "A332"),
     (r"767-?300|\bb763\b", "B763"),
     (r"787-?8|\bb788\b", "B788"),
+    (r"777-?300|\bb77w\b", "B77W"),
+    (r"s-?92|sikorsky\s*92|\bs92\b", "S92"),
     (r"(dhc-?8|dash\s*8|q)-?400|\bdh8d\b", "DH8D"),
     (r"(dhc-?8|dash\s*8|q)-?300|\bdh8c\b", "DH8C"),
+    (r"(dhc-?8|dash\s*8|q)-?200|\bdh8b\b", "DH8B"),
+    (r"(dhc-?8|dash\s*8|q)-?(100|101|102|103)\b|\bdh8a\b", "DH8A"),
+    (r"dhc-?6|twin\s*otter|\bdhc6\b", "DHC6"),
     (r"195[\s-]*e2|e195-?e2|\be295\b", "E295"),
     (r"190[\s-]*e2|e190-?e2|\be290\b", "E290"),
     (r"e-?195|embraer\s*195", "E195"),
@@ -94,12 +111,26 @@ MODEL_PATTERNS: list[tuple[str, str]] = [
     (r"crj.*900|\bcrj9\b", "CRJ9"),
     (r"crj.*200|\bcrj2\b", "CRJ2"),
     (r"atr.*72|\bat7[25]\b", "AT72"),
+    (r"atr.*42|\bat4[35]\b", "AT43"),
     (r"saab.*340|\bsf34\b", "SF34"),
     (r"beech.*1900|\bb190\b", "B190"),
 ]
 
 #: Used when the type is unknown, deliberately mid-range rather than benign.
 UNKNOWN = AircraftProfile("UNKN", "Unknown type", "unknown", 33, 1.1, 1.0)
+
+#: Two days out, many flights have no airframe assigned yet. That is normal
+#: scheduling, not a gap in the table below, and reads differently on a board.
+UNASSIGNED = AircraftProfile("UNKN", "Not yet assigned", "unknown", 33, 1.1, 1.0)
+
+#: Model strings seen but not matched, so a build can report what to add
+#: rather than silently grading a third of the board as an unknown type.
+_unmatched: set[str] = set()
+
+
+def unmatched_models() -> list[str]:
+    """Model strings this build could not resolve, for reporting."""
+    return sorted(_unmatched)
 
 
 def profile_for(type_or_model: str | None) -> AircraftProfile:
@@ -109,8 +140,8 @@ def profile_for(type_or_model: str | None) -> AircraftProfile:
     "De Havilland Canada DHC-8-400". Both must resolve, or every flight
     reads as an unknown type and the per-airframe assessment is pointless.
     """
-    if not type_or_model:
-        return UNKNOWN
+    if not type_or_model or not type_or_model.strip():
+        return UNASSIGNED
 
     text = type_or_model.strip()
     exact = PROFILES.get(text.upper())
@@ -121,4 +152,10 @@ def profile_for(type_or_model: str | None) -> AircraftProfile:
     for pattern, code in MODEL_PATTERNS:
         if re.search(pattern, lowered):
             return PROFILES[code]
-    return UNKNOWN
+
+    # The airline named a type this table does not know. Carry the name
+    # through to the board — "Boeing 737 MAX 9" tells a reader more than
+    # "Unknown type" — while still grading it on the cautious unknown
+    # numbers, since nothing here is known about how it handles wind.
+    _unmatched.add(text)
+    return replace(UNKNOWN, name=text)

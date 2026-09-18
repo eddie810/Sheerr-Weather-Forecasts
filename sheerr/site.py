@@ -150,6 +150,13 @@ def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
 
         assessments = [write_verdict(assess_factors(f, ap, periods, notams))
                        for f in flights]
+        # Name the types the table could not resolve, so they can be added
+        # rather than quietly graded as unknown.
+        from .aviation.aircraft import unmatched_models
+        unknown_types = unmatched_models()
+        if unknown_types:
+            print("::warning::unrecognised aircraft models at "
+                  f"{ap.icao}: {', '.join(unknown_types)}")
         html = render(entry.get("template", "aviation"), "html", {
             "airport": ap, "assessments": assessments, "metar": metar,
             "raw_taf": raw_taf, "notams": notams, "periods": periods,
