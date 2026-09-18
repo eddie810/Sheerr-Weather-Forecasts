@@ -278,7 +278,8 @@ def cmd_aviation(args, config: Config) -> None:
     from .aviation.notams import fetch_notams
     from .aviation.risk import assess_factors, write_verdict
     from .aviation.runways import CYYT
-    from .aviation.schedule import ScheduleError, fetch_schedule, live_sample
+    from .aviation.schedule import (ScheduleError, board_order,
+                                fetch_schedule, live_sample)
 
     airport = CYYT   # only CYYT is modelled so far
     if args.airport.upper() not in (airport.icao, airport.iata):
@@ -303,6 +304,7 @@ def cmd_aviation(args, config: Config) -> None:
 
     if not flights:
         raise SystemExit("error: no flights returned for that window")
+    flights = board_order(flights, datetime.now(_tz.utc))
 
     assessments = [write_verdict(assess_factors(f, airport, periods, notams))
                    for f in flights]

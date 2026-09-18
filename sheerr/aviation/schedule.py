@@ -199,6 +199,23 @@ def fetch_schedule(icao: str, start: datetime, hours: int = 12,
     return sorted(flights, key=lambda f: f.scheduled)
 
 
+def board_order(flights: list[Flight], now: datetime) -> list[Flight]:
+    """Order a board the way an airport screen reads: what is next, first.
+
+    Sorting purely by clock time buries the next departure under everything
+    that has already gone, which on a window starting at 05:00 is most of
+    the morning. Upcoming flights lead, soonest first; those already away
+    follow, most recent first, so the morning bank is still there to look
+    at without being in the way.
+    """
+    def when(flight: Flight) -> datetime:
+        return flight.revised or flight.scheduled
+
+    upcoming = sorted((f for f in flights if when(f) >= now), key=when)
+    past = sorted((f for f in flights if when(f) < now), key=when, reverse=True)
+    return upcoming + past
+
+
 def _parse(rows: list[dict], direction: str) -> list[Flight]:
     out = []
     for row in rows:

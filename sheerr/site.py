@@ -114,7 +114,8 @@ def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
         from .aviation.notams import fetch_notams
         from .aviation.risk import assess_factors, write_verdict
         from .aviation.runways import CYYT
-        from .aviation.schedule import ScheduleError, fetch_schedule, live_sample
+        from .aviation.schedule import (ScheduleError, board_order,
+                                fetch_schedule, live_sample)
         from .models import Location as _Loc
 
         ap = CYYT
@@ -147,6 +148,7 @@ def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
             flights = [f for f in flights if f.direction == direction]
         if not flights:
             raise ProviderError(f"no {direction} flights in the window at {ap.icao}")
+        flights = board_order(flights, datetime.now(timezone.utc))
 
         assessments = [write_verdict(assess_factors(f, ap, periods, notams))
                        for f in flights]

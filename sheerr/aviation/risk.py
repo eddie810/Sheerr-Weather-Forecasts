@@ -46,7 +46,7 @@ OUTLOOK_PLAIN = {
     "De-icing expected": "De-icing needed",
     "De-icing, holdover critical": "De-icing delays likely",
     "Wind-limited departure": "Strong winds",
-    "Contaminated runway": "Snow or ice on runway",
+    "Contaminated runway": "Slippery runway",
     "Beyond forecast": "Too far ahead to say",
 }
 
@@ -257,8 +257,16 @@ def assess_factors(flight: Flight, airport: Airport, periods: list[TafPeriod],
 
     weather = " ".join(p.weather for p in covering if p.weather)
     if notams and notams.contaminated and not FREEZING.search(weather):
-        factors.append(Factor("runway contamination",
-                              "Snow or ice reported on the runway", 0.45))
+        # Say what the NOTAM says. Calling a wet September runway "snow or
+        # ice" was wrong twice over: the surface was good, and the words
+        # were invented rather than read.
+        factors.append(Factor(
+            "runway contamination",
+            f"Reduced braking — {notams.surface_description}", 0.45,
+            technical="RSC " + "; ".join(
+                f"{rwy} RwyCC {code} {surface}".strip()
+                for rwy, (code, surface) in sorted(notams.surfaces.items()))
+            or None))
 
     if FREEZING.search(weather):
         factors.append(Factor(

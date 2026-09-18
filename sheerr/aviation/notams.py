@@ -24,7 +24,25 @@ RVR_OUT = re.compile(r"\bRVR\s+(\d{2})\b.*?\bNOT\s+AVBL\b", re.S)
 RWY_CLOSED = re.compile(r"\bRWY\s+(\d{2}[LRC]?)(?:/(\d{2}[LRC]?))?\s+CLSD\b")
 #: Canadian Runway Friction Index, reported when a runway is contaminated.
 CRFI = re.compile(r"\bCRFI\s+(?:RWY\s+(\d{2}[LRC]?)\s+)?\.?(\d\.\d{2}|\d{2})\b")
-RSC = re.compile(r"\bRSC\b|\bSNOWTAM\b|\bCOMPACTED SNOW\b|\bICE PATCHES\b|\bSLUSH\b|\bWET SNOW\b")
+#: A runway surface condition report under GRF/TALPA:
+#: "RSC 10 5/5/5 100 PCT WET, 100 PCT WET, 100 PCT WET."
+#: The triple is the runway condition code for each third of the runway.
+RSC_REPORT = re.compile(
+    r"\bRSC\s+(\d{2}[LRC]?)\s+(\d)/(\d)/(\d)\s*([^.]*)")
+#: A contaminant named without condition codes, which still deserves notice.
+CONTAMINANT = re.compile(
+    r"\bSNOWTAM\b|\bCOMPACTED SNOW\b|\bICE PATCHES\b|\bSLUSH\b"
+    r"|\bWET SNOW\b|\bDRY SNOW\b|\bGLARE ICE\b|\bFROZEN RUTS\b")
+
+#: ICAO runway condition codes. 6 is dry and 5 is good — a wet runway in
+#: summer reports 5/5/5 and is not contaminated in any sense that delays a
+#: flight. Braking only becomes a factor from 4 down.
+RWYCC_MEANING = {
+    6: "dry", 5: "good", 4: "good to medium", 3: "medium",
+    2: "medium to poor", 1: "poor", 0: "less than poor",
+}
+#: At or below this code the surface is worth reporting as a delay factor.
+RWYCC_SIGNIFICANT = 4
 ILS_OUT = re.compile(r"\bILS\s+(?:RWY\s+)?(\d{2}[LRC]?)\b.*?\b(?:U/S|NOT\s+AVBL|OTS)\b", re.S)
 
 
@@ -37,7 +55,38 @@ class AirportNotams:
     runways_closed: set[str] = field(default_factory=set)
     ils_unserviceable: set[str] = field(default_factory=set)
     crfi: dict[str, float] = field(default_factory=dict)
-    contaminated: bool = False
+    #: runway -> (worst condition code across its thirds, reported surface)
+    surfaces: dict[str, tuple[int, str]] = field(default_factory=dict)
+    #: A contaminant named in a NOTAM that carried no condition codes.
+    contaminant_reported: bool = False
+
+    @property
+    def worst_code(self) -> int | None:
+        """Lowest runway condition code reported anywhere on the field."""
+        return min((c for c, _ in self.surfaces.values()), default=None)
+
+    @property
+    def contaminated(self) -> bool:
+        """Is the surface degraded enough to bear on a delay?
+
+        A wet runway is not. In St. John's it reports 5/5/5 for much of the
+        year, and treating that as contamination put snow and ice on the
+        board in September.
+        """
+        worst = self.worst_code
+        return (worst is not None and worst <= RWYCC_SIGNIFICANT) or self.contaminant_reported
+
+    @property
+    def surface_description(self) -> str:
+        """What is actually on the runway, in the NOTAM's own words."""
+        worst = self.worst_code
+        if worst is None:
+            return "contaminant reported on the runway"
+        for runway, (code, surface) in sorted(self.surfaces.items()):
+            if code == worst:
+                text = surface.strip().lower() or RWYCC_MEANING.get(code, "degraded")
+                return f"runway {runway} {text} (braking {RWYCC_MEANING[code]})"
+        return "degraded runway surface"
 
     @property
     def significant(self) -> bool:
@@ -59,7 +108,7 @@ class AirportNotams:
             lines.append(f"CRFI {value:.2f} on runway {runway}" if runway
                          else f"CRFI {value:.2f} reported")
         if self.contaminated and not self.crfi:
-            lines.append("Runway surface condition reported")
+            lines.append("Runway surface: " + self.surface_description)
         return lines
 
 
@@ -101,10 +150,25 @@ def fetch_notams(icao: str) -> AirportNotams:
         for match in CRFI.finditer(text):
             runway, value = match.group(1) or "", match.group(2)
             result.crfi[runway] = float(value) if "." in value else float(value) / 100
-        if RSC.search(text):
-            result.contaminated = True
+        for match in RSC_REPORT.finditer(text):
+            runway = match.group(1)
+            codes = [int(match.group(i)) for i in (2, 3, 4)]
+            # The thirds are reported separately; the worst one governs.
+            worst = min(codes)
+            surface = _first_surface(match.group(5))
+            previous = result.surfaces.get(runway)
+            if previous is None or worst < previous[0]:
+                result.surfaces[runway] = (worst, surface)
+        if CONTAMINANT.search(text):
+            result.contaminant_reported = True
 
     return result
+
+
+def _first_surface(text: str) -> str:
+    """The surface wording from an RSC report, e.g. "100 PCT WET"."""
+    parts = [p.strip() for p in (text or "").split(",") if p.strip()]
+    return parts[0].lower() if parts else ""
 
 
 #: Crosswind a contaminated runway will bear, as a fraction of the dry
