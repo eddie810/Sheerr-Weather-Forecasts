@@ -89,7 +89,7 @@
   {% endif %}
 
   <footer>
-    <div>Built {{ built_at | datestr }} at {{ built_at | clock }} {{ built_at.strftime('%Z') }}. {% if site.refresh_hours >= 24 %}Refreshes daily.{% else %}Refreshes every {{ site.refresh_hours }} hours.{% endif %}</div>
+    <div>Built {{ built_at | datestr }} at {{ built_at | clock }} {{ built_at.strftime('%Z') }}. {% if site.refresh_hours >= 24 %}Refreshes daily.{% elif site.refresh_hours == 1 %}Refreshes hourly.{% else %}Refreshes every {{ site.refresh_hours }} hours.{% endif %}</div>
     {% for line in attributions %}<div>{{ line }}</div>{% endfor %}
   </footer>
 </div>

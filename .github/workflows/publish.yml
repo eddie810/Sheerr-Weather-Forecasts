@@ -2,13 +2,14 @@ name: Publish forecasts
 
 on:
   schedule:
-    # Four times a day, so the forecast keeps up with its own labels: a page
-    # built in the morning cannot know the evening has come, so it would go
-    # on saying "Today" into the night and name the wrong day after midnight.
-    # These land near 06:00, 12:00, 18:00 and 00:00 Newfoundland time.
+    # Hourly, so a warning issued mid-afternoon is on the page within the
+    # hour rather than waiting for the next scheduled forecast. Alerts are
+    # the time-critical part; the forecast itself changes far more slowly.
+    # Runs at :30 past, which puts four of them near 06:00, 12:00, 18:00 and
+    # midnight Newfoundland time, where the Today/Tonight labels change.
     # GitHub cron is always UTC; pages stamp themselves in each location's
     # own local time, so this needs no seasonal adjustment.
-    - cron: "30 8,14,20,2 * * *"
+    - cron: "30 * * * *"
   push:
     branches: [claude/elegant-lovelace-lhd1en]
     paths:
@@ -46,6 +47,21 @@ jobs:
 
       - name: Verify GRIB decoding is available
         run: python -c "import eccodes; print('ecCodes', eccodes.codes_get_api_version())"
+
+      - name: Work out which ECMWF run is current
+        id: ecmwf
+        run: |
+          # ECMWF publishes at 00, 06, 12 and 18z, so the key must name the
+          # six-hour cycle. Keying on the wall-clock hour would change every
+          # build and never hit.
+          cycle=$(( $(date -u +%H) / 6 * 6 ))
+          printf 'run=%s-%02d\n' "$(date -u +%Y%m%d)" "$cycle" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/ecmwf-cache
+          key: ecmwf-${{ steps.ecmwf.outputs.run }}
+          restore-keys: ecmwf-
 
       - name: Build site
         env:
