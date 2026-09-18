@@ -4,7 +4,7 @@ _{{ summary.members | length }} points sampled: {{ summary.member_names | join("
 
 {% if summary.alerts %}
 {% for a in summary.alerts %}
-> **{{ a.eventDescription or "Weather alert" }}** — {{ a.headlineText }}
+> **{{ a.eventDescription | alert_title }}** — {{ a.headlineText }}
 {% endfor %}
 
 {% endif %}

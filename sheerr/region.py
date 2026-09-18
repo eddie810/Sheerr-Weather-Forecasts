@@ -8,6 +8,7 @@ across the area, which point holds each extreme, and when conditions peak.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import re
 from decimal import Decimal, ROUND_HALF_UP
 from datetime import date as Date, datetime, time, timedelta
 from typing import Any
@@ -79,6 +80,31 @@ def period_of(when) -> str | None:
     if hour < 18:
         return "in the afternoon"
     return "in the evening"
+
+
+#: The Weather Company colour-codes alert severity and folds it into the
+#: title: "Yellow Warning - Wind". Environment Canada issues a wind
+#: warning, with no colour, and that is what a Newfoundland audience is
+#: told on every other channel. The colour is a vendor's internal grading,
+#: so it is stripped rather than broadcast.
+_ALERT_COLOUR = re.compile(
+    r"^\s*(?:yellow|amber|orange|red|green)\s+(warning|watch|statement|advisory)\s*[-–—:]\s*(.+)$",
+    re.I)
+_ALERT_LEADING_KIND = re.compile(r"^\s*(warning|watch|statement|advisory)\s*[-–—:]\s*(.+)$", re.I)
+
+
+def alert_title(text: str | None) -> str:
+    """The alert as a forecast would name it."""
+    if not text:
+        return "Weather alert"
+    value = str(text).strip()
+    for pattern in (_ALERT_COLOUR, _ALERT_LEADING_KIND):
+        match = pattern.match(value)
+        if match:
+            kind, topic = match.group(1).lower(), match.group(2).strip()
+            # "Wind" + "warning", the way it is issued and spoken.
+            return f"{topic[:1].upper()}{topic[1:]} {kind}"
+    return value
 
 
 def clock_phrase(when) -> str | None:

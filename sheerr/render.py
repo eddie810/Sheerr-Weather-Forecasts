@@ -49,6 +49,12 @@ def clock(value: Any, fmt: str = "%-I:%M %p") -> str:
     return value.strftime(fmt)
 
 
+def alert_title(value: Any) -> str:
+    """Name an alert the way it is issued, without a vendor's colour code."""
+    from .region import alert_title as _title
+    return _title(value)
+
+
 def clock_words(value: Any) -> str:
     """Time of day in words, for a forecast's own way of timing things."""
     from .region import clock_phrase
@@ -113,7 +119,7 @@ def build_env(template_dir: Path | str | None = None) -> Environment:
     env.filters.update({
         "num": num, "pct": pct, "clock": clock, "datestr": datestr,
         "arrow": arrow, "wind_desc": wind_desc, "direction": direction, "alert_lead": alert_lead, "alert_locations": alert_locations,
-        "clock_words": clock_words,
+        "clock_words": clock_words, "alert_title": alert_title,
     })
     return env
 

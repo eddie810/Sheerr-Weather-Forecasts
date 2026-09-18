@@ -6,7 +6,7 @@
 {% if event.alerts %}
 > **Active alerts**
 {% for a in event.alerts %}
-> - {{ a.headlineText or a.eventDescription }}
+> - {{ a.eventDescription | alert_title }} — {{ a.headlineText }}
 {% endfor %}
 
 {% endif %}

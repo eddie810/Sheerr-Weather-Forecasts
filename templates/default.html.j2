@@ -14,7 +14,7 @@
   {% if alerts %}
   {% for a in alerts %}
   <section class="alert">
-    <h2>{{ a.eventDescription or "Weather alert" }}</h2>
+    <h2>{{ a.eventDescription | alert_title }}</h2>
     {% if a.description %}<p>{{ a.description | trim }}</p>{% else %}<p>{{ a.headlineText }}</p>{% endif %}
     <div class="src">{{ a.officeName or "Issuing office" }} · {{ a.headlineText }}</div>
   </section>

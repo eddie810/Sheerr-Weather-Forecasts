@@ -8,7 +8,7 @@
 {% if alerts %}
 > **Active alerts**
 {% for a in alerts %}
-> - {{ a.headlineText or a.eventDescription }}
+> - {{ a.eventDescription | alert_title }} — {{ a.headlineText }}
 {% endfor %}
 
 {% endif %}

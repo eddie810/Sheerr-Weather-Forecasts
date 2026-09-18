@@ -215,7 +215,7 @@
   {% for a in summary.alerts %}
   <details class="sw-alert">
     <summary>
-      <span class="sw-alert-name">{{ a.eventDescription or "Weather alert" }}</span>
+      <span class="sw-alert-name">{{ a.eventDescription | alert_title }}</span>
       {% set lead = a | alert_lead %}
       {% if lead %}<span class="sw-alert-lead">{{ lead }}</span>{% endif %}
       {% set places = a | alert_locations %}

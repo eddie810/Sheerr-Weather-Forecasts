@@ -128,6 +128,11 @@ def _clock_phrase(when):
     return clock_phrase(when)
 
 
+def _far_apart(a, b):
+    from .region import phrases_far_apart
+    return phrases_far_apart(a, b)
+
+
 def build_brief(summary: RegionSummary, day: RegionDay) -> tuple[str, set[float]]:
     """Render the day's aggregates as a brief, plus the figures it permits."""
     allowed: set[float] = set()
@@ -150,14 +155,21 @@ def build_brief(summary: RegionSummary, day: RegionDay) -> tuple[str, set[float]
 
     # Timing is given in words, never as a clock reading: a digit here
     # would be a figure the prose is then allowed to invent around.
+    #
+    # The same collapse the deterministic writer applies has to happen here
+    # too. Handing Claude "begins: near midnight" and "ends: after midnight"
+    # gets both back in the prose, which is where "beginning near midnight
+    # and ending after midnight" came from.
+    begins = None if day.precip_underway else _clock_phrase(day.precip_start)
+    ends = _clock_phrase(day.precip_end)
+    if begins and ends and not _far_apart(begins, ends):
+        ends = None
     if day.precip_underway:
         lines.append("Precipitation: already underway as this period opens")
-    elif day.precip_start:
-        lines.append("Precipitation begins: "
-                     + (_clock_phrase(day.precip_start) or "during the period"))
-    if day.precip_end:
-        lines.append("Precipitation ends: "
-                     + (_clock_phrase(day.precip_end) or "before the period ends"))
+    elif begins:
+        lines.append(f"Precipitation begins: {begins}")
+    if ends:
+        lines.append(f"Precipitation ends: {ends}")
 
     if day.night_only and day.low:
         record(day.low.low.value, day.low.high.value)
@@ -203,8 +215,10 @@ def build_brief(summary: RegionSummary, day: RegionDay) -> tuple[str, set[float]
         lines.append("")
         lines.append("Active alerts (mention the alert type, do not quote figures "
                      "from it unless they also appear above):")
+        from .region import alert_title
         for a in summary.alerts:
-            lines.append(f"  - {a.get('eventDescription') or a.get('headlineText')}")
+            lines.append("  - " + alert_title(a.get("eventDescription")
+                                              or a.get("headlineText")))
 
     if summary.missing:
         lines.append("")
