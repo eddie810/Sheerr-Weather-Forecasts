@@ -173,8 +173,8 @@ def assess_factors(flight: Flight, airport: Airport, periods: list[TafPeriod],
     if gust and wind_speed and gust - wind_speed >= 15:
         factors.append(Factor(
             "gusts",
-            f"Gusty — wind jumping to about {kmh(gust):.0f} km/h from "
-            f"{kmh(wind_speed):.0f} km/h, which makes landing and takeoff bumpier",
+            f"Gusty — wind to about {kmh(gust):.0f} km/h "
+            f"from {kmh(wind_speed):.0f} km/h",
             min(0.7, (gust - wind_speed) / 40) * profile.wind_sensitivity,
             technical=f"{wind_speed:.0f}G{gust:.0f} kt, {gust - wind_speed:.0f} kt spread",
         ))
@@ -229,8 +229,7 @@ def assess_factors(flight: Flight, airport: Airport, periods: list[TafPeriod],
         if rvr_out:
             factors.append(Factor(
                 "RVR reporting unserviceable",
-                f"The visibility sensors on runway {runway.ident} are out of service, "
-                "so aircraft need clearer conditions than usual before they can land",
+                f"Visibility sensors out of service on runway {runway.ident}",
                 0.5,
                 technical=f"RVR {runway.ident} unserviceable per NOTAM"))
 
@@ -272,16 +271,13 @@ def assess_factors(flight: Flight, airport: Airport, periods: list[TafPeriod],
         factors.append(Factor(
             "freezing precipitation",
             "Freezing rain or drizzle — "
-            + ("the runway will be slippery" if arriving
-               else "aircraft must be sprayed with de-icing fluid before takeoff, "
-                    "and there is a time limit on how long it lasts"),
+            + ("slippery runway" if arriving else "de-icing needed"),
             (0.75 if arriving else 0.9) * profile.deice_burden))
     elif FROZEN.search(weather):
         factors.append(Factor(
             "snow",
             "Snow — "
-            + ("the runway needs clearing and will be slippery" if arriving
-               else "aircraft need de-icing and the runway needs clearing"),
+            + ("runway clearing" if arriving else "de-icing and runway clearing"),
             (0.5 if arriving else 0.6) * profile.deice_burden))
     if CONVECTIVE.search(weather):
         factors.append(Factor("thunderstorms",
@@ -337,116 +333,15 @@ def _rule_verdict(a: Assessment) -> tuple[str, str]:
     colour = ORANGE if score >= 0.6 else YELLOW if score >= 0.28 else GREEN
     if not a.factors:
         a.reason_technical = "No significant weather in the forecast period."
-        return colour, "Nothing in the forecast that should affect this flight."
+        return colour, "No weather impact expected."
     lead = max(a.factors, key=lambda f: f.weight)
     label = lead.name[0].upper() + lead.name[1:]
     a.reason_technical = f"{label}: {lead.technical or lead.detail}"
     return colour, lead.detail
 
 
-SYSTEM = """You assess weather-related delay risk for flights at a Canadian \
-airport, for Sheerr Weather.
-
-You are given a flight, its aircraft type, the terminal forecast in effect
-at its scheduled time, and pre-computed objective factors. Weigh those
-factors and return a colour and one short sentence.
-
-green   Weather is unlikely to affect the schedule.
-yellow  Weather could plausibly delay this flight.
-orange  Weather is likely to delay this flight, or force de-icing, holding,
-        or a diversion.
-
-Rules:
-- Use ONLY the figures given. Never invent a number.
-- Judge the aircraft against its own limits: the same crosswind is far more
-  limiting for a Beech 1900 than for an A330.
-- A TEMPO or PROB group is a possibility, not the prevailing condition.
-  Weigh it, do not treat it as certain.
-- Arrivals and departures fail differently. An arrival is limited by
-  whether it can complete the approach: landing minima are assessed against
-  runway visual range, 600 ft RVR for an aircraft equipped and certified for
-  CAT III ILS and 1200 ft for everything else, and the downside is holding
-  or a diversion. A departure is limited by de-icing, holdover time and
-  runway state, so freezing precipitation and snow dominate.
-- Never state or imply that a flight is unsafe, cannot operate, or should
-  be cancelled. You assess schedule risk only. Crews and operators decide
-  what flies, against their own limits and current official data.
-- The reason is one sentence, plain, naming the dominant factor."""
-
-
-def write_verdict(assessment: Assessment, api_key: str | None = None,
-                  model: str = "claude-opus-5") -> Assessment:
-    """Have Claude weigh the factors, falling back to the rule verdict."""
-    from ..narrative import find_api_key, validate
-
-    key = api_key
-    if not key:
-        key, _ = find_api_key()
-    if not key or not assessment.factors:
-        return assessment
-
-    flight = assessment.flight
-    brief = [
-        f"Flight: {flight.callsign or flight.number} ({flight.direction})",
-        f"Aircraft: {assessment.profile.name} ({assessment.profile.category}), "
-        f"demonstrated crosswind {assessment.profile.crosswind_kt} kt",
-        f"Scheduled: {flight.scheduled:%Y-%m-%d %H:%M} UTC",
-        f"Flight category at that time: {assessment.category}",
-        f"Runway most likely in use: {assessment.runway or 'unknown'}",
-        f"Headwind {assessment.headwind:.0f} kt, crosswind {assessment.crosswind:.0f} kt "
-        f"({assessment.crosswind_ratio:.0%} of the type's demonstrated crosswind)",
-        "",
-        "Factors:",
-    ] + [f"  - {f.name}: {f.detail}" for f in assessment.factors]
-    text = "\n".join(brief)
-
-    allowed = {float(n) for n in re.findall(r"\d+(?:\.\d+)?", text)}
-    allowed |= set(range(0, 13))
-
-    # A verdict follows from its factors, so the same factors give the same
-    # verdict. Sixty flights reassessed hourly was the bulk of the spend and
-    # almost all of it re-deciding cases that had not changed.
-    from .. import llmcache
-    cache_key = llmcache.key_for("verdict", model, text)
-    cached = llmcache.get(cache_key)
-    if cached:
-        assessment.colour = cached["colour"]
-        assessment.reason = cached["reason"]
-        assessment.source = "claude"
-        return assessment
-
-    if not llmcache.spend():
-        return assessment              # keep the rule verdict
-
-    try:
-        import anthropic
-        from pydantic import BaseModel
-
-        class Verdict(BaseModel):
-            colour: str
-            reason: str
-
-        response = anthropic.Anthropic(api_key=key).messages.parse(
-            model=model, max_tokens=1000, system=SYSTEM,
-            thinking={"type": "adaptive"},
-            messages=[{"role": "user", "content":
-                       f"{text}\n\nReturn colour (green, yellow or orange) "
-                       "and a one-sentence reason."}],
-            output_format=Verdict,
-        )
-        if response.stop_reason == "refusal":
-            raise RuntimeError("model declined")
-
-        parsed = response.parsed_output
-        colour = parsed.colour.strip().lower()
-        if colour not in (GREEN, YELLOW, ORANGE):
-            return assessment
-        reason = parsed.reason.strip()
-        if validate(reason, allowed):
-            return assessment          # cited a figure not in the brief
-        assessment.colour, assessment.reason = colour, reason
-        assessment.source = "claude"
-        llmcache.put(cache_key, {"colour": colour, "reason": reason})
-    except Exception:                  # never fail a build on a verdict
-        pass
-    return assessment
+# A per-flight model call used to write each verdict. It is gone: the board
+# answers one question — could the weather affect this flight — and the
+# rule verdict above already answers it from the same figures. A paragraph
+# per flight was both more than the board needed and, at sixty flights an
+# hour, the bulk of the API spend.

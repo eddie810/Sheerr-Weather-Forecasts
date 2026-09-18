@@ -158,7 +158,7 @@ def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
 
         from .aviation.awc import fetch_metar, fetch_taf
         from .aviation.notams import fetch_notams
-        from .aviation.risk import assess_factors, write_verdict
+        from .aviation.risk import assess_factors
         from .aviation.runways import CYYT
         from .aviation.schedule import (ScheduleError, board_order, day_sections,
                                 fetch_schedule, live_sample)
@@ -208,7 +208,7 @@ def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
                       else [f for f in flights if f.direction == which])
             if not subset:
                 raise ProviderError(f"no {which} flights in the window at {ap.icao}")
-            rows = [write_verdict(assess_factors(f, ap, periods, notams))
+            rows = [assess_factors(f, ap, periods, notams)
                     for f in board_order(subset, now_utc)]
             assessments += rows
             boards.append({
@@ -231,8 +231,7 @@ def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
             "tz": tz,
             "generated_at": datetime.now(ZoneInfo(ap.timezone)),
             "sample_mode": sample, "direction": direction,
-            "assessed_by": ("claude" if any(a.source == "claude" for a in assessments)
-                            else "rule-based"),
+            "assessed_by": "rule-based",
             "home": "./index.html", "standalone": True,
         })
         suffix = "" if direction in ("all", "both") else f"-{direction}s"

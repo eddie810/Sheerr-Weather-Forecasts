@@ -276,7 +276,7 @@ def cmd_aviation(args, config: Config) -> None:
 
     from .aviation.awc import fetch_metar, fetch_taf
     from .aviation.notams import fetch_notams
-    from .aviation.risk import assess_factors, write_verdict
+    from .aviation.risk import assess_factors
     from .aviation.runways import CYYT
     from .aviation.schedule import (ScheduleError, board_order, day_sections,
                                 fetch_schedule, live_sample)
@@ -318,7 +318,7 @@ def cmd_aviation(args, config: Config) -> None:
                   else [f for f in flights if f.direction == which])
         if not subset:
             raise SystemExit(f"error: no {which} flights returned for that window")
-        rows = [write_verdict(assess_factors(f, airport, periods, notams))
+        rows = [assess_factors(f, airport, periods, notams)
                 for f in board_order(subset, now_utc)]
         assessments += rows
         boards.append({
@@ -355,8 +355,7 @@ def cmd_aviation(args, config: Config) -> None:
         # A file opened directly in a browser needs a doctype, or quirks
         # mode changes how it renders.
         "standalone": bool(args.output),
-        "assessed_by": ("claude" if any(a.source == "claude" for a in assessments)
-                        else "rule-based"),
+        "assessed_by": "rule-based",
     }
     write_out(render(args.template, args.format, context), args.output)
 
