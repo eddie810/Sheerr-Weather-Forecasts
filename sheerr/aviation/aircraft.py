@@ -48,6 +48,11 @@ PROFILES = {
     # the wind that merely bumps a Dash 8 can stop these.
     "B350": AircraftProfile("B350", "King Air 350", "turboprop", 25, 1.6, 1.3),
     "DHC3": AircraftProfile("DHC3", "DHC-3 Otter", "turboprop", 20, 1.8, 1.4),
+    # Air ambulance and charter. Light jets: quick to de-ice, but a low
+    # crosswind limit and no CAT III fit.
+    "LJ40": AircraftProfile("LJ40", "Learjet 40", "business jet", 24, 1.3, 0.9),
+    "LJ45": AircraftProfile("LJ45", "Learjet 45", "business jet", 24, 1.3, 0.9),
+    "LJ60": AircraftProfile("LJ60", "Learjet 60", "business jet", 24, 1.25, 0.9),
     "AT43": AircraftProfile("AT43", "ATR 42", "turboprop", 33, 1.4, 1.2),
     "AT72": AircraftProfile("AT72", "ATR 72", "turboprop", 35, 1.35, 1.2),
     "AT75": AircraftProfile("AT75", "ATR 72-500", "turboprop", 35, 1.35, 1.2),
@@ -113,6 +118,9 @@ MODEL_PATTERNS: list[tuple[str, str]] = [
     (r"dhc-?6|twin\s*otter|\bdhc6\b", "DHC6"),
     (r"dhc-?3|\bdhc3\b", "DHC3"),
     (r"king\s*air|\bb350\b|\bbe20\b|beech(craft)?\s*350", "B350"),
+    (r"lear(jet)?\s*-?40|\blj40\b", "LJ40"),
+    (r"lear(jet)?\s*-?45|\blj45\b", "LJ45"),
+    (r"lear(jet)?\s*-?60|\blj60\b", "LJ60"),
     (r"195[\s-]*e2|e195-?e2|\be295\b", "E295"),
     (r"190[\s-]*e2|e190-?e2|\be290\b", "E290"),
     (r"e-?195|embraer\s*195", "E195"),
