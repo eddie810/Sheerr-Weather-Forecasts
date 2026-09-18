@@ -200,8 +200,8 @@ def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
                 "<meta charset=\"utf-8\">\n"
                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
                 f"<title>{summary.name} forecast</title>\n"
-                "<style>html,body{margin:0;padding:0;background:transparent}"
-                "body{padding:2px 0}</style>\n</head>\n<body>\n"
+                "<style>html,body{margin:0;padding:0;background:#fff;"
+                "color:#1b2733}body{padding:2px 0}</style>\n</head>\n<body>\n"
                 + body +
                 "\n<script>\n"
                 "  (function () {\n"

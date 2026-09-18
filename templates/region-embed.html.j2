@@ -23,16 +23,16 @@
     box-sizing:border-box; font-family:var(--sw-serif);
   }
   .sw-forecast *, .sw-forecast *::before, .sw-forecast *::after { box-sizing:inherit; }
-  @media (prefers-color-scheme:dark) {
-    .sw-forecast:not([data-theme="light"]) {
-      --sw-ink:#e9eef3; --sw-soft:#aebecb; --sw-faint:#7e8f9d;
-      --sw-rule:#27343f; --sw-card:#17242c;
-      /* On a dark ground the brand blue itself reads at 7.9:1, so it is
-         used directly rather than darkened. */
-      --sw-accent:#37c3ff; --sw-accent-bg:#132833;
-      --sw-warn-bg:#2a2013; --sw-warn-rule:#5c4622; --sw-warn-ink:#e8c08a;
-      --sw-calm:#6fc191; --sw-breezy:#dcab55; --sw-windy:#e08a4c; --sw-severe:#e0706b;
-    }
+  /* Deliberately NOT tied to prefers-color-scheme: this fragment sits in
+     someone else's page and cannot know what colour that page is. A phone
+     in dark mode would otherwise put pale text on a white host. Opt in by
+     setting data-theme="dark" on the wrapper when the host really is dark. */
+  .sw-forecast[data-theme="dark"] {
+    --sw-ink:#e9eef3; --sw-soft:#aebecb; --sw-faint:#7e8f9d;
+    --sw-rule:#27343f; --sw-card:#17242c;
+    --sw-accent:#37c3ff; --sw-accent-bg:#132833;
+    --sw-warn-bg:#2a2013; --sw-warn-rule:#5c4622; --sw-warn-ink:#e8c08a;
+    --sw-calm:#6fc191; --sw-breezy:#dcab55; --sw-windy:#e08a4c; --sw-severe:#e0706b;
   }
 
   .sw-forecast .sw-head {
@@ -146,9 +146,7 @@
   .sw-forecast .sw-i-cloud { fill:#b9c6d1; }
   .sw-forecast .sw-i-rain { stroke:var(--sw-brand); stroke-width:2.2; stroke-linecap:round; fill:none; }
   .sw-forecast .sw-i-snow { stroke:#9fd4ef; stroke-width:1.8; stroke-linecap:round; fill:none; }
-  @media (prefers-color-scheme:dark) {
-    .sw-forecast:not([data-theme="light"]) .sw-i-cloud { fill:#7e8e9c; }
-  }
+  .sw-forecast[data-theme="dark"] .sw-i-cloud { fill:#7e8e9c; }
   .sw-forecast .sw-wd-hi {
     font-family:var(--sw-sans); font-size:1.02rem; font-weight:700;
     font-variant-numeric:tabular-nums;
