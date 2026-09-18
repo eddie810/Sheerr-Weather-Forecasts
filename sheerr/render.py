@@ -84,6 +84,12 @@ def direction(cardinal: Any) -> str:
     return direction_word(cardinal) or (cardinal or "")
 
 
+def alert_locations(alert: Any) -> list:
+    """Expose the alert's named places to templates."""
+    from .region import alert_locations as _locs
+    return _locs(alert if isinstance(alert, dict) else {})
+
+
 def alert_lead(alert: Any) -> str:
     """Expose the alert lead line to templates."""
     from .region import alert_lead as _lead
@@ -100,7 +106,7 @@ def build_env(template_dir: Path | str | None = None) -> Environment:
     )
     env.filters.update({
         "num": num, "pct": pct, "clock": clock, "datestr": datestr,
-        "arrow": arrow, "wind_desc": wind_desc, "direction": direction, "alert_lead": alert_lead,
+        "arrow": arrow, "wind_desc": wind_desc, "direction": direction, "alert_lead": alert_lead, "alert_locations": alert_locations,
     })
     return env
 

@@ -159,6 +159,34 @@ ALERT_LEAD_KEYS = ("Maximum wind gusts", "Potential wind gusts", "Wind gusts",
                    "Time span", "Locations")
 
 
+def alert_locations(alert: dict) -> list[str]:
+    """The places an alert names, as a list.
+
+    Split on commas only. "St. John's and vicinity" is one place, and so is
+    "Coastal Newfoundland from Green Bay to the Baie de Verde Peninsula" —
+    treating "and" as a separator would break both. A trailing Oxford "and"
+    is dropped once commas have already established a list.
+    """
+    text = (alert.get("description") or "")
+    line = next((ln.strip() for ln in text.splitlines()
+                 if ln.strip().lower().startswith("locations")), "")
+    if not line:
+        return []
+    body = line.split(":", 1)[1].strip().rstrip(".") if ":" in line else ""
+    if not body:
+        return []
+    if "," not in body:
+        return [body]
+    parts = []
+    for chunk in body.split(","):
+        chunk = chunk.strip()
+        if chunk.lower().startswith("and "):
+            chunk = chunk[4:].strip()
+        if chunk:
+            parts.append(chunk)
+    return parts
+
+
 def alert_lead(alert: dict) -> str:
     """One line describing what an alert actually warns about."""
     text = (alert.get("description") or "").strip()
