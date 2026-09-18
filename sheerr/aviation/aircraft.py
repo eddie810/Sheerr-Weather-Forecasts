@@ -92,6 +92,7 @@ PROFILES = {
     "C295": AircraftProfile("C295", "Airbus C295", "turboprop", 35, 1.2, 1.1),
     "A359": CAT3(AircraftProfile("A359", "Airbus A350-900", "widebody", 40, 0.8, 0.8)),
     "B789": CAT3(AircraftProfile("B789", "Boeing 787-9", "widebody", 40, 0.8, 0.8)),
+    "B78X": CAT3(AircraftProfile("B78X", "Boeing 787-10", "widebody", 40, 0.8, 0.8)),
     # Offshore rotary out of St. John's. Wind matters less than icing and
     # ceiling do, and it holds to its own limits rather than a runway's.
     "S92": AircraftProfile("S92", "Sikorsky S-92", "helicopter", 45, 1.1, 1.4),
@@ -122,6 +123,7 @@ MODEL_PATTERNS: list[tuple[str, str]] = [
     (r"777-?200|\bb77l\b", "B77L"),
     (r"\bc-?295\b|cn-?235", "C295"),
     (r"a350-?900|\ba359\b", "A359"),
+    (r"787-?10|\bb78x\b", "B78X"),
     (r"787-?9|\bb789\b", "B789"),
     (r"s-?92|sikorsky\s*92|\bs92\b", "S92"),
     (r"(dhc-?8|dash\s*8|q)-?400|\bdh8d\b", "DH8D"),

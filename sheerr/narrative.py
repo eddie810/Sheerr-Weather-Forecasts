@@ -13,6 +13,7 @@ so an unattended build never fails for want of a key.
 from __future__ import annotations
 
 import os
+from datetime import timedelta
 import re
 from dataclasses import dataclass
 
@@ -261,14 +262,20 @@ def rule_based(summary: RegionSummary, day: RegionDay) -> Narrative:
         # arrives, rather than leaving a reader to assume it is already
         # raining because the chance is high.
         timing = []
-        if day.precip_start and not day.precip_underway:
-            begins = clock_phrase(day.precip_start)
-            if begins:
-                timing.append(f"beginning {begins}")
-        if day.precip_end:
-            ends = clock_phrase(day.precip_end)
-            if ends:
-                timing.append(f"ending {ends}")
+        begins = (clock_phrase(day.precip_start)
+                  if day.precip_start and not day.precip_underway else None)
+        ends = clock_phrase(day.precip_end) if day.precip_end else None
+        # "Beginning near midnight and ending after midnight" is accurate
+        # and useless. An ending is only worth giving when it is far enough
+        # from the start to mean something different.
+        if begins and ends:
+            brief = (day.precip_end - day.precip_start) < timedelta(hours=3)
+            if brief or ends == begins:
+                ends = None
+        if begins:
+            timing.append(f"beginning {begins}")
+        if ends:
+            timing.append(f"ending {ends}")
         if timing:
             chance += ", " + " and ".join(timing)
         parts.append(chance + ".")
