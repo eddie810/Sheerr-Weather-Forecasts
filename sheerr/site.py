@@ -48,16 +48,41 @@ def load_site_config(path: Path | str | None = None) -> dict[str, Any]:
     return yaml.safe_load(path.read_text()) or {}
 
 
+def page_matches(entry: dict[str, Any], only: list[str]) -> bool:
+    """Does this page answer to any of the given names?
+
+    Matched loosely against the page's type and whatever it is about, so
+    "region", "avalon" and "region-avalon" all pick out the same page.
+    """
+    tokens = {str(entry.get(k, "")).lower()
+              for k in ("type", "location", "region", "airport", "direction")}
+    tokens.discard("")
+    tokens.add(f"{entry.get('type', '')}-{entry.get('region') or entry.get('location') or ''}".lower())
+    return any(want.lower() in tokens for want in only)
+
+
 def build_site(config: Config, site_config: dict[str, Any], outdir: Path,
-               build_providers, fetch_all, units_for) -> tuple[list[BuiltPage], list[FailedPage]]:
-    """Render every configured page into `outdir`."""
+               build_providers, fetch_all, units_for,
+               only: list[str] | None = None) -> tuple[list[BuiltPage], list[FailedPage]]:
+    """Render the configured pages into `outdir`.
+
+    `only` narrows the run to the pages named. Changing one page should not
+    mean refetching every other one — a full build costs an ECMWF pull, a
+    schedule pull and a run of narrative calls that nothing asked for.
+    """
     outdir = Path(outdir)
-    if outdir.exists():
+    # A filtered run adds to what is already there rather than replacing a
+    # site with a single page.
+    if outdir.exists() and not only:
         shutil.rmtree(outdir)
-    outdir.mkdir(parents=True)
+    outdir.mkdir(parents=True, exist_ok=True)
 
     meta = site_config.get("site") or {}
     pages = site_config.get("pages") or []
+    if only:
+        pages = [e for e in pages if page_matches(e, only)]
+        if not pages:
+            raise ConfigError(f"no configured page matches {', '.join(only)}")
     built: list[BuiltPage] = []
     failed: list[FailedPage] = []
     attributions: set[str] = set()
@@ -71,6 +96,11 @@ def build_site(config: Config, site_config: dict[str, Any], outdir: Path,
                 built.append(page)
         except (ProviderError, ConfigError, ValueError, SystemExit) as exc:
             failed.append(FailedPage(label, str(exc) or exc.__class__.__name__))
+
+    # The index lists the whole site, so a filtered run leaves the existing
+    # one alone rather than rewriting it with one entry.
+    if only:
+        return built, failed
 
     index = render("index", "html", {
         "site": {"title": meta.get("title", "Forecasts"),

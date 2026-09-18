@@ -366,7 +366,8 @@ def cmd_site(args, config: Config) -> None:
 
     site_config = load_site_config(args.site_config)
     built, failed = build_site(config, site_config, Path(args.outdir),
-                               build_providers, fetch_all, units_for)
+                               build_providers, fetch_all, units_for,
+                               only=args.only or None)
 
     for page in built:
         print(f"  built {page.href}", file=sys.stderr)
@@ -450,6 +451,10 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--site-config", help="Path to site.yml")
     s.add_argument("--strict", action="store_true",
                    help="Fail if any page could not be generated")
+    s.add_argument("--only", action="append", metavar="PAGE",
+                   help="Build just these pages, by type or subject "
+                        "(e.g. --only avalon, --only aviation). Repeatable. "
+                        "Other pages in the output directory are left alone.")
     s.set_defaults(func=cmd_site)
 
     l = sub.add_parser("locations", help="List configured locations")
