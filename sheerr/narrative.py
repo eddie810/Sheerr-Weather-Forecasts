@@ -128,7 +128,9 @@ def build_brief(summary: RegionSummary, day: RegionDay) -> tuple[str, set[float]
     lines = [
         f"Region: {summary.name}",
         f"Members sampled: {', '.join(summary.member_names)}",
-        f"Day: {day.day_of_week}, {day.date:%-d %B %Y}",
+        f"Period: {day.label or day.day_of_week}, {day.date:%-d %B %Y}"
+        + (" — the daytime high has passed; this period is the night ahead"
+           if day.night_only else ""),
         "",
     ]
 
@@ -140,7 +142,10 @@ def build_brief(summary: RegionSummary, day: RegionDay) -> tuple[str, set[float]
     if day.sky:
         lines.append(f"Sky: {day.sky}")
 
-    if day.high and day.low:
+    if day.night_only and day.low:
+        record(day.low.low.value, day.low.high.value)
+        lines.append(f"Low: {_range(day.low)} C")
+    elif day.high and day.low:
         record(day.high.low.value, day.high.high.value,
                day.low.low.value, day.low.high.value)
         where = (f" (coolest {day.high.low.area}, warmest {day.high.high.area})"
@@ -250,13 +255,16 @@ def rule_based(summary: RegionSummary, day: RegionDay) -> Narrative:
                 wind += f" {period}"
         parts.append(wind + ".")
 
-    if day.high:
+    if day.night_only:
+        if day.low:
+            parts.append(f"Low of {_fmt(day.low.low.value)}.")
+    elif day.high:
         if day.high.uniform:
             parts.append(f"High of {_fmt(day.high.high.value)}.")
         else:
             parts.append(
                 f"Highs {_range(day.high)}, coolest over {day.high.low.area}.")
-    if day.low:
+    if day.low and not day.night_only:
         parts.append(f"Low of {_fmt(day.low.low.value)}.")
 
     if day.precip_amount is not None and day.precip_amount >= 0.2:

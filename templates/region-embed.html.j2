@@ -231,16 +231,19 @@
 
   {% for entry in narratives %}
   <div class="sw-day">
-    <h3>{{ entry.day.day_of_week }}, {{ entry.day.date.strftime('%B %-d') }}</h3>
+    <h3>{{ entry.day.label or entry.day.day_of_week }}{% if not entry.day.night_only %}, {{ entry.day.date.strftime('%B %-d') }}{% endif %}</h3>
     <p class="sw-text">{{ entry.narrative.headline }} {{ entry.narrative.discussion }}</p>
     <div class="sw-figs">
-      {% if entry.day.high %}
+      {% if entry.day.night_only and entry.day.low %}
+      <div class="sw-fig"><span class="sw-k">Overnight low</span>
+        <span class="sw-v">{{ entry.day.low.low.value | num }}{{ units.temp }}</span></div>
+      {% elif entry.day.high %}
       <div class="sw-fig"><span class="sw-k">High</span>
         <span class="sw-v">{% if entry.day.high.uniform %}{{ entry.day.high.high.value | num }}{% else %}{{ entry.day.high.low.value | num }}–{{ entry.day.high.high.value | num }}{% endif %}{{ units.temp }}</span>
         {% if not entry.day.high.uniform %}<span class="sw-n">Coolest {{ entry.day.high.low.area }}</span>{% endif %}
       </div>
       {% endif %}
-      {% if entry.day.low %}
+      {% if entry.day.low and not entry.day.night_only %}
       <div class="sw-fig"><span class="sw-k">Low</span>
         <span class="sw-v">{{ entry.day.low.low.value | num }}–{{ entry.day.low.high.value | num }}{{ units.temp }}</span></div>
       {% endif %}
@@ -267,7 +270,7 @@
   <div class="sw-week">
     {% for day in summary.days[:7] %}
     <div class="sw-wd">
-      <span class="sw-wd-name">{{ day.date.strftime('%a') }}</span>
+      <span class="sw-wd-name">{{ "Today" if loop.first and not day.night_only else ("Tonight" if loop.first else day.date.strftime('%a')) }}</span>
       <span class="sw-wd-date">{{ day.date.strftime('%-d %b') }}</span>
       {{ wx_icon(day.icon) }}
       <span class="sw-wd-hi">{{ day.high.high.value | num if day.high else "—" }}°</span>

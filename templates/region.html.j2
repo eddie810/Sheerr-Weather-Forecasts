@@ -34,7 +34,7 @@
 
   {% for entry in narratives %}
   <section>
-    <h2 class="sec">{{ entry.day.day_of_week }}, {{ entry.day.date.strftime('%B %-d') }}</h2>
+    <h2 class="sec">{{ entry.day.label or entry.day.day_of_week }}{% if not entry.day.night_only %}, {{ entry.day.date.strftime('%B %-d') }}{% endif %}</h2>
     {# Terse forecast text reads as one continuous statement, not a
        headline over a body. #}
     <p style="margin:0 0 1rem;max-width:64ch;font-size:1.02rem;line-height:1.6">{{ entry.narrative.headline }} {{ entry.narrative.discussion }}</p>

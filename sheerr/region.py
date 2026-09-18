@@ -27,6 +27,10 @@ SKY_BANDS = [
 ]
 
 
+#: The hour a forecast stops saying "Today" and starts saying "Tonight",
+#: in the region's own local time.
+EVENING_HOUR = 18
+
 #: Forecasts spell wind directions out in full; "NW" is chart shorthand.
 DIRECTION_WORDS = {
     "N": "North", "NNE": "North-northeast", "NE": "Northeast",
@@ -126,6 +130,12 @@ class RegionDay:
     cloud_cover: Spread | None = None
     sky: str | None = None
     precip_amount: float | None = None
+    #: "Today", "Tonight" or the weekday, as a public forecast labels it.
+    label: str = ""
+    #: True once the day's high has passed and only the overnight low is
+    #: still ahead, so the page stops leading with a temperature that
+    #: already happened.
+    night_only: bool = False
 
     @property
     def icon(self) -> str:
@@ -362,9 +372,19 @@ def summarise_region(name: str, timezone: str, members: list[Location],
             if hot:
                 window = (min(hot).astimezone(zone_tz), max(hot).astimezone(zone_tz))
 
+        # Label the way a forecast does: today is "Today" until the evening
+        # and "Tonight" after it, tomorrow and beyond are named days.
+        if offset == 0:
+            evening = now.hour >= EVENING_HOUR
+            label, night_only = ("Tonight", True) if evening else ("Today", False)
+        else:
+            label, night_only = day.strftime("%A"), False
+
         region_days.append(RegionDay(
             date=day,
             day_of_week=day.strftime("%A"),
+            label=label,
+            night_only=night_only,
             high=_spread(highs), low=_spread(lows),
             gust=_spread(gusts), wind_speed=_spread(speeds),
             precip_chance=_spread(pops), cloud_cover=_spread(clouds),

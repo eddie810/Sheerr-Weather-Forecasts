@@ -2,11 +2,13 @@ name: Publish forecasts
 
 on:
   schedule:
-    # Once daily at 10:00 UTC, which is 07:30 NDT — a morning refresh before
-    # the day starts. GitHub cron is always UTC; pages stamp themselves in
-    # each location's own local time, so this needs no seasonal adjustment.
-    # Run it on demand from Actions > Publish forecasts > Run workflow.
-    - cron: "0 10 * * *"
+    # Four times a day, so the forecast keeps up with its own labels: a page
+    # built in the morning cannot know the evening has come, so it would go
+    # on saying "Today" into the night and name the wrong day after midnight.
+    # These land near 06:00, 12:00, 18:00 and 00:00 Newfoundland time.
+    # GitHub cron is always UTC; pages stamp themselves in each location's
+    # own local time, so this needs no seasonal adjustment.
+    - cron: "30 8,14,20,2 * * *"
   push:
     branches: [claude/elegant-lovelace-lhd1en]
     paths:
