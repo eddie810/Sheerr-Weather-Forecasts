@@ -67,6 +67,9 @@
   tr.daybreak ~ tr:nth-child(odd) td { background:#11171e; }
   table.board tr:last-child td { border-bottom:none; }
   .flt { font-weight:600; letter-spacing:.08em; font-size:.95rem; color:var(--ink); }
+  /* Who is operating reads first; the number identifies it. */
+  .flt .airline { display:block; font-weight:600; letter-spacing:.04em; color:var(--ink); }
+  .flt .fltnum { display:block; font-weight:400; font-size:.78rem; color:var(--dim); letter-spacing:.1em; }
   .port { color:var(--amber); letter-spacing:.04em; }
   .time { font-size:1.05rem; font-weight:600; letter-spacing:.06em; color:var(--ink); }
   .ac { color:var(--dim); }
@@ -157,6 +160,12 @@
       letter-spacing:.14em; text-transform:uppercase; flex:0 0 auto;
     }
     table.board td.why, table.board td.outlook { white-space:normal; text-align:right; }
+    /* The label sits left, the airline right, and the number always takes
+       its own line beneath rather than sitting alongside when it happens
+       to fit. */
+    table.board td.flt { flex-wrap:wrap; }
+    table.board td.flt .airline { text-align:right; margin-left:auto; }
+    table.board td.flt .fltnum { flex:0 0 100%; text-align:right; }
     .why { max-width:none; }
   }
 </style>
@@ -211,7 +220,7 @@
         <th>Time</th><th>Flight</th>
         <th>{{ far }}</th>
         <th>Aircraft</th><th>Conditions</th><th class="adv-cell">Rwy</th><th class="adv-cell">Xwind</th>
-        <th>Airline</th><th>Weather</th><th>Outlook</th><th>Detail</th>
+        <th>Status</th><th>Weather</th><th>Outlook</th><th>Detail</th>
       </tr></thead>
       {% for label, rows in board.sections %}
       <tbody>
@@ -219,13 +228,15 @@
       {% for a in rows %}
         <tr>
           <td class="time" data-l="Time">{{ a.flight.scheduled.astimezone(tz).strftime('%H:%M') }}</td>
-          <td class="flt" data-l="Flight">{{ a.flight.callsign or a.flight.number }}</td>
+          <td class="flt" data-l="Flight">
+            {%- if a.flight.operator %}<span class="airline">{{ a.flight.operator }}</span>{% endif %}
+            <span class="fltnum">{{ a.flight.callsign or a.flight.number }}</span></td>
           <td class="port" data-l="{{ far }}">{{ a.flight.other_label }}</td>
           <td class="ac" data-l="Aircraft">{{ a.profile.name }}</td>
           <td data-l="Conditions"><span class="normal-only">{{ a.plain_category }}</span><span class="adv-only">{{ a.category }}</span></td>
           <td class="adv-cell" data-l="Runway">{{ a.runway or "—" }}</td>
           <td class="adv-cell" data-l="Crosswind">{{ a.crosswind | num }} kt</td>
-          <td data-l="Airline"><span class="st st-{{ a.flight.status_state }}">{{ a.flight.status_label or "—" }}</span>
+          <td data-l="Status"><span class="st st-{{ a.flight.status_state }}">{{ a.flight.status_label or "—" }}</span>
             {% if a.flight.revised %}<br><span class="st-rev">now {{ a.flight.revised.astimezone(tz).strftime('%H:%M') }}</span>{% endif %}</td>
           <td data-l="Weather"><span class="chip c-{{ a.colour }}">{{ {"green":"Clear","yellow":"Monitor","orange":"At risk"}[a.colour] }}</span></td>
           <td class="outlook" data-l="Outlook"><span class="normal-only">{{ a.plain_outlook }}</span><span class="adv-only">{{ a.outlook }}</span></td>

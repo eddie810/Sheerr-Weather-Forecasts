@@ -15,6 +15,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import tempfile
 import time
 from dataclasses import dataclass
@@ -24,6 +25,34 @@ from pathlib import Path
 import requests
 
 ADB_HOST = "aerodatabox.p.rapidapi.com"
+
+#: Operators by flight-number prefix, used only when the schedule does not
+#: name the airline itself. Both the two-letter IATA designator and the
+#: three-letter ICAO one appear on a board, depending on the source: "AC"
+#: and "ACA" are both Air Canada, "SPR" is PAL, "POE" is Porter.
+AIRLINE_NAMES = {
+    "AC": "Air Canada", "ACA": "Air Canada",
+    "QK": "Air Canada Express", "JZA": "Air Canada Express",
+    "RV": "Air Canada Rouge", "ROU": "Air Canada Rouge",
+    "WS": "WestJet", "WJA": "WestJet",
+    "WR": "WestJet Encore", "WEN": "WestJet Encore",
+    "PD": "Porter Airlines", "POE": "Porter Airlines",
+    "PB": "PAL Airlines", "SPR": "PAL Airlines",
+    "TS": "Air Transat", "TSC": "Air Transat",
+    "F8": "Flair Airlines", "FLE": "Flair Airlines",
+    "5T": "Canadian North", "MPE": "Canadian North",
+    "8P": "Pacific Coastal", "PCO": "Pacific Coastal",
+    "DL": "Delta", "DAL": "Delta",
+    "UA": "United", "UAL": "United",
+    "AA": "American Airlines", "AAL": "American Airlines",
+    "BA": "British Airways", "BAW": "British Airways",
+    "KL": "KLM", "KLM": "KLM",
+    "LH": "Lufthansa", "DLH": "Lufthansa",
+    "AF": "Air France", "AFR": "Air France",
+    "EI": "Aer Lingus", "EIN": "Aer Lingus",
+    "FI": "Icelandair", "ICE": "Icelandair",
+    "CHQ": "Cougar Helicopters", "CGR": "Cougar Helicopters",
+}
 
 #: How long a fetched schedule chunk stays usable. Published schedules
 #: barely move within a day, while the weather assessed against them changes
@@ -80,6 +109,27 @@ class Flight:
     #: Such a row has no carrier status at all, which is not the same as
     #: being on time.
     sampled: bool = False
+
+    @property
+    def operator(self) -> str:
+        """The airline in full, rather than the two letters on the ticket.
+
+        The schedule usually names it; when it does not, the flight number
+        does, since a board carries no other clue as to who is operating.
+        """
+        named = (self.airline or "").strip()
+        if named:
+            return named
+        code = re.match(r"[A-Z0-9]{2,3}", (self.number or self.callsign or "").upper())
+        if code:
+            found = AIRLINE_NAMES.get(code.group(0))
+            # A three-letter callsign prefix matched first; if the number was
+            # really a two-letter designator, try that before giving up.
+            if not found and len(code.group(0)) == 3:
+                found = AIRLINE_NAMES.get(code.group(0)[:2])
+            if found:
+                return found
+        return ""
 
     @property
     def delay_minutes(self) -> int | None:
