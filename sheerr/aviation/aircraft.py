@@ -86,6 +86,10 @@ PROFILES = {
     "A333": CAT3(AircraftProfile("A333", "Airbus A330-300", "widebody", 38, 0.85, 0.8)),
     "B788": CAT3(AircraftProfile("B788", "Boeing 787-8", "widebody", 40, 0.8, 0.8)),
     "B77W": CAT3(AircraftProfile("B77W", "Boeing 777-300ER", "widebody", 38, 0.8, 0.8)),
+    "B77L": CAT3(AircraftProfile("B77L", "Boeing 777-200LR", "widebody", 38, 0.8, 0.8)),
+    # Search and rescue out of Gander, so it flies in the weather that
+    # grounds everything else and is graded on its own terms.
+    "C295": AircraftProfile("C295", "Airbus C295", "turboprop", 35, 1.2, 1.1),
     "A359": CAT3(AircraftProfile("A359", "Airbus A350-900", "widebody", 40, 0.8, 0.8)),
     "B789": CAT3(AircraftProfile("B789", "Boeing 787-9", "widebody", 40, 0.8, 0.8)),
     # Offshore rotary out of St. John's. Wind matters less than icing and
@@ -115,6 +119,8 @@ MODEL_PATTERNS: list[tuple[str, str]] = [
     (r"767-?300|\bb763\b", "B763"),
     (r"787-?8|\bb788\b", "B788"),
     (r"777-?300|\bb77w\b", "B77W"),
+    (r"777-?200|\bb77l\b", "B77L"),
+    (r"\bc-?295\b|cn-?235", "C295"),
     (r"a350-?900|\ba359\b", "A359"),
     (r"787-?9|\bb789\b", "B789"),
     (r"s-?92|sikorsky\s*92|\bs92\b", "S92"),

@@ -43,7 +43,7 @@
     {% endif %}
 
     <div class="readout">
-      {% if entry.day.high %}
+      {% if entry.day.high and not entry.day.night_only %}
       <div class="cell">
         <div class="k">Highs</div>
         <div class="v">{% if entry.day.high.uniform %}{{ entry.day.high.high.value | num }}{{ units.temp }}{% else %}{{ entry.day.high.low.value | num }}–{{ entry.day.high.high.value | num }}{{ units.temp }}{% endif %}</div>

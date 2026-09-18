@@ -174,7 +174,7 @@ def build_brief(summary: RegionSummary, day: RegionDay) -> tuple[str, set[float]
             f"Wind direction: predominantly "
             f"{direction_word(day.dominant_direction) or day.dominant_direction}")
 
-    if day.precip_amount is not None and day.precip_amount >= 0.2:
+    if day.precip_amount is not None and day.precip_amount >= 0.5:
         record(day.precip_amount)
         lines.append(f"Rainfall amount: {day.precip_amount:.0f} mm")
 
@@ -262,7 +262,7 @@ def rule_based(summary: RegionSummary, day: RegionDay) -> Narrative:
         else:
             parts.append(
                 f"Highs {_range(day.high)}, coolest over {day.high.low.area}.")
-    if day.precip_amount is not None and day.precip_amount >= 0.2:
+    if day.precip_amount is not None and day.precip_amount >= 0.5:
         parts.append(f"Rainfall amount {day.precip_amount:.0f} mm.")
 
     return Narrative(headline, " ".join(parts), "rule-based", [])

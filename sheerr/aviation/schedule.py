@@ -30,6 +30,10 @@ ADB_HOST = "aerodatabox.p.rapidapi.com"
 #: name the airline itself. Both the two-letter IATA designator and the
 #: three-letter ICAO one appear on a board, depending on the source: "AC"
 #: and "ACA" are both Air Canada, "SPR" is PAL, "POE" is Porter.
+#: Values the schedule uses where there is no commercial operator.
+PLACEHOLDER_OPERATORS = {"unknown/private owner", "unknown", "private owner",
+                         "private", "n/a", "-", "none"}
+
 AIRLINE_NAMES = {
     "AC": "Air Canada", "ACA": "Air Canada",
     "QK": "Air Canada Express", "JZA": "Air Canada Express",
@@ -114,22 +118,31 @@ class Flight:
     def operator(self) -> str:
         """The airline in full, rather than the two letters on the ticket.
 
-        The schedule usually names it; when it does not, the flight number
-        does, since a board carries no other clue as to who is operating.
+        The table above wins over the schedule's own wording where it knows
+        the airline. That looks backwards — the schedule is the authority —
+        but it reports one carrier three ways on a single board: PAL as
+        "PAL", as "SPR", and unnamed. A board has to call one airline one
+        thing, so a known operator is named consistently and the schedule
+        fills in the rest.
         """
-        named = (self.airline or "").strip()
-        if named:
-            return named
         code = re.match(r"[A-Z0-9]{2,3}", (self.number or self.callsign or "").upper())
         if code:
-            found = AIRLINE_NAMES.get(code.group(0))
+            known = AIRLINE_NAMES.get(code.group(0))
             # A three-letter callsign prefix matched first; if the number was
             # really a two-letter designator, try that before giving up.
-            if not found and len(code.group(0)) == 3:
-                found = AIRLINE_NAMES.get(code.group(0)[:2])
-            if found:
-                return found
-        return ""
+            if not known and len(code.group(0)) == 3:
+                known = AIRLINE_NAMES.get(code.group(0)[:2])
+            if known:
+                return known
+
+        named = (self.airline or "").strip()
+        # The schedule uses placeholders for aircraft with no commercial
+        # operator, and sometimes hands back the very code we are trying to
+        # replace. Neither is a name to print.
+        if (not named or named.lower() in PLACEHOLDER_OPERATORS
+                or re.fullmatch(r"[A-Z0-9]{2,3}", named)):
+            return ""
+        return named
 
     @property
     def delay_minutes(self) -> int | None:
