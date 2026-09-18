@@ -15,6 +15,8 @@ from __future__ import annotations
 import os
 from datetime import timedelta
 import re
+
+from . import llmcache
 from dataclasses import dataclass
 
 from .region import RegionDay, RegionSummary
@@ -333,6 +335,21 @@ def write(summary: RegionSummary, day: RegionDay,
 
     brief, allowed = build_brief(summary, day)
 
+    # The same brief always produces the same forecast, so an hourly
+    # rebuild of unchanged weather can reuse what it wrote last time.
+    cache_key = llmcache.key_for("region", model, brief)
+    cached = llmcache.get(cache_key)
+    if cached:
+        return Narrative(cached["headline"], cached["discussion"],
+                         cached.get("source", "claude"), [])
+
+    if not llmcache.spend():
+        result = rule_based(summary, day)
+        result.warnings.append(
+            f"model budget of {llmcache.BUDGET} calls spent for this build; "
+            "used rule-based text")
+        return result
+
     try:
         import anthropic
         from pydantic import BaseModel
@@ -377,6 +394,10 @@ def write(summary: RegionSummary, day: RegionDay,
             fallback.warnings = violations
             return fallback
 
+        # Only store text that passed validation; caching a bad passage
+        # would serve it for a week.
+        llmcache.put(cache_key, {"headline": headline, "discussion": discussion,
+                                 "source": "claude"})
         return Narrative(headline, discussion, "claude",
                          [key_warning] if key_warning else [])
 

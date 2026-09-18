@@ -71,6 +71,16 @@ jobs:
           key: schedule-${{ steps.ecmwf.outputs.run }}
           restore-keys: schedule-
 
+      # Written text is a function of the brief it came from, so an hourly
+      # rebuild of unchanged weather reuses it instead of paying for the
+      # same paragraph again. Keyed by the run so it always restores, and
+      # saved every build so new passages carry forward.
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/llm-cache
+          key: llm-${{ github.run_id }}
+          restore-keys: llm-
+
       - name: Build site
         env:
           TWC_API_KEY: ${{ secrets.TWC_API_KEY }}
@@ -90,6 +100,11 @@ jobs:
           # one download of each global field.
           SHEERR_ECMWF_CACHE: ${{ runner.temp }}/ecmwf-cache
           SHEERR_SCHEDULE_CACHE: ${{ runner.temp }}/schedule-cache
+          SHEERR_LLM_CACHE: ${{ runner.temp }}/llm-cache
+          # A ceiling on model calls per build. Caching fails open, so this
+          # is what stops a bad-weather day running away: past it, pages
+          # fall back to their deterministic writers rather than spending.
+          SHEERR_LLM_BUDGET: "40"
         run: |
           if [ -z "$TWC_API_KEY" ]; then
             echo "::error::TWC_API_KEY secret is not set. Add it under"\

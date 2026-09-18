@@ -403,6 +403,21 @@ def write_verdict(assessment: Assessment, api_key: str | None = None,
     allowed = {float(n) for n in re.findall(r"\d+(?:\.\d+)?", text)}
     allowed |= set(range(0, 13))
 
+    # A verdict follows from its factors, so the same factors give the same
+    # verdict. Sixty flights reassessed hourly was the bulk of the spend and
+    # almost all of it re-deciding cases that had not changed.
+    from .. import llmcache
+    cache_key = llmcache.key_for("verdict", model, text)
+    cached = llmcache.get(cache_key)
+    if cached:
+        assessment.colour = cached["colour"]
+        assessment.reason = cached["reason"]
+        assessment.source = "claude"
+        return assessment
+
+    if not llmcache.spend():
+        return assessment              # keep the rule verdict
+
     try:
         import anthropic
         from pydantic import BaseModel
@@ -431,6 +446,7 @@ def write_verdict(assessment: Assessment, api_key: str | None = None,
             return assessment          # cited a figure not in the brief
         assessment.colour, assessment.reason = colour, reason
         assessment.source = "claude"
+        llmcache.put(cache_key, {"colour": colour, "reason": reason})
     except Exception:                  # never fail a build on a verdict
         pass
     return assessment
