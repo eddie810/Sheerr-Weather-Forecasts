@@ -146,6 +146,40 @@ def phrases_far_apart(start_phrase: str | None, end_phrase: str | None) -> bool:
                 and end_phrase in _MIDNIGHT_PHRASES)
 
 
+#: What a forecast calls each form, steady and showery. Environment Canada
+#: says "chance of showers", never "chance of precipitation"; the generic
+#: word belongs in a definition, not a forecast.
+PRECIP_WORDS = {
+    "rain": ("rain", "showers"),
+    "drizzle": ("drizzle", "drizzle"),
+    "snow": ("snow", "flurries"),
+    "freezing rain": ("freezing rain", "freezing rain"),
+    "freezing drizzle": ("freezing drizzle", "freezing drizzle"),
+    "sleet": ("ice pellets", "ice pellets"),
+    "ice": ("ice pellets", "ice pellets"),
+    "wintry mix": ("wet snow or rain", "wet snow or rain"),
+}
+
+
+def precip_word(kinds: list[str], showery: bool) -> str:
+    """Name what is falling, the way a forecast names it.
+
+    The provider reports a type on every hour, fair or not — it is the form
+    precipitation would take, not a statement that any is falling — so this
+    is only ever asked about hours already known to be wet.
+    """
+    counts: dict[str, int] = {}
+    for kind in kinds:
+        key = (kind or "").strip().lower()
+        if key:
+            counts[key] = counts.get(key, 0) + 1
+    if not counts:
+        return "showers" if showery else "precipitation"
+    leading = max(counts, key=counts.get)
+    steady, shower = PRECIP_WORDS.get(leading, (leading, leading))
+    return shower if showery else steady
+
+
 #: An hour counts as wet at this much accumulation, or at this chance when
 #: no amount is given. Below it the hour is damp at most.
 WET_MM = 0.1
@@ -216,6 +250,9 @@ class RegionDay:
     cloud_cover: Spread | None = None
     sky: str | None = None
     precip_amount: float | None = None
+    #: What is falling, named as a forecast names it: rain, showers, snow,
+    #: flurries, freezing rain.
+    precip_kind: str | None = None
     #: When precipitation starts and stops within this period, local time.
     #: A period reading "chance of rain 100%" with nothing falling for six
     #: hours is telling the truth badly.
@@ -483,6 +520,24 @@ def summarise_region(name: str, timezone: str, members: list[Location],
                     wet_by_hour[local] = wet_by_hour.get(local, 0) + 1
         needed = max(1, len(reporting) // 2)
         wet_hours = sorted(t for t, n in wet_by_hour.items() if n >= needed)
+        # Name the precipitation from the hours it is actually falling in.
+        # The provider reports a type on fair hours too, so reading it off
+        # the whole period would call a clear night "rain".
+        wet_set = set(wet_hours)
+        kinds, showery_hits, wet_phrases = [], 0, 0
+        for hours in reporting:
+            for h in hours:
+                if h.slot.astimezone(zone_tz) not in wet_set:
+                    continue
+                if h.precip_type:
+                    kinds.append(h.precip_type)
+                if h.phrase:
+                    wet_phrases += 1
+                    if "shower" in h.phrase.lower():
+                        showery_hits += 1
+        showery = bool(wet_phrases) and showery_hits * 2 >= wet_phrases
+        precip_kind = precip_word(kinds, showery) if wet_hours else None
+
         precip_start = wet_hours[0] if wet_hours else None
         precip_end = None
         if wet_hours:
@@ -513,7 +568,7 @@ def summarise_region(name: str, timezone: str, members: list[Location],
             sky=sky, precip_amount=rain_mm, dominant_direction=direction,
             direction_agreement=agreement,
             precip_start=precip_start, precip_end=precip_end,
-            precip_underway=underway,
+            precip_underway=underway, precip_kind=precip_kind,
             peak_gust_at=peak[1].astimezone(zone_tz) if peak else None,
             peak_gust_where=peak[2] if peak else None,
             peak_window=window,

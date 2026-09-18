@@ -207,11 +207,14 @@ def build_brief(summary: RegionSummary, day: RegionDay) -> tuple[str, set[float]
 
     if day.precip_amount is not None and day.precip_amount >= 0.5:
         record(day.precip_amount)
-        lines.append(f"Rainfall amount: {day.precip_amount:.0f} mm")
+        noun = "Snowfall" if (day.precip_kind or "").startswith(("snow", "flurr")) \
+            else "Rainfall"
+        lines.append(f"{noun} amount: {day.precip_amount:.0f} mm")
 
     if day.precip_chance:
         record(day.precip_chance.low.value, day.precip_chance.high.value)
-        lines.append(f"Chance of precipitation: {day.precip_chance.high.value:.0f}%")
+        lines.append(f"Chance of {day.precip_kind or 'precipitation'}: "
+                     f"{day.precip_chance.high.value:.0f}%")
 
     if summary.alerts:
         lines.append("")
@@ -274,7 +277,10 @@ def rule_based(summary: RegionSummary, day: RegionDay) -> Narrative:
 
     parts = []
     if day.precip_chance and day.precip_chance.high.value >= 20:
-        chance = f"Chance of precipitation {day.precip_chance.high.value:.0f}%"
+        # "Chance of rain", the way a forecast says it. The generic word is
+        # only reached for when nothing names the form.
+        what = day.precip_kind or "precipitation"
+        chance = f"Chance of {what} {day.precip_chance.high.value:.0f}%"
         # A period can be wet without being wet throughout. Say when it
         # arrives, rather than leaving a reader to assume it is already
         # raining because the chance is high.
@@ -316,7 +322,10 @@ def rule_based(summary: RegionSummary, day: RegionDay) -> Narrative:
             parts.append(
                 f"Highs {_range(day.high)}, coolest over {day.high.low.area}.")
     if day.precip_amount is not None and day.precip_amount >= 0.5:
-        parts.append(f"Rainfall amount {day.precip_amount:.0f} mm.")
+        # Snow does not have a rainfall amount.
+        noun = "Snowfall" if (day.precip_kind or "").startswith(("snow", "flurr")) \
+            else "Rainfall"
+        parts.append(f"{noun} amount {day.precip_amount:.0f} mm.")
 
     return Narrative(headline, " ".join(parts), "rule-based", [])
 
