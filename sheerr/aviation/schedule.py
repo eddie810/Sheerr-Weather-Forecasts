@@ -76,6 +76,10 @@ class Flight:
     other_city: str | None = None    # city name, for "St. John's (YYT)"
     #: What the airline currently expects, as distinct from the schedule.
     revised: datetime | None = None
+    #: True for a live-traffic stand-in rather than a published schedule.
+    #: Such a row has no carrier status at all, which is not the same as
+    #: being on time.
+    sampled: bool = False
 
     @property
     def delay_minutes(self) -> int | None:
@@ -91,6 +95,8 @@ class Flight:
     @property
     def status_label(self) -> str:
         """What the airline says, in words a passenger reads on a board."""
+        if self.sampled:
+            return ""
         if self.cancelled:
             return "Cancelled"
         delay = self.delay_minutes
@@ -110,6 +116,8 @@ class Flight:
     @property
     def status_state(self) -> str:
         """green / amber / red, for how the status is shown."""
+        if self.sampled:
+            return "none"
         if self.cancelled:
             return "red"
         delay = self.delay_minutes
@@ -152,9 +160,11 @@ def fetch_schedule(icao: str, start: datetime, hours: int = 12,
     while remaining > 0:
         span = min(remaining, 12)
         window = f"{cursor:%Y-%m-%dT%H:%M}/{cursor + timedelta(hours=span):%Y-%m-%dT%H:%M}"
-        key = hashlib.sha1(f"{icao}|{window}".encode()).hexdigest()[:16]
+        # Deliberately not named `key`: that is the API key, and reusing the
+        # name here sent the cache digest to RapidAPI as the credential.
+        cache_key = hashlib.sha1(f"{icao}|{window}".encode()).hexdigest()[:16]
 
-        payload = _cached(key)
+        payload = _cached(cache_key)
         if payload is not None:
             flights += _parse(payload.get("departures") or [], "departure")
             flights += _parse(payload.get("arrivals") or [], "arrival")
@@ -180,7 +190,7 @@ def fetch_schedule(icao: str, start: datetime, hours: int = 12,
                                 f"{response.text[:160]}")
 
         payload = response.json()
-        _store(key, payload)
+        _store(cache_key, payload)
         flights += _parse(payload.get("departures") or [], "departure")
         flights += _parse(payload.get("arrivals") or [], "arrival")
         cursor += timedelta(hours=span)
@@ -255,6 +265,6 @@ def live_sample(latitude: float, longitude: float, distance_nm: int = 150,
             other_airport=None, other_name=None,
             aircraft_type=aircraft.get("t"),
             registration=aircraft.get("r"),
-            status="live ADS-B",
+            status=None, sampled=True,
         ))
     return flights

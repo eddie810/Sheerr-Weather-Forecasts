@@ -130,8 +130,12 @@ def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
         sample = bool(entry.get("sample"))
         try:
             flights = fetch_schedule(ap.icao, start, int(entry.get("hours", 12)))
-        except ScheduleError:
+        except ScheduleError as exc:
             # No key or quota exhausted: show live traffic rather than nothing.
+            # Say so loudly — this fallback is a degraded page that still
+            # builds green, so a silent one hid a broken schedule for a day.
+            print(f"::warning::schedule unavailable at {ap.icao}, falling back "
+                  f"to live traffic: {exc}")
             flights = live_sample(ap.latitude, ap.longitude)
             sample = True
 

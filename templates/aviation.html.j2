@@ -70,6 +70,8 @@
 
   .st { font-weight:600; letter-spacing:.04em; white-space:nowrap; }
   .st-green{color:var(--clear)} .st-amber{color:var(--monitor)} .st-red{color:var(--risk)}
+  /* No published schedule behind the row, so no carrier status to report. */
+  .st-none{color:var(--dim); font-weight:400;}
   .st-rev { font-size:.72rem; color:var(--dim); }
   tr.cancelled td { opacity:.6; }
   tr.cancelled td:nth-child(2) { text-decoration:line-through; }
@@ -191,7 +193,7 @@
           <td data-l="Conditions"><span class="normal-only">{{ a.plain_category }}</span><span class="adv-only">{{ a.category }}</span></td>
           <td class="adv-cell" data-l="Runway">{{ a.runway or "—" }}</td>
           <td class="adv-cell" data-l="Crosswind">{{ a.crosswind | num }} kt</td>
-          <td data-l="Airline"><span class="st st-{{ a.flight.status_state }}">{{ a.flight.status_label }}</span>
+          <td data-l="Airline"><span class="st st-{{ a.flight.status_state }}">{{ a.flight.status_label or "—" }}</span>
             {% if a.flight.revised %}<br><span class="st-rev">now {{ a.flight.revised.astimezone(tz).strftime('%H:%M') }}</span>{% endif %}</td>
           <td data-l="Weather"><span class="chip c-{{ a.colour }}">{{ {"green":"Clear","yellow":"Monitor","orange":"At risk"}[a.colour] }}</span></td>
           <td class="outlook" data-l="Outlook"><span class="normal-only">{{ a.plain_outlook }}</span><span class="adv-only">{{ a.outlook }}</span></td>
