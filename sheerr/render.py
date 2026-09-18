@@ -84,6 +84,12 @@ def direction(cardinal: Any) -> str:
     return direction_word(cardinal) or (cardinal or "")
 
 
+def alert_lead(alert: Any) -> str:
+    """Expose the alert lead line to templates."""
+    from .region import alert_lead as _lead
+    return _lead(alert if isinstance(alert, dict) else {})
+
+
 def build_env(template_dir: Path | str | None = None) -> Environment:
     env = Environment(
         loader=FileSystemLoader(str(template_dir or TEMPLATE_DIR)),
@@ -94,7 +100,7 @@ def build_env(template_dir: Path | str | None = None) -> Environment:
     )
     env.filters.update({
         "num": num, "pct": pct, "clock": clock, "datestr": datestr,
-        "arrow": arrow, "wind_desc": wind_desc, "direction": direction,
+        "arrow": arrow, "wind_desc": wind_desc, "direction": direction, "alert_lead": alert_lead,
     })
     return env
 

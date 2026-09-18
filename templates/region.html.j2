@@ -13,11 +13,16 @@
 
   {% if summary.alerts %}
   {% for a in summary.alerts %}
-  <section class="alert">
-    <h2>{{ a.eventDescription or "Weather alert" }}</h2>
+  <details class="alert">
+    <summary style="cursor:pointer;list-style:none">
+      <span style="display:block;font-weight:600;color:var(--warn-ink);font-size:.95rem">{{ a.eventDescription or "Weather alert" }}</span>
+      {% set lead = a | alert_lead %}
+      {% if lead %}<span style="display:block;font-size:.86rem;color:var(--ink-soft);margin-top:.2rem">{{ lead }}</span>{% endif %}
+      <span style="display:block;font-size:.72rem;color:var(--ink-faint);margin-top:.35rem">Read the full statement</span>
+    </summary>
     {% if a.description %}<p>{{ a.description | trim }}</p>{% else %}<p>{{ a.headlineText }}</p>{% endif %}
     <div class="src">{{ a.officeName or "Issuing office" }}</div>
-  </section>
+  </details>
   {% endfor %}
   {% endif %}
 

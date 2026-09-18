@@ -136,6 +136,27 @@ class RegionSummary:
         return [m.name for m in self.members]
 
 
+#: Lines in an Environment Canada statement that carry the actual threat,
+#: in preference order. Used for the one-line summary when an alert is
+#: collapsed.
+ALERT_LEAD_KEYS = ("Maximum wind gusts", "Potential wind gusts", "Wind gusts",
+                   "Rainfall", "Snowfall", "Total snowfall", "Hazard",
+                   "Time span", "Locations")
+
+
+def alert_lead(alert: dict) -> str:
+    """One line describing what an alert actually warns about."""
+    text = (alert.get("description") or "").strip()
+    if not text:
+        return alert.get("headlineText") or ""
+    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+    for key in ALERT_LEAD_KEYS:
+        for line in lines:
+            if line.lower().startswith(key.lower()):
+                return line
+    return lines[0] if lines else ""
+
+
 def _spread(values: list[tuple[str, float, str | None]]) -> Spread | None:
     """Build a Spread from (location name, value, zone) triples."""
     clean = [t for t in values if t[1] is not None]

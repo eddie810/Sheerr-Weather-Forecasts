@@ -36,7 +36,22 @@
     border-left:4px solid var(--sw-warn-ink); border-radius:3px;
     padding:.9rem 1.1rem; margin:0 0 1.2rem;
   }
-  .sw-forecast .sw-alert h3 { font-size:.9rem; margin:0 0 .4rem; color:var(--sw-warn-ink) !important; }
+  .sw-forecast .sw-alert { padding:.75rem 1rem; }
+  .sw-forecast .sw-alert > summary {
+    cursor:pointer; list-style:none; display:block; color:var(--sw-warn-ink) !important;
+  }
+  .sw-forecast .sw-alert > summary::-webkit-details-marker { display:none; }
+  .sw-forecast .sw-alert > summary::after {
+    content:"Read the full statement ▸"; display:block; margin-top:.35rem;
+    font-size:.72rem; letter-spacing:.04em; opacity:.85;
+  }
+  .sw-forecast .sw-alert[open] > summary::after { content:"Hide the full statement ▾"; }
+  .sw-forecast .sw-alert-name {
+    display:block; font-size:.9rem; font-weight:700; color:var(--sw-warn-ink) !important;
+  }
+  .sw-forecast .sw-alert-lead {
+    display:block; font-size:.84rem; color:var(--sw-soft) !important; margin-top:.15rem;
+  }
   .sw-forecast .sw-alert p { margin:.3rem 0; font-size:.86rem; color:var(--sw-soft); white-space:pre-line; }
 
   .sw-forecast .sw-day { border-top:1px solid var(--sw-rule); padding:1.1rem 0 .3rem; }
@@ -79,10 +94,14 @@
   </div>
 
   {% for a in summary.alerts %}
-  <div class="sw-alert">
-    <h3>{{ a.eventDescription or "Weather alert" }}</h3>
+  <details class="sw-alert">
+    <summary>
+      <span class="sw-alert-name">{{ a.eventDescription or "Weather alert" }}</span>
+      {% set lead = a | alert_lead %}
+      {% if lead %}<span class="sw-alert-lead">{{ lead }}</span>{% endif %}
+    </summary>
     {% if a.description %}<p>{{ a.description | trim }}</p>{% else %}<p>{{ a.headlineText }}</p>{% endif %}
-  </div>
+  </details>
   {% endfor %}
 
   {% for entry in narratives %}
