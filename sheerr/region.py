@@ -180,6 +180,10 @@ def precip_word(kinds: list[str], showery: bool) -> str:
     return shower if showery else steady
 
 
+#: A chance worth naming. Below this the period is not described as a
+#: chance of anything, so there is nothing to name.
+NAMEABLE_POP = 20
+
 #: An hour counts as wet at this much accumulation, or at this chance when
 #: no amount is given. Below it the hour is damp at most.
 WET_MM = 0.1
@@ -523,20 +527,29 @@ def summarise_region(name: str, timezone: str, members: list[Location],
         # Name the precipitation from the hours it is actually falling in.
         # The provider reports a type on fair hours too, so reading it off
         # the whole period would call a clear night "rain".
+        # Prefer the hours precipitation is actually falling in. Where a
+        # period only carries a chance and no accumulation — half the
+        # forecast days — read the hours most likely to see it instead. A
+        # fifty per cent chance of rain is still a chance of rain, and
+        # naming it "precipitation" is the thing this exists to stop.
         wet_set = set(wet_hours)
-        kinds, showery_hits, wet_phrases = [], 0, 0
-        for hours in reporting:
-            for h in hours:
-                if h.slot.astimezone(zone_tz) not in wet_set:
-                    continue
-                if h.precip_type:
-                    kinds.append(h.precip_type)
-                if h.phrase:
-                    wet_phrases += 1
-                    if "shower" in h.phrase.lower():
-                        showery_hits += 1
-        showery = bool(wet_phrases) and showery_hits * 2 >= wet_phrases
-        precip_kind = precip_word(kinds, showery) if wet_hours else None
+        naming = [h for hours in reporting for h in hours
+                  if start <= h.slot.astimezone(zone_tz) < end
+                  and h.slot.astimezone(zone_tz) in wet_set]
+        if not naming:
+            naming = [h for hours in reporting for h in hours
+                      if start <= h.slot.astimezone(zone_tz) < end
+                      and (h.precip_chance or 0) >= NAMEABLE_POP]
+        kinds, showery_hits, phrases = [], 0, 0
+        for h in naming:
+            if h.precip_type:
+                kinds.append(h.precip_type)
+            if h.phrase:
+                phrases += 1
+                if "shower" in h.phrase.lower():
+                    showery_hits += 1
+        showery = bool(phrases) and showery_hits * 2 >= phrases
+        precip_kind = precip_word(kinds, showery) if naming else None
 
         precip_start = wet_hours[0] if wet_hours else None
         precip_end = None
