@@ -288,8 +288,8 @@ def cmd_aviation(args, config: Config) -> None:
     metar = fetch_metar(airport.icao)
     notams = fetch_notams(airport.icao)
 
-    local_now = datetime.now(ZoneInfo(airport.timezone))
-    start = local_now.replace(hour=args.start_hour, minute=0, second=0,
+    airport_now = datetime.now(ZoneInfo(airport.timezone))
+    start = airport_now.replace(hour=args.start_hour, minute=0, second=0,
                               microsecond=0).astimezone(_tz.utc)
     try:
         flights = (live_sample(airport.latitude, airport.longitude)
