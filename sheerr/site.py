@@ -188,8 +188,34 @@ def _build_page(config: Config, entry: dict, outdir: Path, build_providers,
             embed_dir.mkdir(exist_ok=True)
             fragment = dict(context)
             fragment.update({"standalone": False, "home": None})
-            (embed_dir / f"region-{entry['region']}.html").write_text(
-                render("region-embed", "html", fragment))
+            body = render("region-embed", "html", fragment)
+            (embed_dir / f"region-{entry['region']}.html").write_text(body)
+
+            # A standalone document for iframing. Squarespace's editor
+            # mangles pasted <style> and <link> tags, so an iframe is the
+            # robust route: nothing can leak in either direction. It posts
+            # its height to the parent so the frame can size itself.
+            (embed_dir / f"region-{entry['region']}-frame.html").write_text(
+                "<!doctype html>\n<html lang=\"en\">\n<head>\n"
+                "<meta charset=\"utf-8\">\n"
+                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
+                f"<title>{summary.name} forecast</title>\n"
+                "<style>html,body{margin:0;padding:0;background:transparent}"
+                "body{padding:2px 0}</style>\n</head>\n<body>\n"
+                + body +
+                "\n<script>\n"
+                "  (function () {\n"
+                "    function send() {\n"
+                "      var h = document.documentElement.scrollHeight;\n"
+                "      parent.postMessage({ sheerrForecastHeight: h }, '*');\n"
+                "    }\n"
+                "    window.addEventListener('load', send);\n"
+                "    window.addEventListener('resize', send);\n"
+                "    // Expanding an alert changes the height.\n"
+                "    document.addEventListener('toggle', send, true);\n"
+                "    setTimeout(send, 400); setTimeout(send, 1500);\n"
+                "  })();\n"
+                "</script>\n</body>\n</html>\n")
         lead = summary.days[0] if summary.days else None
         subtitle = (f"{len(summary.members)} points"
                     + (f" · gusts to {lead.gust.high.value:.0f}" if lead and lead.gust else ""))

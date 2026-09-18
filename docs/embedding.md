@@ -1,19 +1,47 @@
-# Embedding a forecast in the Squarespace site
+# Putting a forecast on the Squarespace site
 
-The build publishes a scoped fragment for each region at:
+**Do not paste the forecast HTML into a page.** Squarespace's editor strips
+or rewrites `<style>` and `<link>` tags, which breaks both the forecast and
+the surrounding layout. Paste one of the small snippets below instead; each
+pulls the live forecast from this build.
 
+The build publishes two files per region:
+
+| File | For |
+|---|---|
+| `embed/region-avalon.html` | a fragment, fetched and injected |
+| `embed/region-avalon-frame.html` | a standalone page, for an iframe |
+
+Both live under `https://eddie810.github.io/Sheerr-Weather-Forecasts/`.
+
+## Recommended: iframe (Code Block)
+
+Nothing can leak in either direction, so Squarespace's CSS cannot affect the
+forecast and the forecast cannot affect the page. The frame reports its own
+height, so it grows when someone expands an alert rather than clipping.
+
+```html
+<iframe id="sw-forecast"
+        src="https://eddie810.github.io/Sheerr-Weather-Forecasts/embed/region-avalon-frame.html"
+        style="width:100%;border:0;display:block;height:1200px"
+        scrolling="no" title="Avalon regional forecast"></iframe>
+<script>
+  window.addEventListener('message', function (e) {
+    var h = e.data && e.data.sheerrForecastHeight;
+    if (h) document.getElementById('sw-forecast').style.height = h + 'px';
+  });
+</script>
 ```
-https://eddie810.github.io/Sheerr-Weather-Forecasts/embed/region-avalon.html
-```
 
-It is a fragment, not a page: no `<html>`, no `<body>`, every selector scoped
-under `.sw-forecast`, and typography inherited from the host so it matches the
-surrounding page. GitHub Pages sends `access-control-allow-origin: *`, so a
-browser on another domain may fetch it.
+The `height:1200px` is only a starting value; the script replaces it once the
+frame loads. Leave it in — if the script is ever blocked, the frame still
+shows the forecast at a sensible height.
 
-## Squarespace
+## Alternative: inject the fragment
 
-Add a **Code Block** to the page (Business plan or higher) and paste:
+Renders as part of the page rather than inside a frame, so it inherits the
+site's fonts. More exposed to the theme's CSS, though the fragment scopes
+everything under `.sw-forecast` and hardens its colours.
 
 ```html
 <div id="sw-avalon">Loading the Avalon forecast…</div>
@@ -32,20 +60,12 @@ Add a **Code Block** to the page (Business plan or higher) and paste:
 </script>
 ```
 
-The forecast then refreshes with the daily build; the page itself needs no
-further edits. The fallback matters: if the build or the network is down the
-reader gets a link rather than an empty block.
-
-## Alternatives
-
-- **iframe** — `<iframe src="…/embed/region-avalon.html" style="width:100%;border:0"
-  height="1400" title="Avalon forecast"></iframe>`. Works without a Code Block,
-  but the height is fixed and will either clip or leave a gap.
-- **Subdomain** — point `forecast.sheerrweather.ca` at GitHub Pages with a CNAME
-  and serve the full pages directly, outside Squarespace.
+Both snippets need a **Code Block**, which Squarespace offers on Business
+plans and above. On a lower plan, use an Embed Block with the iframe URL
+directly — the height will be fixed, but it works.
 
 ## Other regions
 
 Add the region to `config/locations.yml`, add a `type: region` page to
-`config/site.yml`, and a matching fragment appears under `embed/`.
+`config/site.yml`, and both files appear under `embed/` on the next build.
 Set `embed: false` on a page to skip it.
