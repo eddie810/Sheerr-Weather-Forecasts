@@ -185,8 +185,19 @@ def assess_factors(flight: Flight, airport: Airport, periods: list[TafPeriod],
     # spread either — so neither of the other two wind factors sees it,
     # while on the ramp it stops loading, doors and bridges regardless of
     # where it is blowing from.
-    strongest = max(v for v in (gust, wind_speed) if v is not None) \
-        if (gust or wind_speed) else None
+    # Across every group in effect, not just the prevailing one. The wind
+    # above comes from the first group that names it, which is how a TEMPO
+    # gusting 40 hid behind a prevailing 18G28 and produced no factor at
+    # all. Crosswind still uses the prevailing wind — that is the landing
+    # you plan — but whether strong wind could disrupt the flight has to
+    # look at the strongest wind forecast during it.
+    strongest = None
+    strongest_transient = False
+    for period in covering:
+        for value in (period.wind_speed, period.wind_gust):
+            if value is not None and (strongest is None or value > strongest):
+                strongest, strongest_transient = value, period.transient
+
     if strongest and strongest >= STRONG_WIND_KT:
         if strongest >= SEVERE_WIND_KT:
             detail = (f"Damaging wind — gusts to about {kmh(strongest):.0f} km/h, "
@@ -196,14 +207,18 @@ def assess_factors(flight: Flight, airport: Airport, periods: list[TafPeriod],
                       "enough to slow loading and ramp work")
         else:
             detail = f"Strong wind — gusts to about {kmh(strongest):.0f} km/h"
+        if strongest_transient:
+            detail += ", though only for part of the time"
         # Ramps down from the first threshold; a light type feels it sooner.
         span = max(1.0, SEVERE_WIND_KT - STRONG_WIND_KT)
         factors.append(Factor(
             "wind",
             detail,
-            min(1.0, (strongest - STRONG_WIND_KT) / span) * profile.wind_sensitivity,
-            technical=(f"{strongest:.0f} kt "
-                       + ("gusting" if gust and gust >= strongest else "sustained")
+            min(1.0, (strongest - STRONG_WIND_KT) / span)
+            * profile.wind_sensitivity
+            * (0.7 if strongest_transient else 1.0),
+            technical=(f"{strongest:.0f} kt peak across the groups in effect"
+                       + (" (TEMPO)" if strongest_transient else "")
                        + f", ground handling affected from {HANDLING_WIND_KT} kt"),
         ))
 
