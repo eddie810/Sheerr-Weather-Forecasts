@@ -253,9 +253,10 @@
         <span class="sw-v">{{ entry.day.wind_speed.low.value | num }}–{{ entry.day.wind_speed.high.value | num }}</span>
         <span class="sw-n">{{ units.speed }}{% if entry.day.dominant_direction %} {{ entry.day.dominant_direction | direction | lower }}{% endif %}</span></div>
       {% endif %}
-      {% if entry.day.precip_chance and entry.day.precip_chance.high.value >= pop_floor %}
+      {% if entry.day.precip_chance_typical and entry.day.precip_chance_typical >= pop_floor %}
       <div class="sw-fig"><span class="sw-k">Chance of {{ entry.day.precip_kind or "rain" }}</span>
-        <span class="sw-v">{{ entry.day.precip_chance.high.value | num }}%</span>
+        <span class="sw-v">{{ entry.day.precip_chance_typical | num }}%</span>
+        {% if entry.day.precip_gradient %}<span class="sw-n">{{ entry.day.precip_gradient | capitalize }}</span>{% endif %}
         {% if entry.day.precip_start or entry.day.precip_underway %}
         <span class="sw-n">{% if entry.day.precip_start and not entry.day.precip_underway %}Beginning {{ entry.day.precip_start | clock_words }}{% elif entry.day.precip_end %}Ending {{ entry.day.precip_end | clock_words }}{% else %}Already underway{% endif %}</span>
         {% endif %}</div>

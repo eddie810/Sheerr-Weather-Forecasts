@@ -70,10 +70,11 @@
         <div class="n">{{ units.speed }}{% if entry.day.dominant_direction %} from the {{ entry.day.dominant_direction | direction | lower }}{% endif %}</div>
       </div>
       {% endif %}
-      {% if entry.day.precip_chance and entry.day.precip_chance.high.value >= pop_floor %}
+      {% if entry.day.precip_chance_typical and entry.day.precip_chance_typical >= pop_floor %}
       <div class="cell">
         <div class="k">Chance of {{ entry.day.precip_kind or "rain" }}</div>
-        <div class="v">{{ entry.day.precip_chance.high.value | num }}%</div>
+        <div class="v">{{ entry.day.precip_chance_typical | num }}%</div>
+        {% if entry.day.precip_gradient %}<div class="n">{{ entry.day.precip_gradient | capitalize }}</div>{% endif %}
         {% if entry.day.precip_start and not entry.day.precip_underway %}<div class="n">Beginning {{ entry.day.precip_start | clock_words }}</div>
         {% elif entry.day.precip_underway and entry.day.precip_end %}<div class="n">Ending {{ entry.day.precip_end | clock_words }}</div>
         {% elif entry.day.precip_underway %}<div class="n">Already underway</div>{% endif %}

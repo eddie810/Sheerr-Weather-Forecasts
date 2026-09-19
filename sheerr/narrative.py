@@ -215,10 +215,12 @@ def build_brief(summary: RegionSummary, day: RegionDay) -> tuple[str, set[float]
 
     # The brief had no floor while the writer did, so Claude was handed a
     # five per cent chance and dutifully printed it.
-    if day.precip_chance and day.precip_chance.high.value >= POP_FLOOR:
-        record(day.precip_chance.low.value, day.precip_chance.high.value)
-        lines.append(f"Chance of {day.precip_kind or 'precipitation'}: "
-                     f"{day.precip_chance.high.value:.0f}%")
+    chance = day.precip_chance_typical
+    if chance is not None and chance >= POP_FLOOR:
+        record(chance)
+        lines.append(f"Chance of {day.precip_kind or 'precipitation'}: {chance:.0f}%")
+        if day.precip_gradient:
+            lines.append(f"Where: {day.precip_gradient}")
 
     # Only the alerts covering this period. Handing Claude every alert on
     # the page got the wind warning repeated under all five, which reads as
@@ -284,11 +286,13 @@ def rule_based(summary: RegionSummary, day: RegionDay) -> Narrative:
     headline = (day.sky or "Cloud").capitalize() + "."
 
     parts = []
-    if day.precip_chance and day.precip_chance.high.value >= POP_FLOOR:
+    if day.precip_chance_typical is not None and day.precip_chance_typical >= POP_FLOOR:
         # "Chance of rain", the way a forecast says it. The generic word is
         # only reached for when nothing names the form.
         what = day.precip_kind or "precipitation"
-        chance = f"Chance of {what} {day.precip_chance.high.value:.0f}%"
+        chance = f"Chance of {what} {day.precip_chance_typical:.0f}%"
+        if day.precip_gradient:
+            chance += f", {day.precip_gradient}"
         # A period can be wet without being wet throughout. Say when it
         # arrives, rather than leaving a reader to assume it is already
         # raining because the chance is high.

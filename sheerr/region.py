@@ -232,6 +232,11 @@ def precip_word(kinds: list[str], showery: bool) -> str:
     return shower if showery else steady
 
 
+#: How far apart the wettest and driest points must be before the forecast
+#: says where it is more likely. Below this the region is close enough to
+#: quote one figure and leave it there.
+POP_GRADIENT = 25
+
 #: The lowest chance a forecast quotes. Below it a period is not described
 #: as a chance of anything — a five per cent chance of rain is a dry
 #: forecast, and printing the figure invites a reader to plan around it.
@@ -314,6 +319,13 @@ class RegionDay:
     precip_kind: str | None = None
     #: The alerts in effect during this period, not every alert on the page.
     alerts: list[dict[str, Any]] = field(default_factory=list)
+    #: The figure to quote: the region's average, not its wettest corner.
+    #: The maximum read as 100% across the Avalon while St. John's sat at
+    #: 55%, which is true of one point and wrong as a regional statement.
+    precip_chance_typical: float | None = None
+    #: Where precipitation is more likely, when the region disagrees enough
+    #: to be worth saying.
+    precip_gradient: str | None = None
     #: When precipitation starts and stops within this period, local time.
     #: A period reading "chance of rain 100%" with nothing falling for six
     #: hours is telling the truth badly.
@@ -438,6 +450,32 @@ def alert_lead(alert: dict) -> str:
             if line.lower().startswith(key.lower()):
                 return line
     return lines[0] if lines else ""
+
+
+def pop_gradient(values: list[tuple[str, float, str | None]]) -> str | None:
+    """Name where precipitation is more likely, by local area.
+
+    Averages each area first so a zone with two points does not outvote one
+    with a single point, then names the wettest against the driest.
+    """
+    by_zone: dict[str, list[float]] = {}
+    for name, value, zone in values:
+        if value is None:
+            continue
+        by_zone.setdefault(zone or name, []).append(value)
+    if len(by_zone) < 2:
+        return None
+    means = {z: sum(v) / len(v) for z, v in by_zone.items()}
+    ranked = sorted(means, key=means.get, reverse=True)
+    top, bottom = ranked[0], ranked[-1]
+    if means[top] - means[bottom] < POP_GRADIENT:
+        return None
+    # A second area worth grouping with the first.
+    leaders = [z for z in ranked if means[z] >= means[top] - 10][:2]
+    laggards = [z for z in reversed(ranked) if means[z] <= means[bottom] + 10][:2]
+    lead = " and ".join(leaders)
+    lag = " and ".join(laggards)
+    return f"more likely over {lead} than {lag}"
 
 
 def _spread(values: list[tuple[str, float, str | None]]) -> Spread | None:
@@ -608,6 +646,12 @@ def summarise_region(name: str, timezone: str, members: list[Location],
         showery = bool(phrases) and showery_hits * 2 >= phrases
         precip_kind = precip_word(kinds, showery) if naming else None
 
+        # The regional figure is the average of the points, rounded to five
+        # like the rest. Where they disagree widely, say where it is more
+        # likely rather than quoting one number for the whole peninsula.
+        typical = round5(sum(v for _, v, _ in pops) / len(pops)) if pops else None
+        gradient = pop_gradient(pops) if pops else None
+
         precip_start = wet_hours[0] if wet_hours else None
         precip_end = None
         if wet_hours:
@@ -639,6 +683,7 @@ def summarise_region(name: str, timezone: str, members: list[Location],
             direction_agreement=agreement,
             precip_start=precip_start, precip_end=precip_end,
             precip_underway=underway, precip_kind=precip_kind,
+            precip_chance_typical=typical, precip_gradient=gradient,
             peak_gust_at=peak[1].astimezone(zone_tz) if peak else None,
             peak_gust_where=peak[2] if peak else None,
             peak_window=window,
