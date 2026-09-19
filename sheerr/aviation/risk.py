@@ -123,6 +123,16 @@ class Assessment:
         return min(1.0, peak + others * 0.25)
 
 
+#: Wind strength that bears on a flight regardless of direction, in knots.
+#: Ground handling is the binding constraint well before flying is: loading,
+#: cargo doors and bridges come off before an approach becomes unflyable.
+#: Planning bands for ranking a board, not operating limits — every operator
+#: sets its own, and they vary by type and by station.
+STRONG_WIND_KT = 30      # noticeable on the ramp
+HANDLING_WIND_KT = 40    # loading and door work commonly restricted
+SEVERE_WIND_KT = 50      # ground handling generally suspended
+
+
 def assess_factors(flight: Flight, airport: Airport, periods: list[TafPeriod],
                    notams: AirportNotams | None = None) -> Assessment:
     """Compute the objective part of the assessment."""
@@ -168,6 +178,33 @@ def assess_factors(flight: Flight, airport: Airport, periods: list[TafPeriod],
                    f"(CRFI {crfi:.2f} of {profile.crosswind_kt} kt dry)"
                    if crfi is not None
                    else f"{profile.crosswind_kt} kt demonstrated crosswind")),
+        ))
+
+    # Wind strength on its own, whatever its direction. A gale straight
+    # down the runway produces no crosswind and, if it is steady, no gust
+    # spread either — so neither of the other two wind factors sees it,
+    # while on the ramp it stops loading, doors and bridges regardless of
+    # where it is blowing from.
+    strongest = max(v for v in (gust, wind_speed) if v is not None) \
+        if (gust or wind_speed) else None
+    if strongest and strongest >= STRONG_WIND_KT:
+        if strongest >= SEVERE_WIND_KT:
+            detail = (f"Damaging wind — gusts to about {kmh(strongest):.0f} km/h, "
+                      "enough to stop ground handling")
+        elif strongest >= HANDLING_WIND_KT:
+            detail = (f"Strong wind — gusts to about {kmh(strongest):.0f} km/h, "
+                      "enough to slow loading and ramp work")
+        else:
+            detail = f"Strong wind — gusts to about {kmh(strongest):.0f} km/h"
+        # Ramps down from the first threshold; a light type feels it sooner.
+        span = max(1.0, SEVERE_WIND_KT - STRONG_WIND_KT)
+        factors.append(Factor(
+            "wind",
+            detail,
+            min(1.0, (strongest - STRONG_WIND_KT) / span) * profile.wind_sensitivity,
+            technical=(f"{strongest:.0f} kt "
+                       + ("gusting" if gust and gust >= strongest else "sustained")
+                       + f", ground handling affected from {HANDLING_WIND_KT} kt"),
         ))
 
     if gust and wind_speed and gust - wind_speed >= 15:
