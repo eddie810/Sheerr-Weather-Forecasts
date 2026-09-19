@@ -57,7 +57,7 @@ locations:
     latitude: 47.7350
     longitude: -53.2158
     timezone: America/St_Johns
-    zone: "Conception Bay North"
+    zone: "the Avalon Peninsula North"
 
   placentia:
     name: Placentia
@@ -81,7 +81,7 @@ locations:
     latitude: 48.0736
     longitude: -53.0089
     timezone: America/St_Johns
-    zone: "the Bay de Verde Peninsula"
+    zone: "the Avalon Peninsula North"
 
   bonavista:
     name: Bonavista
