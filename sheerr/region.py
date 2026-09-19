@@ -93,6 +93,58 @@ _ALERT_COLOUR = re.compile(
 _ALERT_LEADING_KIND = re.compile(r"^\s*(warning|watch|statement|advisory)\s*[-–—:]\s*(.+)$", re.I)
 
 
+def _parse_local(text) -> datetime | None:
+    """An ISO timestamp from the provider, or nothing."""
+    if not text:
+        return None
+    try:
+        return datetime.fromisoformat(str(text))
+    except ValueError:
+        return None
+
+
+def alert_window(alert: dict) -> tuple[datetime | None, datetime | None]:
+    """When the hazard is in effect.
+
+    Onset and end describe the weather; effective and expire describe the
+    bulletin, and a bulletin often expires hours before the wind does
+    because it is due for reissue. Prefer the hazard, fall back to the
+    bulletin.
+    """
+    start = (_parse_local(alert.get("onsetTimeLocal"))
+             or _parse_local(alert.get("effectiveTimeLocal"))
+             or _parse_local(alert.get("issueTimeLocal")))
+    end = (_parse_local(alert.get("endTimeLocal"))
+           or _parse_local(alert.get("expireTimeLocal")))
+    return start, end
+
+
+def alerts_in_effect(alerts: list[dict], start: datetime, end: datetime,
+                     include_undated: bool = True) -> list[dict]:
+    """The alerts covering a period, rather than every one on the page.
+
+    A wind warning for Saturday afternoon belongs in Saturday's paragraph.
+    Repeating it under every period tells a reader it applies all week.
+
+    An alert carrying no usable times cannot be placed. Dropping it would
+    lose a warning, so it goes in the nearest period and nowhere else —
+    `include_undated` is set for the first period only.
+    """
+    covering = []
+    for alert in alerts:
+        a_start, a_end = alert_window(alert)
+        if a_start is None and a_end is None:
+            if include_undated:
+                covering.append(alert)
+            continue
+        if a_start is not None and a_start >= end:
+            continue                   # begins after this period
+        if a_end is not None and a_end <= start:
+            continue                   # over before this period
+        covering.append(alert)
+    return covering
+
+
 def alert_title(text: str | None) -> str:
     """The alert as a forecast would name it."""
     if not text:
@@ -260,6 +312,8 @@ class RegionDay:
     #: What is falling, named as a forecast names it: rain, showers, snow,
     #: flurries, freezing rain.
     precip_kind: str | None = None
+    #: The alerts in effect during this period, not every alert on the page.
+    alerts: list[dict[str, Any]] = field(default_factory=list)
     #: When precipitation starts and stops within this period, local time.
     #: A period reading "chance of rain 100%" with nothing falling for six
     #: hours is telling the truth badly.
@@ -613,6 +667,8 @@ def summarise_region(name: str, timezone: str, members: list[Location],
             period = aggregate(start, end, kind)
             if period is None:
                 continue
+            period.alerts = alerts_in_effect(alerts, start, end,
+                                             include_undated=not region_days)
             # Today's own periods are named for the present, not the
             # weekday: a forecast issued this morning says "Today" and
             # "Tonight", never "Friday" and "Friday night".

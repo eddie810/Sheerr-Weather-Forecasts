@@ -75,6 +75,14 @@ locations:
     timezone: America/St_Johns
     zone: "the Cape Shore"
 
+  old-perlican:
+    name: Old Perlican
+    region: "NL"
+    latitude: 48.0736
+    longitude: -53.0089
+    timezone: America/St_Johns
+    zone: "the Bay de Verde Peninsula"
+
   bonavista:
     name: Bonavista
     region: "NL"
@@ -97,3 +105,4 @@ regions:
       - carbonear
       - placentia
       - cape-st-marys
+      - old-perlican

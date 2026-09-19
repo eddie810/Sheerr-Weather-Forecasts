@@ -51,7 +51,9 @@ Name the local areas the brief gives you rather than the measuring points,
 and only when a figure genuinely differs across the region. If the region is
 uniform, do not name places at all.
 
-Mention an active alert plainly in one short sentence if there is one.
+Mention an alert plainly in one short sentence if the brief lists one for
+this period. The brief only lists alerts in effect during the period it
+describes, so say nothing about alerts when it lists none.
 Report conditions only. Never advise on safety, travel, closures, or
 whether to go ahead with anything.
 
@@ -218,12 +220,16 @@ def build_brief(summary: RegionSummary, day: RegionDay) -> tuple[str, set[float]
         lines.append(f"Chance of {day.precip_kind or 'precipitation'}: "
                      f"{day.precip_chance.high.value:.0f}%")
 
-    if summary.alerts:
+    # Only the alerts covering this period. Handing Claude every alert on
+    # the page got the wind warning repeated under all five, which reads as
+    # though it runs all week.
+    if day.alerts:
         lines.append("")
-        lines.append("Active alerts (mention the alert type, do not quote figures "
-                     "from it unless they also appear above):")
+        lines.append("Alerts in effect during this period (mention the alert "
+                     "type, do not quote figures from it unless they also "
+                     "appear above):")
         from .region import alert_title
-        for a in summary.alerts:
+        for a in day.alerts:
             lines.append("  - " + alert_title(a.get("eventDescription")
                                               or a.get("headlineText")))
 
