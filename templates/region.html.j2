@@ -70,7 +70,7 @@
         <div class="n">{{ units.speed }}{% if entry.day.dominant_direction %} from the {{ entry.day.dominant_direction | direction | lower }}{% endif %}</div>
       </div>
       {% endif %}
-      {% if entry.day.precip_chance %}
+      {% if entry.day.precip_chance and entry.day.precip_chance.high.value >= pop_floor %}
       <div class="cell">
         <div class="k">Chance of {{ entry.day.precip_kind or "rain" }}</div>
         <div class="v">{{ entry.day.precip_chance.high.value | num }}%</div>

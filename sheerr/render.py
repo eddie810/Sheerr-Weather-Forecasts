@@ -116,6 +116,10 @@ def build_env(template_dir: Path | str | None = None) -> Environment:
         lstrip_blocks=True,
         keep_trailing_newline=True,
     )
+    # Templates gate on the same floor the prose does, rather than each
+    # carrying its own number.
+    from .region import POP_FLOOR
+    env.globals["pop_floor"] = POP_FLOOR
     env.filters.update({
         "num": num, "pct": pct, "clock": clock, "datestr": datestr,
         "arrow": arrow, "wind_desc": wind_desc, "direction": direction, "alert_lead": alert_lead, "alert_locations": alert_locations,

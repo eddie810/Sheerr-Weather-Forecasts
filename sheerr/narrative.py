@@ -19,7 +19,7 @@ import re
 from . import llmcache
 from dataclasses import dataclass
 
-from .region import RegionDay, RegionSummary
+from .region import POP_FLOOR, RegionDay, RegionSummary
 
 MODEL = "claude-opus-5"
 
@@ -211,7 +211,9 @@ def build_brief(summary: RegionSummary, day: RegionDay) -> tuple[str, set[float]
             else "Rainfall"
         lines.append(f"{noun} amount: {day.precip_amount:.0f} mm")
 
-    if day.precip_chance:
+    # The brief had no floor while the writer did, so Claude was handed a
+    # five per cent chance and dutifully printed it.
+    if day.precip_chance and day.precip_chance.high.value >= POP_FLOOR:
         record(day.precip_chance.low.value, day.precip_chance.high.value)
         lines.append(f"Chance of {day.precip_kind or 'precipitation'}: "
                      f"{day.precip_chance.high.value:.0f}%")
@@ -276,7 +278,7 @@ def rule_based(summary: RegionSummary, day: RegionDay) -> Narrative:
     headline = (day.sky or "Cloud").capitalize() + "."
 
     parts = []
-    if day.precip_chance and day.precip_chance.high.value >= 20:
+    if day.precip_chance and day.precip_chance.high.value >= POP_FLOOR:
         # "Chance of rain", the way a forecast says it. The generic word is
         # only reached for when nothing names the form.
         what = day.precip_kind or "precipitation"

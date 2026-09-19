@@ -253,7 +253,7 @@
         <span class="sw-v">{{ entry.day.wind_speed.low.value | num }}–{{ entry.day.wind_speed.high.value | num }}</span>
         <span class="sw-n">{{ units.speed }}{% if entry.day.dominant_direction %} {{ entry.day.dominant_direction | direction | lower }}{% endif %}</span></div>
       {% endif %}
-      {% if entry.day.precip_chance %}
+      {% if entry.day.precip_chance and entry.day.precip_chance.high.value >= pop_floor %}
       <div class="sw-fig"><span class="sw-k">Chance of {{ entry.day.precip_kind or "rain" }}</span>
         <span class="sw-v">{{ entry.day.precip_chance.high.value | num }}%</span>
         {% if entry.day.precip_start or entry.day.precip_underway %}
@@ -275,7 +275,7 @@
       {{ wx_icon(day.icon) }}
       <span class="sw-wd-hi">{{ day.high.high.value | num if day.high else "—" }}°</span>
       <span class="sw-wd-lo">{{ day.low.low.value | num if day.low else "—" }}°</span>
-      <span class="sw-wd-pop">{% if day.precip_chance and day.precip_chance.high.value >= 20 %}{{ day.precip_chance.high.value | num }}%{% endif %}</span>
+      <span class="sw-wd-pop">{% if day.precip_chance and day.precip_chance.high.value >= pop_floor %}{{ day.precip_chance.high.value | num }}%{% endif %}</span>
     </div>
     {% endfor %}
   </div>

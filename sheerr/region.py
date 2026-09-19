@@ -180,9 +180,12 @@ def precip_word(kinds: list[str], showery: bool) -> str:
     return shower if showery else steady
 
 
-#: A chance worth naming. Below this the period is not described as a
-#: chance of anything, so there is nothing to name.
-NAMEABLE_POP = 20
+#: The lowest chance a forecast quotes. Below it a period is not described
+#: as a chance of anything — a five per cent chance of rain is a dry
+#: forecast, and printing the figure invites a reader to plan around it.
+#: One constant, because the prose, the brief behind it and the figure
+#: panel disagreeing is how "Chance of precipitation 5%" reached the page.
+POP_FLOOR = 20
 
 #: An hour counts as wet at this much accumulation, or at this chance when
 #: no amount is given. Below it the hour is damp at most.
@@ -539,7 +542,7 @@ def summarise_region(name: str, timezone: str, members: list[Location],
         if not naming:
             naming = [h for hours in reporting for h in hours
                       if start <= h.slot.astimezone(zone_tz) < end
-                      and (h.precip_chance or 0) >= NAMEABLE_POP]
+                      and (h.precip_chance or 0) >= POP_FLOOR]
         kinds, showery_hits, phrases = [], 0, 0
         for h in naming:
             if h.precip_type:
