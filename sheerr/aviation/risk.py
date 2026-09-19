@@ -128,9 +128,31 @@ class Assessment:
 #: cargo doors and bridges come off before an approach becomes unflyable.
 #: Planning bands for ranking a board, not operating limits — every operator
 #: sets its own, and they vary by type and by station.
+#: Score at which a flight is worth monitoring, and at which it is at risk.
+YELLOW_AT = 0.28
+ORANGE_AT = 0.6
+
 STRONG_WIND_KT = 30      # noticeable on the ramp
 HANDLING_WIND_KT = 40    # loading and door work commonly restricted
 SEVERE_WIND_KT = 50      # ground handling generally suspended
+
+
+def wind_weight(knots: float) -> float:
+    """How much a wind of this strength bears on a flight.
+
+    Anchored to the bands rather than sloped through them, so the
+    thresholds mean what they say: 30 kt reaches the monitor mark, 40 kt
+    reaches the at-risk mark, 50 kt tops out.
+    """
+    if knots < STRONG_WIND_KT:
+        return 0.0
+    if knots < HANDLING_WIND_KT:
+        span = (knots - STRONG_WIND_KT) / (HANDLING_WIND_KT - STRONG_WIND_KT)
+        return YELLOW_AT + span * (ORANGE_AT - YELLOW_AT)
+    if knots < SEVERE_WIND_KT:
+        span = (knots - HANDLING_WIND_KT) / (SEVERE_WIND_KT - HANDLING_WIND_KT)
+        return ORANGE_AT + span * (1.0 - ORANGE_AT)
+    return 1.0
 
 
 def assess_factors(flight: Flight, airport: Airport, periods: list[TafPeriod],
@@ -209,13 +231,14 @@ def assess_factors(flight: Flight, airport: Airport, periods: list[TafPeriod],
             detail = f"Strong wind — gusts to about {kmh(strongest):.0f} km/h"
         if strongest_transient:
             detail += ", though only for part of the time"
-        # Ramps down from the first threshold; a light type feels it sooner.
-        span = max(1.0, SEVERE_WIND_KT - STRONG_WIND_KT)
+        # A light type feels it sooner, but nothing is discounted for being
+        # heavy: the binding constraint here is the ramp, and a forty knot
+        # gust stops loading whatever is parked at the gate — more so for a
+        # widebody, with higher loaders and a longer bridge.
         factors.append(Factor(
             "wind",
             detail,
-            min(1.0, (strongest - STRONG_WIND_KT) / span)
-            * profile.wind_sensitivity
+            min(1.0, wind_weight(strongest) * max(1.0, profile.wind_sensitivity))
             * (0.7 if strongest_transient else 1.0),
             technical=(f"{strongest:.0f} kt peak across the groups in effect"
                        + (" (TEMPO)" if strongest_transient else "")
@@ -382,7 +405,7 @@ def _outlook(a: Assessment, arriving: bool, weather: str) -> str:
 def _rule_verdict(a: Assessment) -> tuple[str, str]:
     """Deterministic colour and one-line reason."""
     score = a.score
-    colour = ORANGE if score >= 0.6 else YELLOW if score >= 0.28 else GREEN
+    colour = ORANGE if score >= ORANGE_AT else YELLOW if score >= YELLOW_AT else GREEN
     if not a.factors:
         a.reason_technical = "No significant weather in the forecast period."
         return colour, "No weather impact expected."
