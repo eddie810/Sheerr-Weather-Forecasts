@@ -114,22 +114,45 @@
   .sw-forecast .sw-windy{color:var(--sw-windy) !important} .sw-forecast .sw-severe{color:var(--sw-severe) !important}
 
 
+  .sw-forecast .sw-hero {
+    display:block; width:100%; height:auto; aspect-ratio:16/9;
+    object-fit:cover; border-radius:6px; margin:0 0 1.2rem;
+    background:var(--sw-rule);
+  }
+
   /* Seven-day strip */
+  /* Laid out like the broadcast panel: a column per day, the day name
+     above, the sky in the middle, the high large and the low on a bar
+     beneath it. The cards carry their own dark ground, so the white text
+     inside them is safe on a white host page — the body text around them
+     stays black. */
   .sw-forecast .sw-week {
-    display:grid; gap:1px; background:var(--sw-rule);
-    border:1px solid var(--sw-rule); border-radius:4px; overflow:hidden;
-    grid-template-columns:repeat(7,1fr); margin-top:.6rem;
+    display:grid; gap:6px; grid-template-columns:repeat(7,1fr); margin-top:.6rem;
   }
   .sw-forecast .sw-wd {
-    background:var(--sw-card); padding:.7rem .3rem .8rem; text-align:center;
+    background:linear-gradient(#123a63,#0d2c4d);
+    border:1px solid #2b5a8a; border-radius:7px; overflow:hidden;
+    padding:.55rem .25rem 0; text-align:center; display:flex;
+    flex-direction:column; align-items:stretch;
   }
+  /* The weekend lifts out of the run, as it does on the panel. */
+  .sw-forecast .sw-wd.sw-wknd { background:linear-gradient(#2f6ea8,#245b8d); }
   .sw-forecast .sw-wd-name {
-    font-family:var(--sw-sans); font-size:.62rem; letter-spacing:.1em;
-    text-transform:uppercase; color:var(--sw-faint) !important; font-weight:700;
+    font-family:var(--sw-sans); font-size:.7rem; letter-spacing:.1em;
+    text-transform:uppercase; color:#fff !important; font-weight:800;
   }
   .sw-forecast .sw-wd-date {
-    font-family:var(--sw-sans); font-size:.6rem; color:var(--sw-faint) !important;
-    display:block; margin-top:.1rem;
+    font-family:var(--sw-sans); font-size:.58rem; color:#a8c6e2 !important;
+    display:block; margin-top:.05rem;
+  }
+  .sw-forecast .sw-wd-cond {
+    font-family:var(--sw-sans); font-size:.58rem; line-height:1.25;
+    color:#d6e6f5 !important; display:block; margin-top:.15rem;
+    min-height:2.1em; padding:0 .1rem;
+  }
+  /* The low sits on its own bar at the foot, flush to the card edges. */
+  .sw-forecast .sw-wd-foot {
+    margin-top:auto; background:#8c949c; padding:.28rem 0 .3rem;
   }
   .sw-forecast .sw-icon { width:32px; height:32px; display:block; margin:.45rem auto .35rem; }
   .sw-forecast .sw-i-sun { fill:#f2a33c; }
@@ -138,16 +161,18 @@
   .sw-forecast .sw-i-rain { stroke:var(--sw-brand); stroke-width:2.2; stroke-linecap:round; fill:none; }
   .sw-forecast .sw-i-snow { stroke:#9fd4ef; stroke-width:1.8; stroke-linecap:round; fill:none; }
   .sw-forecast .sw-wd-hi {
-    font-family:var(--sw-sans); font-size:1.02rem; font-weight:700;
-    font-variant-numeric:tabular-nums;
+    font-family:var(--sw-sans); font-size:1.5rem; font-weight:800;
+    font-variant-numeric:tabular-nums; color:#fff !important;
+    display:block; line-height:1.15; padding-bottom:.35rem;
   }
   .sw-forecast .sw-wd-lo {
-    font-family:var(--sw-sans); font-size:.86rem; color:var(--sw-soft) !important;
-    font-variant-numeric:tabular-nums;
+    font-family:var(--sw-sans); font-size:.95rem; font-weight:700;
+    font-variant-numeric:tabular-nums; color:#12202c !important;
+    display:block; line-height:1.1;
   }
   .sw-forecast .sw-wd-pop {
-    font-family:var(--sw-sans); font-size:.62rem; color:var(--sw-accent) !important;
-    display:block; margin-top:.25rem; font-weight:600; min-height:.9rem;
+    font-family:var(--sw-sans); font-size:.66rem; color:#8fd4ff !important;
+    display:block; margin-top:.2rem; font-weight:700; min-height:.9rem;
   }
   .sw-forecast .sw-week-title {
     font-family:var(--sw-sans); font-size:.68rem; letter-spacing:.14em;
@@ -155,8 +180,11 @@
     margin:1.6rem 0 0;
   }
   @media (max-width:560px) {
-    .sw-forecast .sw-week { grid-template-columns:repeat(4,1fr); }
+    .sw-forecast .sw-week { grid-template-columns:repeat(4,1fr); gap:5px; }
     .sw-forecast .sw-icon { width:28px; height:28px; }
+    .sw-forecast .sw-wd-hi { font-size:1.3rem; }
+    /* Four to a row leaves more width, so the wording can breathe. */
+    .sw-forecast .sw-wd-cond { min-height:0; }
   }
   @media (max-width:360px) { .sw-forecast .sw-week { grid-template-columns:repeat(3,1fr); } }
   .sw-forecast .sw-foot {
@@ -211,7 +239,10 @@
     <p class="sw-title">{{ summary.name }}</p>
     <p class="sw-sub">Issued {{ summary.generated_at | datestr }} at {{ summary.generated_at | clock }} {{ summary.generated_at.strftime('%Z') }}</p>
   </div>
-
+  {# Order follows how the page is read: a warning first, because it is
+     the one thing that changes what somebody does; then the map, which
+     answers "what is it doing near me" at a glance; then the week; and
+     the written detail last, for whoever wants it. #}
   {% for a in summary.alerts %}
   <details class="sw-alert">
     <summary>
@@ -229,6 +260,57 @@
   </details>
   {% endfor %}
 
+
+  {# The forecast map, served from the CDN rather than rebuilt here.
+     Loaded lazily and given an aspect ratio so the page does not jump when
+     it arrives, and the alt text carries the region for anyone who cannot
+     see it. A broken CDN leaves a gap, not a broken layout. #}
+  <img class="sw-hero" loading="lazy" decoding="async"
+       src="https://SheerrWeather.b-cdn.net/wximages/Avalon_Forecast.jpg"
+       alt="Map of today's forecast temperatures across {{ summary.name }}">
+
+  {% set strip = summary.outlook or summary.days %}
+  {% if strip | length > 1 %}
+  <p class="sw-week-title">The week ahead</p>
+  <div class="sw-week">
+    {#- Short sky wording for a narrow column. The forecast's own phrases
+        run long ("a mix of sun and cloud"), so the panel gets a compact
+        form of the same thing. Presentation only: the prose above is
+        untouched. -#}
+    {% set short_sky = {
+      "sunny": "Sunny", "mainly sunny": "Mostly Sunny",
+      "a mix of sun and cloud": "Sun &amp; Cloud",
+      "mainly cloudy": "Mostly Cloudy", "cloudy": "Cloudy",
+      "clear": "Clear", "mainly clear": "Mostly Clear",
+      "partly cloudy": "Partly Cloudy",
+    } %}
+    {#- A chance worth printing is not the same as precipitation being the
+        story. At twenty per cent the sky is what the day looks like and the
+        figure carries the chance; the panel only leads with the
+        precipitation once it is likely enough to be what you would say
+        first. -#}
+    {% set cond_pop = 30 %}
+    {% for day in strip[:7] %}
+    {% set wet = day.precip_chance_typical and day.precip_chance_typical >= pop_floor %}
+    {% set leads = day.precip_chance_typical and day.precip_chance_typical >= cond_pop %}
+    <div class="sw-wd{{ " sw-wknd" if day.date.weekday() >= 5 }}">
+      <span class="sw-wd-name">{{ "Today" if loop.first else day.date.strftime('%a') }}</span>
+      <span class="sw-wd-date">{{ day.date.strftime('%-d %b') }}</span>
+      {{ wx_icon(day.icon) }}
+      <span class="sw-wd-pop">{% if wet %}{{ day.precip_chance_typical | num }}%{% endif %}</span>
+      <span class="sw-wd-cond">
+        {%- if leads and day.precip_kind -%}
+          {{ day.precip_kind | capitalize }}
+        {%- else -%}
+          {{ short_sky.get(day.sky, day.sky | capitalize if day.sky else "") }}
+        {%- endif -%}
+      </span>
+      <span class="sw-wd-hi">{{ day.high.high.value | num if day.high else "—" }}</span>
+      <span class="sw-wd-foot"><span class="sw-wd-lo">{{ day.low.low.value | num if day.low else "—" }}</span></span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
   {% for entry in narratives %}
   <div class="sw-day">
     <h3>{{ entry.day.label or entry.day.day_of_week }}{% if not entry.day.night_only %}, {{ entry.day.date.strftime('%B %-d') }}{% endif %}</h3>
@@ -265,22 +347,6 @@
   </div>
   {% endfor %}
 
-  {% set strip = summary.outlook or summary.days %}
-  {% if strip | length > 1 %}
-  <p class="sw-week-title">The week ahead</p>
-  <div class="sw-week">
-    {% for day in strip[:7] %}
-    <div class="sw-wd">
-      <span class="sw-wd-name">{{ "Today" if loop.first else day.date.strftime('%a') }}</span>
-      <span class="sw-wd-date">{{ day.date.strftime('%-d %b') }}</span>
-      {{ wx_icon(day.icon) }}
-      <span class="sw-wd-hi">{{ day.high.high.value | num if day.high else "—" }}°</span>
-      <span class="sw-wd-lo">{{ day.low.low.value | num if day.low else "—" }}°</span>
-      <span class="sw-wd-pop">{% if day.precip_chance and day.precip_chance.high.value >= pop_floor %}{{ day.precip_chance.high.value | num }}%{% endif %}</span>
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
 
   <div class="sw-foot">
     <p>Sampled across {{ summary.members | length }} points: {{ summary.member_names | join(", ") }}.</p>
