@@ -179,14 +179,36 @@
     text-transform:uppercase; color:var(--sw-accent) !important; font-weight:700;
     margin:1.6rem 0 0;
   }
-  @media (max-width:560px) {
-    .sw-forecast .sw-week { grid-template-columns:repeat(4,1fr); gap:5px; }
-    .sw-forecast .sw-icon { width:28px; height:28px; }
-    .sw-forecast .sw-wd-hi { font-size:1.3rem; }
-    /* Four to a row leaves more width, so the wording can breathe. */
-    .sw-forecast .sw-wd-cond { min-height:0; }
+  /* A row of columns needs width. On a phone seven of them come out as
+     thin slivers and wrap four-and-three with a hole in the grid, so the
+     panel turns on its side: one row per day, read left to right. Nothing
+     is hidden behind a swipe and nothing is squeezed. */
+  @media (max-width:640px) {
+    .sw-forecast .sw-week { grid-template-columns:1fr; gap:5px; }
+    .sw-forecast .sw-wd {
+      flex-direction:row; align-items:center; text-align:left;
+      padding:.45rem .7rem; gap:.65rem;
+    }
+    .sw-forecast .sw-wd-name { flex:0 0 3.1rem; font-size:.74rem; }
+    /* The weekday carries the day well enough in a list. */
+    .sw-forecast .sw-wd-date { display:none; }
+    .sw-forecast .sw-icon { width:30px; height:30px; margin:0; flex:0 0 30px; }
+    .sw-forecast .sw-wd-cond {
+      flex:1 1 auto; min-height:0; margin:0; font-size:.72rem;
+    }
+    .sw-forecast .sw-wd-pop {
+      flex:0 0 2.4rem; min-height:0; margin:0; text-align:right; font-size:.72rem;
+    }
+    .sw-forecast .sw-wd-hi {
+      flex:0 0 2.1rem; font-size:1.15rem; padding:0; text-align:right;
+    }
+    /* No bar across the foot of a row; the low simply follows the high. */
+    .sw-forecast .sw-wd-foot {
+      margin:0; background:transparent; padding:0; flex:0 0 2.1rem;
+      text-align:right;
+    }
+    .sw-forecast .sw-wd-lo { color:#9dbdd8 !important; font-size:1rem; }
   }
-  @media (max-width:360px) { .sw-forecast .sw-week { grid-template-columns:repeat(3,1fr); } }
   .sw-forecast .sw-foot {
     border-top:1px solid var(--sw-rule); margin-top:1.3rem; padding-top:.8rem;
     font-family:var(--sw-sans); font-size:.72rem; color:var(--sw-faint) !important;
