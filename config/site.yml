@@ -30,12 +30,3 @@ pages:
     # Sunday — about the run a public forecast issues in detail.
     narrative_days: 5
 
-  # Event briefings. `when` accepts an ISO timestamp for a fixed date, or a
-  # phrase like "saturday 2pm" that rolls forward each week.
-  - type: event
-    location: witless-bay
-    when: "2026-09-19T14:00"
-    name: Wedding
-    window: 4
-    # Drop this page automatically once the event has passed.
-    expires_after: true
