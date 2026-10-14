@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "sheerrweather-elementor": {
+      "type": "http",
+      "url": "https://sheerrweather.ca/wp-json/elementor/mcp/",
+      "headers": {
+        "Authorization": "Basic ${SW_WP_AUTH}"
+      }
+    }
+  }
+}
