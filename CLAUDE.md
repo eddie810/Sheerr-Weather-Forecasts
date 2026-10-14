@@ -1,0 +1,86 @@
+# Sheerr Weather — working notes for Claude
+
+Eddie Sheerr runs Sheerr Weather (Newfoundland & Labrador forecasts). Most day-to-day work is on the
+WordPress site, not the Python code in this repo. Write to Eddie in plain language; he is not a developer.
+
+## The website: sheerrweather.ca
+
+- WordPress + Elementor on Hostinger. Moved off Squarespace on Oct 12, 2026 (all ~640 old posts and
+  ~3,800 comments imported). Old `sheerrweather.ca/forecasts/<slug>` links redirect to the new posts.
+- Domain is registered at Squarespace Domains; only the website A/CNAME records point at Hostinger.
+  **Never touch the Google Workspace MX, google-site-verification TXT or _dmarc records** (email).
+- Site timezone is America/St_Johns. Times Eddie gives are NDT/NST.
+
+### Access
+
+- REST API: `curl -H "Authorization: Basic $SW_WP_AUTH" https://sheerrweather.ca/wp-json/...`
+  (`SW_WP_AUTH` is an environment secret = base64 of `admin:<application password>`). Never print it,
+  never ask Eddie to paste passwords or tokens into the chat.
+- Elementor MCP server is configured in `.mcp.json` (same secret). Use it for Elementor page layouts.
+- Custom code lives in the **Code Snippets** plugin: `GET/POST /wp-json/code-snippets/v1/snippets[/<id>]`.
+  Lint PHP locally (`php -l`, prefix `<?php`) before saving a snippet.
+- Purge the LiteSpeed page cache after changes: `POST /wp-json/code-snippets/v1/snippets/23/activate`
+  (single-use snippet that runs `litespeed_purge_all`).
+- Private keys are stored as WordPress options and never exposed: `sw_twc_api_key` (weather.com / TWC),
+  `sw_smg_token` (Streamology), `sw_fb_page_id` + `sw_fb_page_token` (Facebook Page, set in
+  Settings → General; posting not built yet).
+- To read TWC data (Eddie prefers TWC over other sources): add a temporary admin-only, read-only snippet
+  that calls `api.weather.com` with `get_option('sw_twc_api_key')`, use it, then **delete it**.
+  Useful endpoints: `/v3/wx/forecast/daily/5day`, `/v3/wx/forecast/hourly/2day`,
+  `/v3/wx/observations/current`, `/v3/location/near?product=pws`, `/v2/pws/observations/current`.
+- Environment Canada alerts (public): `https://api.weather.gc.ca/collections/weather-alerts/items?lang=en&province=NL&f=json`.
+
+### Key snippets (Code Snippets IDs)
+
+| ID | What it does |
+|----|--------------|
+| 5  | Live alert ticker, 24/7 channel slot fallback |
+| 6  | App-style mobile layout and bottom tab bar |
+| 7  | Google Ad Manager sponsor slots on posts (Morning Briefings get one 300×250 unit right after the "sponsored by" line) |
+| 11 | Homepage feeds: latest post, top stories, briefings, Latest Videos (YouTube playlist RSS, falls back to scraping the playlist page, then the last good list) |
+| 16 | Blog page (/blog/) with compact pager |
+| 18 | Storm Centre (YouTube live on top + `storm-centre-cams` 3-camera Streamology player) |
+| 19 | Streamology camera players + camera weather banners (TWC currents per camera spot, temperature from nearest healthy PWS, one decimal) and the YouTube live embed (`SW_TV_YOUTUBE_ID`) on the homepage and /live/ (tap to play) |
+| 21 | Info pages, contact form, footer, old Squarespace URL redirects |
+| 27 | Streamology Player Builder (Tools → Player Builder; players stored in option `sw_players`) |
+| 32 | Site search page |
+| 34 | App feed at the old Squarespace address (`/forecasts?format=rss`) — the mobile app reads this |
+| 39 | Facebook Page settings fields |
+
+## Blog posts
+
+Always save as **draft** unless Eddie says publish/schedule. Show him what you wrote and flag guesses.
+
+**Before editing a post Eddie may have open in the editor:** check its `modified` time, and ask him to
+close or reload the editor first. Saving from a stale editor tab overwrites API changes (this happened).
+Make targeted find/replace edits on the current content rather than rewriting the whole post.
+
+### Morning Briefing (category 3)
+- Title `Tuesday Morning’s Weather Briefing — October 13, 2026`, slug `tuesday-mornings-weather-briefing-october-13-2026`,
+  excerpt `A detailed outlook about what to expect today across Newfoundland and Labrador.`
+- Layout: title image (featured image too) → `Good <Day> Morning!` + 4–6 bullets → separator → discussion →
+  sponsor lines → regional forecasts → `Looking ahead:` → footer (app / Map Room / Highway Cams links).
+- Sponsor: **Roebothan, McKay, Marshall** — `This morning’s update is sponsored by Roebothan, McKay, Marshall.`
+  then `Visit MakeTheCall.ca today to learn more about how the law firm can help you!` (the ad unit lands between them, mid-post).
+- Regions, in order: Eastern Newfoundland / the Avalon · Central · West Coast · South Coast ·
+  Southwest / Wreckhouse · GNP and the Straits · Labrador / the Big Land.
+- Usually scheduled for **5:00 AM NDT**; Eddie sends an app push alert around 6:30 AM with the link.
+  App teasers end with "Tap here to read more."
+
+### Evening Forecast (category 4)
+- Usually written from Eddie's YouTube video captions. Fix caption mishearings and list the guesses.
+- Layout: separator → YouTube embed → separator → centred `This evening’s forecast is sponsored by:` +
+  sponsor banner → separator → write-up with `<h3>` sections → separator → "Don’t forget to…" footer.
+- Sponsor: **Medicuro** banner (media ID 3310), linked to https://medicuro.ca/.
+- Featured image = the YouTube thumbnail Eddie sends.
+
+### Voice
+First person, conversational, practical ("give yourself a few extra minutes"), NL place names, °C, km/h, mm/cm.
+Quote Environment Canada warning details exactly (areas, gusts, timing).
+
+## YouTube
+Channel @EddieSheerr (`UCx20u4KYgqx3XGLuBm1Uabw`), forecasts playlist "Sheerr Weather"
+(`PLRhEYLjVM6T3zn3xS6MN-1RUuyw2H4-lm`), 24/7 stream "Sheerr Weather 24" (ID in snippet 19).
+
+## This repo
+Python forecast generator (`sheerr/`, `templates/`, `config/`) — see README.md.
