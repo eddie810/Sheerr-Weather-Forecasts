@@ -80,6 +80,7 @@ Make targeted find/replace edits on the current content rather than rewriting th
 
 ### Voice
 First person, conversational, practical ("give yourself a few extra minutes"), NL place names, °C, km/h, mm/cm.
+Say "below freezing" or "below the freezing mark", never "below zero".
 Quote Environment Canada warning details exactly (areas, gusts, timing).
 
 ## YouTube
