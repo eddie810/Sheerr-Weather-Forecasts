@@ -51,6 +51,10 @@ WordPress site, not the Python code in this repo. Write to Eddie in plain langua
 
 Always save as **draft** unless Eddie says publish/schedule. Show him what you wrote and flag guesses.
 
+**Build posts from normal editor blocks** (`wp:paragraph`, `wp:heading`, `wp:list`/`wp:list-item`, `wp:image`,
+`wp:separator`, `wp:embed`), **never Custom HTML (`wp:html`) blocks**, so Eddie can edit the text in the visual
+editor without touching code. (The centred sponsor heading in Evening Forecasts can be a centred `wp:heading`.)
+
 **Before editing a post Eddie may have open in the editor:** check its `modified` time, and ask him to
 close or reload the editor first. Saving from a stale editor tab overwrites API changes (this happened).
 Make targeted find/replace edits on the current content rather than rewriting the whole post.
