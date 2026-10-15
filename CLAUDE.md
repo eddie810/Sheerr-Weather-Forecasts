@@ -66,6 +66,7 @@ Make targeted find/replace edits on the current content rather than rewriting th
   sponsor lines → regional forecasts → `Looking ahead:` → footer (app / Map Room / Highway Cams links).
 - Sponsor: **Roebothan, McKay, Marshall** — `This morning’s update is sponsored by Roebothan, McKay, Marshall.`
   then `Visit MakeTheCall.ca today to learn more about how the law firm can help you!` (the ad unit lands between them, mid-post).
+  Both sponsor lines are **centred** (`wp:paragraph {"align":"center"}`).
 - Regions, in order: Eastern Newfoundland / the Avalon · Central · West Coast · South Coast ·
   Southwest / Wreckhouse · GNP and the Straits · Labrador / the Big Land.
 - Usually scheduled for **5:00 AM NDT**; Eddie sends an app push alert around 6:30 AM with the link.
