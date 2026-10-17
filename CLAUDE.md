@@ -46,6 +46,8 @@ WordPress site, not the Python code in this repo. Write to Eddie in plain langua
 | 32 | Site search page |
 | 34 | App feed at the old Squarespace address (`/forecasts?format=rss`) — the mobile app reads this |
 | 39 | Facebook Page settings fields |
+| 40 | Wreckhouse Wind Gauge page (/wreckhouse/): ECCC station + HRDPS forecast, warning level 100 km/h |
+| 41 | Regional forecast pages (`[sw_region region="..."]`): regions in `sw_rg_regions()`, menu order in `sw_rg_menu()` (also feeds the region switcher on each page and the phone "More" menu). Homepage "Regional Forecasts" list is in Elementor (page 45) and must be updated by hand when a region is added |
 
 ## Blog posts
 
