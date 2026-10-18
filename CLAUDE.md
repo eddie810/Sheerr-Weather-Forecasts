@@ -65,7 +65,7 @@ Make targeted find/replace edits on the current content rather than rewriting th
 - Title `Tuesday Morning’s Weather Briefing — October 13, 2026`, slug `tuesday-mornings-weather-briefing-october-13-2026`,
   excerpt `A detailed outlook about what to expect today across Newfoundland and Labrador.`
 - Layout: title image (featured image too) → `Good <Day> Morning!` + 4–6 bullets → separator → discussion →
-  sponsor lines → regional forecasts → `Looking ahead:` → footer (app / Map Room / Highway Cams links).
+  sponsor lines → regional forecasts → `Looking ahead:` → footer (app / 📍 Regional Forecast pages teaser linking every region page / Map Room / Highway Cams links).
 - Sponsor: **Roebothan, McKay, Marshall** — `This morning’s update is sponsored by Roebothan, McKay, Marshall.`
   then `Visit MakeTheCall.ca today to learn more about how the law firm can help you!` (the ad unit lands between them, mid-post).
   Both sponsor lines are **centred** (`wp:paragraph {"align":"center"}`), with a separator line above and below the pair.
