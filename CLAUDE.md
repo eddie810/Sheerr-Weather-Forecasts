@@ -22,8 +22,8 @@ WordPress site, not the Python code in this repo. Write to Eddie in plain langua
 - Purge the LiteSpeed page cache after changes: `POST /wp-json/code-snippets/v1/snippets/23/activate`
   (single-use snippet that runs `litespeed_purge_all`).
 - Private keys are stored as WordPress options and never exposed: `sw_twc_api_key` (weather.com / TWC),
-  `sw_smg_token` (Streamology), `sw_fb_page_id` + `sw_fb_page_token` (Facebook Page, set in
-  Settings → General; posting not built yet).
+  `sw_smg_token` (Streamology), `sw_fb_page_id` + `sw_fb_page_token` (Facebook Page "Meteorologist Eddie Sheerr", set in
+  Settings → General; Page token expires Dec 18, 2026 unless Eddie swaps in a never-expiring one).
 - To read TWC data (Eddie prefers TWC over other sources): add a temporary admin-only, read-only snippet
   that calls `api.weather.com` with `get_option('sw_twc_api_key')`, use it, then **delete it**.
   Useful endpoints: `/v3/wx/forecast/daily/5day`, `/v3/wx/forecast/hourly/2day`,
@@ -48,6 +48,7 @@ WordPress site, not the Python code in this repo. Write to Eddie in plain langua
 | 39 | Facebook Page settings fields |
 | 40 | Wreckhouse Wind Gauge page (/wreckhouse/): ECCC station + HRDPS forecast, warning level 100 km/h |
 | 41 | Regional forecast pages (`[sw_region region="..."]`): regions in `sw_rg_regions()`, menu order in `sw_rg_menu()` (also feeds the region switcher on each page and the phone "More" menu). Homepage "Regional Forecasts" list is in Elementor (page 45) and must be updated by hand when a region is added |
+| 42 | Facebook Page posting (admin-only): `GET /wp-json/sw-fb/v1/status`, `GET posts`, `GET insights/<id>`, `POST post` {message, link?, image_url?, scheduled_time?}, `DELETE post/<id>`. Image posts need a public image URL (upload to WP media first). Show Eddie the caption first unless he says to post/share it |
 
 ## Blog posts
 
