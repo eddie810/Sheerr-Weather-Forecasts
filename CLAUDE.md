@@ -36,7 +36,7 @@ WordPress site, not the Python code in this repo. Write to Eddie in plain langua
 |----|--------------|
 | 5  | Live alert ticker, 24/7 channel slot fallback |
 | 6  | App-style mobile layout and bottom tab bar |
-| 7  | Google Ad Manager sponsor slots on posts (Morning Briefings get one 300×250 unit right after the "sponsored by" line) |
+| 7  | Google Ad Manager sponsor slots on posts (Morning Briefings: HPSL banner under the title; 300×250 units only when the post has a "sponsored by" line) |
 | 11 | Homepage feeds: latest post, top stories, briefings, Latest Videos (YouTube playlist RSS, falls back to scraping the playlist page, then the last good list) |
 | 16 | Blog page (/blog/) with compact pager |
 | 18 | Storm Centre (YouTube live on top + `storm-centre-cams` 3-camera Streamology player) |
@@ -65,8 +65,9 @@ Make targeted find/replace edits on the current content rather than rewriting th
 - Title `Tuesday Morning’s Weather Briefing — October 13, 2026`, slug `tuesday-mornings-weather-briefing-october-13-2026`,
   excerpt `A detailed outlook about what to expect today across Newfoundland and Labrador.`
 - Layout: title image (featured image too) → `Good <Day> Morning!` + 4–6 bullets → separator → discussion →
-  sponsor lines → regional forecasts → `Looking ahead:` → footer (app / 📍 Regional Forecast pages teaser linking every region page / Map Room / Highway Cams links).
-- Sponsor: **Roebothan, McKay, Marshall** — `This morning’s update is sponsored by Roebothan, McKay, Marshall.`
+  (sponsor lines, when there's a sponsor) → regional forecasts → `Looking ahead:` → footer (app / 📍 Regional Forecast pages teaser linking every region page / Map Room / Highway Cams links).
+- **No sponsor lines for now** (RMM's run ended Oct 19, 2026). Without a "sponsored by" line the post gets only the HPSL banner under the title, no 300×250 squares (snippet 7).
+- Past sponsor: **Roebothan, McKay, Marshall** — `This morning’s update is sponsored by Roebothan, McKay, Marshall.`
   then `Visit MakeTheCall.ca today to learn more about how the law firm can help you!` (the ad unit lands between them, mid-post).
   Both sponsor lines are **centred** (`wp:paragraph {"align":"center"}`), with a separator line above and below the pair.
 - Regions, in order: Eastern Newfoundland / the Avalon · Central · West Coast · South Coast ·
