@@ -48,7 +48,7 @@ WordPress site, not the Python code in this repo. Write to Eddie in plain langua
 | 39 | Facebook Page settings fields |
 | 40 | Wreckhouse Wind Gauge page (/wreckhouse/): ECCC station + HRDPS forecast, warning level 100 km/h |
 | 41 | Regional forecast pages (`[sw_region region="..."]`): regions in `sw_rg_regions()`, menu order in `sw_rg_menu()` (also feeds the region switcher on each page and the phone "More" menu). Homepage "Regional Forecasts" list is in Elementor (page 45) and must be updated by hand when a region is added |
-| 42 | Facebook Page posting (admin-only): `GET /wp-json/sw-fb/v1/status`, `GET posts`, `GET insights/<id>`, `POST post` {message, link?, image_url?, scheduled_time?}, `DELETE post/<id>`. Image posts need a public image URL (upload to WP media first). Show Eddie the caption first unless he says to post/share it |
+| 42 | Facebook Page posting (admin-only): `GET /wp-json/sw-fb/v1/status`, `GET posts`, `GET insights/<id>`, `POST post` {message, link?, image_url?, scheduled_time?}, `DELETE post/<id>`, `GET comments/<id>` (commenter names are withheld by Facebook), `POST reply/<id>`, `POST hide/<id>`, `POST like/<id>`. Image posts need a public image URL (upload to WP media first). Show Eddie the caption/reply first unless he says to post/share it |
 
 ## Blog posts
 
