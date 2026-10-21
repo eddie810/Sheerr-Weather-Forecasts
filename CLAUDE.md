@@ -74,7 +74,8 @@ Make targeted find/replace edits on the current content rather than rewriting th
 - Regions, in order: Eastern Newfoundland / the Avalon · Central · West Coast · South Coast ·
   Southwest / Wreckhouse · GNP and the Straits · Labrador / the Big Land.
 - Usually scheduled for **5:00 AM NDT**; Eddie sends an app push alert around 6:30 AM with the link.
-  App teasers end with "Tap here to read more."
+  App teasers end with "Tap here to read more." **Always give Labrador its own line in app descriptions,
+  push alerts and social captions** (Eddie flagged that it kept getting left out).
 
 ### Evening Forecast (category 4)
 - Usually written from Eddie's YouTube video captions. Fix caption mishearings and list the guesses.
