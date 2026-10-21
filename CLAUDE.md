@@ -82,6 +82,8 @@ Make targeted find/replace edits on the current content rather than rewriting th
 - Layout: separator → YouTube embed → separator → centred `This evening’s forecast is sponsored by:` +
   sponsor banner → separator → write-up with `<h3>` sections → separator → "Don’t forget to…" footer.
 - Sponsor: **Medicuro** banner (media ID 3310), linked to https://medicuro.ca/.
+  Oct 20–21, 2026 videos were sponsored by **Amplifon** (banner media ID 3444, shown at 316px wide, linked to https://www.amplifon.com/).
+  Use whichever sponsor Eddie's video names; ask if unsure.
 - Featured image = the YouTube thumbnail Eddie sends.
 
 ### Voice
