@@ -75,7 +75,8 @@ Make targeted find/replace edits on the current content rather than rewriting th
 - Regions, in order: Eastern Newfoundland / the Avalon · Central · West Coast · South Coast ·
   Southwest / Wreckhouse · GNP and the Straits · Labrador / the Big Land.
 - Usually scheduled for **5:00 AM NDT**; Eddie sends an app push alert around 6:30 AM with the link.
-  App teasers end with "Tap here to read more." **Always give Labrador its own line in app descriptions,
+  App alert **description** is a short tease (2–3 sentences, not a full summary) and always ends with
+  `Tap "see more" to read the update.` The push notification ends with "Tap here to read more." **Always give Labrador its own line in app descriptions,
   push alerts and social captions** (Eddie flagged that it kept getting left out).
 
 ### Evening Forecast (category 4)
