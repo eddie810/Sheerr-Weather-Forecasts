@@ -50,6 +50,7 @@ WordPress site, not the Python code in this repo. Write to Eddie in plain langua
 | 41 | Regional forecast pages (`[sw_region region="..."]`): regions in `sw_rg_regions()`, menu order in `sw_rg_menu()` (also feeds the region switcher on each page and the phone "More" menu). Homepage "Regional Forecasts" list is in Elementor (page 45) and must be updated by hand when a region is added |
 | 42 | Facebook Page posting (admin-only): `GET /wp-json/sw-fb/v1/status`, `GET posts`, `GET insights/<id>`, `POST post` {message, link?, image_url?, scheduled_time?}, `DELETE post/<id>`, `GET comments/<id>` (commenter names are withheld by Facebook), `POST reply/<id>`, `POST hide/<id>`, `POST like/<id>`. Image posts need a public image URL (upload to WP media first). Show Eddie the caption/reply first unless he says to post/share it |
 | 43 | Facebook link previews for scheduled posts: Facebook's crawler gets og: tags (title, excerpt, featured image) for a `future` post; everyone else still gets an uncached 404. So a Facebook link post can be scheduled with Facebook before the blog goes live (set the featured image first) |
+| 44 | Google Analytics (GA4 Data API, read-only, admin-only): property `496478054`, service account key + property ID in Settings → General (never shown back). `GET /wp-json/sw-ga/v1/status`, `POST /wp-json/sw-ga/v1/report` (runReport body), `POST /wp-json/sw-ga/v1/realtime` (runRealtimeReport body). Eddie's own logged-in visits aren't tracked (snippet 35) |
 
 ## Blog posts
 
