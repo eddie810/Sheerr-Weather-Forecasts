@@ -58,7 +58,9 @@ WordPress site, not the Python code in this repo. Write to Eddie in plain langua
 ### Claude dashboard
 "Sheerr Weather Audience" on claude.ai (https://claude.ai/artifact/3gv4M658YNsnyBcT5cR3Mv, Dashboard type): a snapshot of the
 Sheerr Stats numbers (finished days only). `python3 tools/claude_dashboard_snapshot.py <dir>` writes its seven JSON files
-(daily incl. ad impressions, top_pages, fb_top, yt_top, web_sources, yt_sources, ad_places); upload each as an asset and point `datasets/<id>` at it.
+(daily incl. ad impressions, top_pages, fb_top, yt_top, web_sources, yt_sources, ad_places; the six lists carry a `period` column 1/7/28
+from `GET /wp-json/sw-stats/v1/tops?start=&end=`); upload each as an asset and point `datasets/<id>` at it. The page has a
+Yesterday / 7 days / 28 days switch (`dash/params` period, default 28).
 A scheduled task refreshes it every morning at 6:47 AM NL time.
 
 ## Blog posts

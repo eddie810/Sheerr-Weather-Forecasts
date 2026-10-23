@@ -3,13 +3,16 @@
 Reads the admin-only endpoint GET /wp-json/sw-stats/v1/data (snippet 45) with the SW_WP_AUTH secret and
 writes one JSON file per dashboard dataset into the output folder:
 
-  daily.json        one row per finished day (NL time), last 90 days: views and people per platform
-  top_pages.json    top website pages, last 28 days
-  fb_top.json       top Facebook posts, last 28 days
-  yt_top.json       top YouTube videos, last 28 days
-  web_sources.json  where website visits come from, last 28 days
-  yt_sources.json   where YouTube views come from, last 28 days
-  ad_places.json    Sheerr Weather ad impressions and clicks by app page / website placement, last 28 days
+  daily.json        one row per finished day (NL time), last 90 days: views and people per platform, ad impressions
+  top_pages.json    top website pages
+  fb_top.json       top Facebook posts (posted in the period)
+  yt_top.json       top YouTube videos (YouTube's period ends on its latest day of data)
+  web_sources.json  where website visits come from
+  yt_sources.json   where YouTube views come from
+  ad_places.json    Sheerr Weather ad impressions and clicks by app page / website placement
+
+The six lists have a `period` column (1, 7 or 28): yesterday, the last 7 and the last 28 finished days
+(GET /wp-json/sw-stats/v1/tops?start=&end=).
 
 Usage: python3 tools/claude_dashboard_snapshot.py <output folder>
 """
@@ -17,16 +20,21 @@ import json
 import os
 import sys
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-API = "https://sheerrweather.ca/wp-json/sw-stats/v1/data"
+API = "https://sheerrweather.ca/wp-json/sw-stats/v1/"
+PERIODS = (1, 7, 28)
+
+
+def get(path):
+    req = urllib.request.Request(API + path, headers={"Authorization": "Basic " + os.environ["SW_WP_AUTH"]})
+    with urllib.request.urlopen(req, timeout=240) as r:
+        return json.load(r)
 
 
 def fetch(days):
-    req = urllib.request.Request(f"{API}?days={days}&refresh=1", headers={"Authorization": "Basic " + os.environ["SW_WP_AUTH"]})
-    with urllib.request.urlopen(req, timeout=180) as r:
-        return json.load(r)
+    return get(f"data?days={days}&refresh=1")
 
 
 def iso(k):
@@ -36,8 +44,9 @@ def iso(k):
 
 def main(out):
     os.makedirs(out, exist_ok=True)
-    today = datetime.now(ZoneInfo("America/St_Johns")).strftime("%Y-%m-%d")
-    d90, d28 = fetch(90), fetch(28)
+    now = datetime.now(ZoneInfo("America/St_Johns"))
+    today = now.strftime("%Y-%m-%d")
+    d90 = fetch(90)
     for k in ("web", "app", "fb", "yt", "ads"):
         if isinstance(d90.get(k), dict) and d90[k].get("error"):
             sys.exit(f"{k}: {d90[k]['error']}")
@@ -59,15 +68,17 @@ def main(out):
     daily = [{c: days[d].get(c) for c in cols} for d in sorted(days)]
     daily = [r for r in daily if r["web_views"] is not None]  # YouTube reports start a few days earlier
 
-    files = {
-        "daily.json": daily,
-        "top_pages.json": [{"page": p["title"] or p["path"], "path": p["path"], "views": p["views"], "people": p["users"]} for p in d28["web"]["pages"]],
-        "fb_top.json": [{"post": p["message"] or "(no text)", "posted": p["when"], "url": p["url"], "reach": p["reach"], "views": p["views"], "link_clicks": p["link"], "reactions": p["reactions"], "comments": p["comments"], "shares": p["shares"]} for p in d28["fb"]["top"]],
-        "yt_top.json": [{"video": v["title"], "url": "https://youtu.be/" + v["id"], "published": v.get("published"), "views": v["views"], "watch_hours": v["hours"], "avg_view_seconds": v["avgdur"]} for v in d28["yt"]["top"]],
-        "web_sources.json": [{"source": s["name"], "visits": s["sessions"]} for s in d28["web"]["sources"]],
-        "yt_sources.json": [{"source": s["name"], "views": s["views"]} for s in d28["yt"]["sources"]],
-        "ad_places.json": [{"placement": a["name"], "where": "App" if a["where"] == "app" else "Website", "impressions": a["imp"], "clicks": a["clicks"]} for a in d28["ads"]["places"]],
-    }
+    yesterday = now.date() - timedelta(days=1)
+    files = {k: [] for k in ("top_pages.json", "fb_top.json", "yt_top.json", "web_sources.json", "yt_sources.json", "ad_places.json")}
+    for n in PERIODS:
+        t = get(f"tops?start={yesterday - timedelta(days=n - 1)}&end={yesterday}")
+        files["top_pages.json"] += [{"period": n, "page": p["title"] or p["path"], "path": p["path"], "views": p["views"], "people": p["users"]} for p in t.get("pages", [])]
+        files["fb_top.json"] += [{"period": n, "post": p["message"] or "(no text)", "posted": p["when"], "url": p["url"], "reach": p["reach"], "views": p["views"], "link_clicks": p["link"], "reactions": p["reactions"], "comments": p["comments"], "shares": p["shares"]} for p in t.get("fb_top", [])]
+        files["yt_top.json"] += [{"period": n, "video": v["title"], "url": "https://youtu.be/" + v["id"], "published": v.get("published"), "views": v["views"], "watch_hours": v["hours"], "avg_view_seconds": v["avgdur"], "yt_start": t.get("yt_start"), "yt_end": t.get("yt_end")} for v in t.get("yt_top", [])]
+        files["web_sources.json"] += [{"period": n, "source": s["name"], "visits": s["sessions"]} for s in t.get("sources", [])]
+        files["yt_sources.json"] += [{"period": n, "source": s["name"], "views": s["views"], "yt_start": t.get("yt_start"), "yt_end": t.get("yt_end")} for s in t.get("yt_sources", [])]
+        files["ad_places.json"] += [{"period": n, "placement": a["name"], "where": "App" if a["where"] == "app" else "Website", "impressions": a["imp"], "clicks": a["clicks"]} for a in t.get("ad_places", [])]
+    files["daily.json"] = daily
     for name, rows in files.items():
         with open(os.path.join(out, name), "w") as f:
             json.dump(rows, f, ensure_ascii=False)
