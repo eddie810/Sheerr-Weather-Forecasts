@@ -54,6 +54,12 @@ WordPress site, not the Python code in this repo. Write to Eddie in plain langua
 | 45 | **Sheerr Stats** admin dashboard (WP admin → Sheerr Stats): "Today so far" box on top with a day picker (website page views + app views + Facebook views, plus people reached per platform and an "up to" total, vs. the day before; `GET /wp-json/sw-stats/v1/day?date=YYYY-MM-DD`; GA's today numbers fill in hours late) + GA website stats + App section (GA property 498016949) + Facebook Page-wide daily insights (page_media_view = Views/impressions, page_total_media_view_unique, engagements, follows, visits) + per-post stats; 7/28/90 days, by day/week; `GET /wp-json/sw-stats/v1/data?days=` (15-min cache, `&refresh=1`). FB post insights via field expansion return lifetime + day rows: use lifetime |
 | 48 | YouTube (Analytics + Data API, OAuth as eddie.sheerr@gmail.com, Google Cloud project "Sheerr Weather Website", app published/External): client ID/secret + Connect button in Settings → General, refresh token in option `sw_yt_refresh`. `GET /wp-json/sw-yt/v1/status`, `POST /wp-json/sw-yt/v1/report` (reports.query params), `POST /wp-json/sw-yt/v1/data` {path, params}. Data lags 2–3 days; thumbnail impressions/CTR not available via API. Also feeds the YouTube section of Sheerr Stats |
 
+### Claude dashboard
+"Sheerr Weather Audience" on claude.ai (https://claude.ai/artifact/3gv4M658YNsnyBcT5cR3Mv, Dashboard type): a snapshot of the
+Sheerr Stats numbers (finished days only). `python3 tools/claude_dashboard_snapshot.py <dir>` writes its six JSON files
+(daily, top_pages, fb_top, yt_top, web_sources, yt_sources); upload each as an asset and point `datasets/<id>` at it.
+A scheduled task refreshes it every morning at 6:47 AM NL time.
+
 ## Blog posts
 
 Always save as **draft** unless Eddie says publish/schedule. Show him what you wrote and flag guesses.
