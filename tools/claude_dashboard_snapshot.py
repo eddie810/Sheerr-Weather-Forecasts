@@ -9,6 +9,7 @@ writes one JSON file per dashboard dataset into the output folder:
   yt_top.json       top YouTube videos, last 28 days
   web_sources.json  where website visits come from, last 28 days
   yt_sources.json   where YouTube views come from, last 28 days
+  ad_places.json    Sheerr Weather ad impressions and clicks by app page / website placement, last 28 days
 
 Usage: python3 tools/claude_dashboard_snapshot.py <output folder>
 """
@@ -37,7 +38,7 @@ def main(out):
     os.makedirs(out, exist_ok=True)
     today = datetime.now(ZoneInfo("America/St_Johns")).strftime("%Y-%m-%d")
     d90, d28 = fetch(90), fetch(28)
-    for k in ("web", "app", "fb", "yt"):
+    for k in ("web", "app", "fb", "yt", "ads"):
         if isinstance(d90.get(k), dict) and d90[k].get("error"):
             sys.exit(f"{k}: {d90[k]['error']}")
 
@@ -53,7 +54,8 @@ def main(out):
     put(d90["app"]["daily"], {"views": "app_views", "users": "app_people"})
     put(d90["fb"]["page"]["daily"], {"views": "fb_views", "viewers": "fb_people"})
     put(d90["yt"]["daily"], {"views": "yt_views", "hours": "yt_hours"})
-    cols = ["day", "web_views", "web_people", "app_views", "app_people", "fb_views", "fb_people", "yt_views", "yt_hours"]
+    put(d90["ads"]["daily"], {"app": "ads_app", "web": "ads_web", "clicks": "ad_clicks"})
+    cols = ["day", "web_views", "web_people", "app_views", "app_people", "fb_views", "fb_people", "yt_views", "yt_hours", "ads_app", "ads_web", "ad_clicks"]
     daily = [{c: days[d].get(c) for c in cols} for d in sorted(days)]
     daily = [r for r in daily if r["web_views"] is not None]  # YouTube reports start a few days earlier
 
@@ -64,6 +66,7 @@ def main(out):
         "yt_top.json": [{"video": v["title"], "url": "https://youtu.be/" + v["id"], "published": v.get("published"), "views": v["views"], "watch_hours": v["hours"], "avg_view_seconds": v["avgdur"]} for v in d28["yt"]["top"]],
         "web_sources.json": [{"source": s["name"], "visits": s["sessions"]} for s in d28["web"]["sources"]],
         "yt_sources.json": [{"source": s["name"], "views": s["views"]} for s in d28["yt"]["sources"]],
+        "ad_places.json": [{"placement": a["name"], "where": "App" if a["where"] == "app" else "Website", "impressions": a["imp"], "clicks": a["clicks"]} for a in d28["ads"]["places"]],
     }
     for name, rows in files.items():
         with open(os.path.join(out, name), "w") as f:
