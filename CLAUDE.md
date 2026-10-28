@@ -107,6 +107,7 @@ Make targeted find/replace edits on the current content rather than rewriting th
 ### Voice
 First person, conversational, practical ("give yourself a few extra minutes"), NL place names, °C, km/h, mm/cm.
 Say "below freezing" or "below the freezing mark", never "below zero".
+Temperatures always as numbers with the degree symbol: "-7°", "1°", "3° to 7°", never "minus 7" or "1 degree" (posts, captions, app alerts).
 Quote Environment Canada warning details exactly (areas, gusts, timing).
 
 ## YouTube
