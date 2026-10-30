@@ -104,6 +104,7 @@ Make targeted find/replace edits on the current content rather than rewriting th
   Oct 20–21, 2026 videos were sponsored by **Amplifon** (banner media ID 3444, shown at 316px wide, linked to https://www.amplifon.com/).
   Use whichever sponsor Eddie's video names; ask if unsure.
 - Featured image = the YouTube thumbnail Eddie sends.
+- App alerts / push / captions for Evening Forecasts should **tease the video** ("watch my latest forecast", what the video shows), not just summarize the text.
 
 ### Voice
 First person, conversational, practical ("give yourself a few extra minutes"), NL place names, °C, km/h, mm/cm.
