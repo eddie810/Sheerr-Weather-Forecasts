@@ -77,6 +77,7 @@ Its `README.md` lists every map type with build/render commands; its `CLAUDE.md`
 writing a Morning Briefing or Evening Forecast, build matching maps from it using the same numbers as the post, upload
 them to WP media and place them in the post. In this cloud environment the Mapbox key is `MAP_BOX_API_KEY`
 (the graphics scripts read `MAPBOX_ACCESS_TOKEN`: `export MAPBOX_ACCESS_TOKEN=$MAP_BOX_API_KEY`); `TWC_API_KEY` is set.
+**Labrador is just as important as the Island:** whenever a post gets an Island map (highs, lows, totals), also make the Labrador version (`nl-temps` region `labrador` with `roads-labrador.geojson`, etc.) and place it with the Labrador text.
 
 ## Blog posts
 
