@@ -4,7 +4,7 @@ Writes map-data.js (window.TM).   python3 build_map.py data/ne/adm1.geojson"""
 import json, os, sys
 from pyproj import Transformer
 from shapely import make_valid
-from shapely.geometry import box, shape
+from shapely.geometry import Polygon, box, shape
 from shapely.ops import transform, unary_union
 import build as cz
 
@@ -31,14 +31,17 @@ OFF = {"today": {"PT": -7, "AZ": -7, "MT": -6, "CT": -5, "ET": -4, "BC": -7, "YT
 
 
 def canada_2026(ne):
-    """Canadian zones as of Nov 1, 2026: B.C. (permanent UTC-7 since Mar 8), Alberta + N.W.T. (permanent UTC-6),
+    """Canadian zones as of Nov 1, 2026: B.C. (permanent UTC-7 since Mar 8), Alberta + N.W.T. + East Kootenay/Golden B.C. (permanent UTC-6),
     Manitoba + northwestern Ontario west of 90W (permanent UTC-5), Nunavut split by its Mountain/Central/Eastern parts."""
     f = {x["properties"]["name"]: make_valid(shape(x["geometry"])) for x in json.load(open(ne))["features"] if x["properties"].get("admin") == "Canada"}
     q, lab = f["Québec"], f["Newfoundland and Labrador"]
     isl = lab.intersection(box(-60, 46, -52, 51.7)); labr = lab.difference(isl); se = labr.intersection(box(-57.1, 51.3, -55, 53.6))
     nu, on = f["Nunavut"], f["Ontario"]
+    # East Kootenay (RDEK, incl. Cranbrook, Fernie, Invermere) + Golden / CSRD Area A: year-round UTC-6 with Alberta (Creston stays UTC-7)
+    ek = f["British Columbia"].intersection(Polygon([(-116.35, 48.9), (-116.45, 49.6), (-116.8, 50.2), (-117.3, 50.9), (-117.8, 51.5),
+                                                     (-118.3, 52.3), (-117.5, 53.0), (-113.5, 53.0), (-113.5, 48.9)]))
     return {
-        "BC": f["British Columbia"], "YT": f["Yukon"], "AB": unary_union([f["Alberta"], f["Northwest Territories"]]), "SK": f["Saskatchewan"],
+        "BC": f["British Columbia"].difference(ek), "YT": f["Yukon"], "AB": unary_union([f["Alberta"], f["Northwest Territories"], ek]), "SK": f["Saskatchewan"],
         "MB": unary_union([f["Manitoba"], on.intersection(box(-100, 40, -90, 60))]),
         "NUW": nu.intersection(box(-125, 50, -102, 90)), "NUC": nu.intersection(box(-102, 50, -85, 90)),
         "ETC": unary_union([on.difference(box(-100, 40, -90, 60)), q.difference(box(-61.5, 49.8, 0, 90)).difference(box(-62.5, 46, 0, 48)),
