@@ -84,13 +84,13 @@ def main(start, end, out, note=""):
     fol = [(fmt(d["fb"]["followers"]) + "+", "Facebook followers"), (fmt(app_users) + "+", "App users this week"), (fmt(subs) + "+", "YouTube subscribers")]
     fol_html = "".join(f"<div><b>{a}</b><span>{b}</span></div>" for a, b in fol)
     bd = date(int(busy[:4]), int(busy[4:6]), int(busy[6:]))
-    busy_line = f"Busiest day: <b>{bd:%A}, {bd:%B} {bd.day}</b>" + (f" · {note}" if note else "")
+    busy_line = f"Busiest day: <b>{bd:%A}, {bd:%B} {bd.day}</b>" + (f" ({note})" if note else "")
     big_chg = chg(tot, ptot).replace("<em", '<em style="display:block"', 1).replace("</em>", " vs. the week before</em>") if chg(tot, ptot) else ""
     html = f'''<!doctype html><html><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet"><style>
 *{{box-sizing:border-box}}body{{margin:0}}
 .g{{width:1080px;height:1350px;background:#EEF1F0;color:#10222B;font-family:"Source Sans 3",sans-serif;display:flex;flex-direction:column;position:relative;overflow:hidden}}
-.hd{{background:#0C2236;color:#fff;padding:44px 64px 110px;position:relative}}
+.hd{{background:#0C2236;color:#fff;padding:40px 64px 104px;position:relative}}
 .hd:after{{content:"";position:absolute;right:-140px;top:-120px;width:520px;height:520px;border-radius:50%;border:2px solid rgba(43,166,222,.22)}}
 .ey{{font:600 28px "Barlow Condensed";letter-spacing:.12em;text-transform:uppercase;color:#2BA6DE}}
 h1{{font:800 92px/.92 "Barlow Condensed";text-transform:uppercase;margin:10px 0 0}}
@@ -99,23 +99,26 @@ h1{{font:800 92px/.92 "Barlow Condensed";text-transform:uppercase;margin:10px 0 
 .big .l{{font:600 30px/1.2 "Source Sans 3";color:#4E656F;max-width:420px}}
 .big .l em{{margin-top:6px;font-size:24px}}
 .grid{{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:22px 56px 0}}
-.t{{background:#fff;border:1px solid #D5DDDE;border-radius:18px;padding:16px 26px}}
+.t{{background:#fff;border:1px solid #D5DDDE;border-radius:18px;padding:12px 26px}}
 .tl{{font:700 24px "Barlow Condensed";letter-spacing:.06em;text-transform:uppercase;color:#1C8CC4}}
-.tv{{font:800 62px/1 "Barlow Condensed";color:#10222B;margin-top:4px}}
+.tv{{font:800 56px/1 "Barlow Condensed";color:#10222B;margin-top:4px}}
 .ts{{font:600 21px "Source Sans 3";color:#6E838C;margin-top:6px;display:flex;justify-content:space-between;gap:10px}}
 em{{font-style:normal;font-weight:700;white-space:nowrap}}em.up{{color:#0A7A3D}}
-.fol{{display:grid;grid-template-columns:repeat(3,1fr);margin:20px 56px 0;border-top:2px solid #C9D3D4;padding-top:18px}}
+.fol{{display:grid;grid-template-columns:repeat(3,1fr);margin:16px 56px 0;border-top:2px solid #C9D3D4;padding-top:14px}}
 .fol div{{text-align:center}}.fol b{{display:block;font:800 52px/1 "Barlow Condensed";color:#0C2236}}.fol span{{font:600 20px "Source Sans 3";color:#4E656F;text-transform:uppercase;letter-spacing:.04em}}
-.busy{{margin:16px 56px 0;font:400 24px "Source Sans 3";color:#4E656F;text-align:center}}.busy b{{color:#10222B}}
-.ft{{margin-top:auto;display:flex;justify-content:space-between;align-items:center;padding:0 56px 30px}}
+.cta{{margin:18px 56px 0;background:#0C2236;border-radius:18px;padding:20px 30px;display:flex;align-items:center;justify-content:space-between;gap:20px;color:#fff}}
+.cta b{{display:block;font:800 36px/1.05 "Barlow Condensed";text-transform:uppercase}}.cta span{{display:block;margin-top:6px;font:600 20px "Source Sans 3";color:#B9CCDA}}.cta span b{{display:inline;font:700 20px "Source Sans 3";text-transform:none;color:#fff}}
+.cta i{{font:700 24px "Source Sans 3";font-style:normal;color:#0C2236;background:#2BA6DE;border-radius:999px;padding:12px 22px;white-space:nowrap}}
+.busy{{margin:14px 56px 0;font:400 24px "Source Sans 3";color:#4E656F;text-align:center}}.busy b{{color:#10222B}}
+.ft{{margin-top:auto;display:flex;justify-content:space-between;align-items:center;padding:0 56px 26px}}
 .ft img{{height:58px}}.ft span{{font:600 20px "Source Sans 3";color:#6E838C;text-align:right;line-height:1.35}}
 </style></head><body><div class="g" id="graphic">
 <div class="hd"><div class="ey">{rng}</div><h1>This week at<br>Sheerr Weather</h1></div>
 <div class="big"><div class="n">{fmt(tot)}+</div><div class="l">views across Facebook, the app, YouTube and sheerrweather.ca{big_chg}</div></div>
 <div class="grid">{tiles_html}</div>
 <div class="fol">{fol_html}</div>
-<div class="busy">{busy_line}</div>
-<div class="ft"><img src="{LOGO}" alt="Sheerr Weather"><span>Newfoundland and Labrador’s weather, every day<br>sheerrweather.ca</span></div>
+<div class="cta"><div><b>Put your business in front of this audience</b><span>{busy_line} · Ads on the app, website, Facebook and YouTube</span></div><i>sheerrweather.ca/advertise</i></div>
+<div class="ft"><img src="{LOGO}" alt="Sheerr Weather"><span>Advertising: eddie@sheerrweather.ca<br>sheerrweather.ca</span></div>
 </div></body></html>'''
     page = os.path.join(os.path.dirname(os.path.abspath(out)), "week.html")
     with open(page, "w") as f:
