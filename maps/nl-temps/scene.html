@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3D Highs Map</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+:root{
+  --page:#DCE2E2;
+  --paper:#EEF1F0; --panel:#FFFFFF;
+  --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4;
+  --accent:#1C8CC4;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1080px;margin:0 auto}
+.scaler{width:1080px;height:1350px;transform-origin:top left}
+
+.g{width:1080px;height:1350px;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+.pad{padding-left:64px;padding-right:64px}
+.top{padding-top:34px;padding-bottom:22px}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:26px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;font-size:76px;line-height:.94;margin:4px 0 8px}
+.sub{font-size:27px;line-height:1.3;color:var(--ink-2);margin:0}
+
+.map{position:relative;height:960px;flex:none;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  background:#fdfdfd 0 0/1080px 960px no-repeat;overflow:hidden}
+.map svg.ov{position:absolute;inset:0}
+.card{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center}
+.card .box{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--rule);border-radius:10px;
+  padding:4px 14px 4px 8px;box-shadow:0 2px 8px -3px rgba(16,34,43,.35)}
+.card .box svg{width:54px;height:54px;flex:none}
+.card .t{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:50px;line-height:1;font-variant-numeric:tabular-nums}
+.card .n{margin-top:4px;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:22px;text-transform:uppercase;
+  letter-spacing:.02em;white-space:nowrap;color:var(--ink);
+  text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 6px #fff,0 0 6px #fff}
+
+.scale{background:var(--panel);border-bottom:1px solid var(--rule);padding-top:14px;padding-bottom:16px;display:flex;align-items:center;gap:22px}
+.scale .k{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:24px;text-transform:uppercase;letter-spacing:.06em;line-height:1.1}
+.scale .k span{display:block;font-weight:600;font-size:19px;color:var(--ink-3);letter-spacing:.04em}
+.scale .ramp{flex:1;display:flex}
+.scale .ramp div{flex:1;text-align:left}
+.scale .ramp i{display:block;height:24px}
+.scale .ramp b{display:block;font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:21px;color:var(--ink-2);margin-top:3px;transform:translateX(-50%);width:max-content}
+.scale .ramp div:first-child b{transform:none}
+
+.foot{margin-top:auto;padding-top:12px;padding-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:24px}
+/* sponsor slot: ?sponsor=file.png drops a logo in; otherwise the space is left clear to add one later */
+.sponsor{width:300px;height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none}
+.sponsor .k{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.sponsor .slot{flex:1;width:100%;display:flex;align-items:center;justify-content:center}
+.sponsor img{max-width:100%;max-height:68px;display:block}
+.sponsor.guide .slot{border:2px dashed #B9C3C6;border-radius:6px}
+.foot img{height:72px;width:auto;display:block}
+.src{font-size:16px;color:var(--ink-3);text-align:center;line-height:1.35}
+</style>
+</head>
+<body>
+<!-- Sheerr icon set, picked by TWC iconCode in build.py -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="i-sunshape"><circle cx="0" cy="0" r="9" fill="#F2B630"/>
+      <g stroke="#F2B630" stroke-width="3" stroke-linecap="round">
+        <path d="M0-14v-5M0 14v5M-14 0h-5M14 0h5M-10-10l-3.5-3.5M10 10l3.5 3.5M-10 10l-3.5 3.5M10-10l3.5-3.5"/></g></g>
+    <path id="i-cloudshape" d="M-17 8a9 9 0 0 1 1-17.9A12 12 0 0 1 7-11a9.5 9.5 0 0 1 10 19z"/>
+    <symbol id="sun" viewBox="-30 -30 60 60"><use href="#i-sunshape" transform="scale(1.2)"/></symbol>
+    <symbol id="partly" viewBox="-30 -30 60 60"><use href="#i-sunshape" transform="translate(-6,-7)"/>
+      <use href="#i-cloudshape" transform="translate(5,9)" fill="#fff" stroke="#6E838C" stroke-width="2.4"/></symbol>
+    <symbol id="mostly" viewBox="-30 -30 60 60"><use href="#i-sunshape" transform="translate(-10,-11) scale(.8)"/>
+      <use href="#i-cloudshape" transform="translate(2,5) scale(1.2)" fill="#E4E9E9" stroke="#6E838C" stroke-width="2"/></symbol>
+    <symbol id="cloud" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,3) scale(1.3)" fill="#C9D3D4" stroke="#4E656F" stroke-width="1.8"/></symbol>
+    <symbol id="rain" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-5) scale(1.2)" fill="#C9D3D4" stroke="#4E656F" stroke-width="2"/>
+      <g stroke="#1C8CC4" stroke-width="3" stroke-linecap="round"><path d="M-12 12l-3 8M-2 12l-3 8M8 12l-3 8"/></g></symbol>
+    <symbol id="showers" viewBox="-30 -30 60 60"><use href="#i-sunshape" transform="translate(-8,-10) scale(.8)"/>
+      <use href="#i-cloudshape" transform="translate(4,0) scale(1.05)" fill="#fff" stroke="#6E838C" stroke-width="2.2"/>
+      <g stroke="#1C8CC4" stroke-width="3" stroke-linecap="round"><path d="M-4 15l-2.5 7M6 15l-2.5 7"/></g></symbol>
+    <symbol id="snow" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-5) scale(1.2)" fill="#C9D3D4" stroke="#4E656F" stroke-width="2"/>
+      <g fill="#5AAEE3"><circle cx="-11" cy="16" r="3"/><circle cx="0" cy="20" r="3"/><circle cx="11" cy="16" r="3"/></g></symbol>
+    <symbol id="mix" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-5) scale(1.2)" fill="#C9D3D4" stroke="#4E656F" stroke-width="2"/>
+      <path d="M-10 12l-3 8M6 12l-3 8" stroke="#1C8CC4" stroke-width="3" stroke-linecap="round"/><circle cx="0" cy="17" r="3" fill="#5AAEE3"/></symbol>
+    <symbol id="thunder" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-6) scale(1.2)" fill="#A6AEB1" stroke="#4E656F" stroke-width="2"/>
+      <path d="M2 8l-8 11h6l-4 9 10-13h-6l4-7z" fill="#F2B630"/></symbol>
+    <symbol id="fog" viewBox="-30 -30 60 60"><g stroke="#6E838C" stroke-width="3.5" stroke-linecap="round"><path d="M-20-10h40M-24 0h40M-18 10h40M-22 20h30"/></g></symbol>
+    <symbol id="wind" viewBox="-30 -30 60 60"><g fill="none" stroke="#4E656F" stroke-width="3.5" stroke-linecap="round">
+      <path d="M-22-8h28a6 6 0 1 0-6-6M-22 2h36a6 6 0 1 1-6 6M-22 12h20"/></g></symbol>
+  </defs>
+</svg>
+
+<div class="stage"><div class="scaler" id="scaler">
+<div class="g" id="graphic">
+  <div class="top pad">
+    <div class="eyebrow" id="eyebrow"></div>
+    <h1 id="title"></h1>
+    <p class="sub" id="sub"></p>
+  </div>
+
+  <div class="map">
+    <svg class="ov" id="ov" viewBox="0 0 1080 960" aria-hidden="true"></svg>
+    <div id="cards"></div>
+  </div>
+
+  <div class="scale pad">
+    <div class="k">Afternoon high<span>°C</span></div>
+    <div class="ramp" id="ramp"></div>
+  </div>
+
+  <div class="foot pad">
+    <img src="logo.png" alt="Sheerr Weather">
+    <div class="src">Town forecasts: The Weather Company<br>Shading: <span id="model">HRDPS (ECCC)</span><br>© Mapbox © OpenStreetMap</div>
+    <div class="sponsor" id="sponsor"><div class="k">Presented by</div><div class="slot" id="slot"></div></div>
+  </div>
+</div>
+</div></div>
+<script>
+  // ?region=straits loads data-straits.js / map-straits.png; default is the Island
+  window.REGION = new URLSearchParams(location.search).get("region") || "";
+  document.write('<script src="data' + (REGION ? "-" + REGION : "") + '.js"><\/script>');
+</script>
+<script>
+(function(){
+  var D = window.TEMPS, NS = "http://www.w3.org/2000/svg", svg = document.getElementById("ov");
+  function el(p, tag, a, text){ var n=document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); if (text) n.textContent=text; p.appendChild(n); return n; }
+
+  var TC = D.colours;
+
+  var highs = Object.keys(D.towns).map(function(n){ return D.towns[n].high; });
+  var lo = Math.min.apply(null, highs), hi = Math.max.apply(null, highs);
+  // sponsor slot
+  (function(){
+    var q = new URLSearchParams(location.search), sp = q.get("sponsor");
+    if (sp) document.getElementById("slot").innerHTML = '<img src="' + sp.replace(/"/g, "") + '" alt="Sponsor">';
+    else if (q.has("guide")) document.getElementById("sponsor").classList.add("guide");
+    if (q.has("nosponsor")) document.getElementById("sponsor").style.display = "none";
+  })();
+
+  // auto summary from the town forecasts
+  function autoSummary(){
+    var names = Object.keys(D.towns), t = names.map(function(n){ return D.towns[n]; });
+    var wet = function(i){ return ["rain","showers","mix","snow","thunder"].indexOf(i) >= 0; };
+    var snow = names.filter(function(n){ return ["snow","mix"].indexOf(D.towns[n].icon) >= 0; });
+    var rain = names.filter(function(n){ return ["rain","showers","thunder"].indexOf(D.towns[n].icon) >= 0; });
+    var dry = t.filter(function(x){ return !wet(x.icon); }).length;
+    var s = snow.length >= names.length - 2 ? "Snow and flurries for most of the region"
+          : snow.length ? "Flurries or wet snow for " + snow.slice(0, 2).join(" and ") + (snow.length > 2 ? " and more" : "")
+          : rain.length >= names.length / 2 ? "Rain and showers for much of the region"
+          : rain.length ? "Showers for " + rain.slice(0, 3).join(", ") + (rain.length > 3 ? " and more" : "")
+          : "A mostly dry {weekday}";
+    if (snow.length && rain.length && snow.length < names.length - 2) s = "Rain, mixing with wet snow in cooler areas";
+    if (!snow.length && !rain.length && dry === names.length) s = "A mostly dry {weekday} with a mix of sun and cloud";
+    return s + ". Highs {lo} to {hi}°.";
+  }
+  if (D.summary === "auto") D.summary = autoSummary();
+
+  function fill(t){ return t.replace(/\{weekday\}/g, D.weekday).replace("{lo}", lo).replace("{hi}", hi).replace(" to " + lo + "°", lo === hi ? "°" : " to " + hi + "°"); }
+  document.getElementById("eyebrow").textContent = D.place + " · " + D.weekday + ", " + D.date.split(", ")[1];
+  document.getElementById("title").textContent = fill(D.title);
+  document.getElementById("sub").textContent = fill(D.summary);
+  var sfx = REGION ? "-" + REGION : "";
+  document.querySelector(".map").style.backgroundImage = (D.relief ? "url(relief" + sfx + ".png), " : "") +
+    "url(shade" + sfx + ".png), url(map" + sfx + ".png)";
+
+  // coastline traced from the same land mask as the shading
+  el(svg, "path", {d:D.coast, fill:"none", stroke:"#fff", "stroke-width":4, "stroke-linejoin":"round"});
+  el(svg, "path", {d:D.coast, fill:"none", stroke:"#10222B", "stroke-width":1.6, "stroke-linejoin":"round"});
+
+  // highways: white casing under a dark line; Interstates heavier. Shields drawn after the labels.
+  (D.roads || []).forEach(function(r){
+    el(svg, "path", {d:r.d, fill:"none", stroke:"#fff", "stroke-width":r.interstate ? 6 : 4.5, "stroke-linejoin":"round", "stroke-linecap":"round", opacity:.85});
+    el(svg, "path", {d:r.d, fill:"none", stroke:r.interstate ? "#3B3F45" : "#6B6F75", "stroke-width":r.interstate ? 2.8 : 1.8, "stroke-linejoin":"round", "stroke-linecap":"round"});
+  });
+  function shield(r){
+    var x = r.shield[0], y = r.shield[1], w = r.num.length > 2 ? 40 : 32;
+    var g = el(svg, "g", {transform:"translate(" + x + "," + y + ")"});
+    if (r.style === "tch"){                    // Trans-Canada Highway: green shield, white maple leaf feel
+      el(g, "path", {d:"M-17,-15 h34 v10 q0,14 -17,22 q-17,-8 -17,-22 z", fill:"#1E7A3C", stroke:"#fff", "stroke-width":2});
+      el(g, "text", {x:0, y:7, "text-anchor":"middle", "font-family":"Barlow Condensed, sans-serif", "font-weight":700, "font-size":19, fill:"#fff"}, r.num);
+    } else if (r.style === "prov"){            // NL provincial route: white rounded box
+      var pw = r.num.length * 10 + 14;
+      el(g, "rect", {x:-pw/2, y:-12, width:pw, height:24, rx:5, fill:"#fff", stroke:"#10222B", "stroke-width":1.8});
+      el(g, "text", {x:0, y:6, "text-anchor":"middle", "font-family":"Barlow Condensed, sans-serif", "font-weight":700, "font-size":17, fill:"#10222B"}, r.num);
+    } else if (r.interstate){
+      el(g, "path", {d:"M" + (-w/2) + ",-15 h" + w + " v12 q0,12 " + (-w/2) + ",19 q" + (-w/2) + ",-7 " + (-w/2) + ",-19 z", fill:"#1B4FA0", stroke:"#fff", "stroke-width":2});
+      el(g, "rect", {x:-w/2, y:-15, width:w, height:7, fill:"#C8102E"});
+      el(g, "text", {x:0, y:8, "text-anchor":"middle", "font-family":"Barlow Condensed, sans-serif", "font-weight":700, "font-size":17, fill:"#fff"}, r.num);
+    } else {
+      el(g, "path", {d:"M" + (-w/2) + ",-14 h" + w + " v10 q0,14 " + (-w/2) + ",20 q" + (-w/2) + ",-6 " + (-w/2) + ",-20 z", fill:"#fff", stroke:"#10222B", "stroke-width":2});
+      el(g, "text", {x:0, y:7, "text-anchor":"middle", "font-family":"Barlow Condensed, sans-serif", "font-weight":700, "font-size":16, fill:"#10222B"}, r.num);
+    }
+  }
+
+  // place and water labels
+  (D.labels || []).forEach(function(l){
+    var water = l[3] === "water", faint = l[3] === "region-faint";
+    el(svg, "text", {x:l[1], y:l[2], transform:"rotate(" + l[4] + " " + l[1] + " " + l[2] + ")", "text-anchor":"middle",
+      "font-family": water ? "Source Sans 3, sans-serif" : "Barlow Condensed, sans-serif",
+      "font-style": water ? "italic" : "normal", "font-weight": water ? 400 : 700,
+      "font-size": water ? 26 : 34, "letter-spacing": water ? "0.12em" : "0.3em",
+      fill: water ? "#6E838C" : (faint ? "#8A9BA2" : "#10222B"), opacity: water ? 1 : .55,
+      style: water ? "" : "text-transform:uppercase"}, l[0]);
+  });
+
+  var cards = document.getElementById("cards");
+  Object.keys(D.towns).forEach(function(n){
+    var t = D.towns[n], p = t.xy, c = t.card;
+    el(svg, "line", {x1:p[0], y1:p[1], x2:c[0], y2:c[1], stroke:"#10222B", "stroke-width":1.6, opacity:.55});
+    el(svg, "circle", {cx:p[0], cy:p[1], r:6, fill:"#10222B", stroke:"#fff", "stroke-width":2.5});
+    var d = document.createElement("div");
+    d.className = "card"; d.style.left = c[0] + "px"; d.style.top = (c[1] + 12) + "px";
+    d.innerHTML = '<div class="box"><svg><use href="#' + t.icon + '"/></svg><div class="t">' + t.high + '°</div></div><div class="n">' + n + '</div>';
+    cards.appendChild(d);
+  });
+
+  // shields: first candidate spot clear of every card, town dot and other shield (map pixel space)
+  var map = document.querySelector(".map"), mb = map.getBoundingClientRect(), k = mb.width / 1080;
+  var boxes = Array.prototype.map.call(cards.children, function(c){
+    var b = c.getBoundingClientRect();
+    return [(b.left - mb.left) / k - 22, (b.top - mb.top) / k - 18, (b.right - mb.left) / k + 22, (b.bottom - mb.top) / k + 18];
+  });
+  Object.keys(D.towns).forEach(function(n){ var p = D.towns[n].xy; boxes.push([p[0] - 26, p[1] - 22, p[0] + 26, p[1] + 22]); });
+  function clear(x, y){ return x > 40 && x < 1040 && y > 30 && boxes.every(function(b){ return x < b[0] || x > b[2] || y < b[1] || y > b[3]; }); }
+  (D.roads || []).forEach(function(r){
+    var pts = [r.shield].concat(r.cands || []), pick = null;
+    for (var i = 0; i < pts.length && !pick; i++) if (clear(pts[i][0], pts[i][1])) pick = pts[i];
+    if (!pick) return;                               // nowhere clear: leave the road unlabelled
+    r.shield = pick; shield(r);
+    boxes.push([pick[0] - 28, pick[1] - 22, pick[0] + 28, pick[1] + 22]);
+  });
+
+  // colour scale: only the range that appears on the map, plus a band either side
+  if (D.model) document.getElementById("model").textContent = D.model;
+  var stp = D.step || 2, ramp = document.getElementById("ramp"), bu = D.bands_used || [], from = Math.min(Math.floor((lo - stp) / stp) * stp, bu[0] != null ? bu[0] : 1e9), to = Math.max(Math.ceil((hi + stp) / stp) * stp, bu.length ? bu[bu.length - 1] + stp : -1e9);
+  document.querySelector(".scale .k span").textContent = "°" + (D.unit || "C");
+  for (var v = from; v < to; v += stp){
+    var d = document.createElement("div");
+    d.innerHTML = '<i style="background:' + TC[v] + '"></i><b>' + v + '°</b>';
+    ramp.appendChild(d);
+  }
+
+  var s=document.getElementById("scaler"), st=s.parentNode;
+  if (new URLSearchParams(location.search).has("export")) document.body.classList.add("export");
+  function fit(){ var k=document.body.classList.contains("export")?1:Math.min(1, st.clientWidth/1080); s.style.transform="scale("+k+")"; st.style.height=(1350*k)+"px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+
+<script>document.write('<script src="3d/terrain' + (window.REGION ? "-" + REGION : "") + '.js"><\/script>');</script>
+<script type="module" src="3d/scene.js"></script>
+</body>
+</html>

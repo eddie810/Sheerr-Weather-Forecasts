@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Trick-or-Treat Forecast</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Creepster&family=Source+Sans+3:wght@400;600&display=block" rel="stylesheet">
+<style>
+/* Trick-or-treat regions, 1920x1080, in the style of graphics/halloween-video. Wording from the blog post. */
+:root{--pumpkin:#FF7A1A;--ember:#FFB25C;--ink:#F3E9DA;--dim:#A99BB8;--night:#0B0716}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000}
+#graphic{position:relative;width:1920px;height:1080px;overflow:hidden;background:var(--night);font-family:"Source Sans 3",sans-serif;color:var(--ink)}
+#graphic>svg,#graphic>img{position:absolute;left:0;top:0;width:1920px;height:1080px}
+.vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 70% 85% at 32% 52%,transparent 55%,rgba(0,0,0,.65) 100%)}
+.card{position:absolute;width:270px;padding:12px 14px 13px;border-radius:14px;background:rgba(20,12,34,.92);border:2px solid var(--pumpkin);
+  box-shadow:0 0 18px rgba(255,110,20,.35),inset 0 0 12px rgba(255,110,20,.1)}
+.card .rn{font:700 19px/1.05 "Barlow Condensed";letter-spacing:1px;text-transform:uppercase;color:var(--ember)}
+.card .row{display:flex;align-items:center;gap:10px;margin-top:6px}
+.card svg.ic{width:58px;height:58px;flex:none}
+.card .t{font:800 44px/1 "Barlow Condensed";color:#fff;white-space:nowrap}
+.card .f{font:700 19px/1.1 "Barlow Condensed";color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+.card .f b{color:#CDB8FF}
+.card .c{font:600 18px/1.25 "Source Sans 3";color:var(--ink);margin-top:7px}
+.card .sw{display:inline-block;width:13px;height:13px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+#panel{position:absolute;right:0;top:0;width:560px;height:1080px;padding:64px 54px 0 50px;
+  background:linear-gradient(90deg,rgba(18,11,31,0) 0,rgba(18,11,31,.93) 46px,#120B1F 120px)}
+.eyebrow{font:700 25px/1.15 "Barlow Condensed";letter-spacing:2.2px;text-transform:uppercase;color:var(--pumpkin)}
+h1{font:400 104px/.92 "Creepster";color:var(--pumpkin);margin:20px 0 0;text-shadow:0 0 22px rgba(255,100,10,.55),0 0 2px #FFB25C}
+h1 span{display:block;color:#F4EFE6;text-shadow:0 0 22px rgba(190,160,255,.35)}
+.lead{font:400 27px/1.32 "Source Sans 3";margin-top:24px}
+.lead b{color:var(--ember);font-weight:600}
+.box{margin-top:26px;border:1.5px solid #3A2A52;border-radius:12px;padding:14px 18px;background:rgba(40,24,62,.45);display:flex;gap:14px;align-items:center}
+.box .k{font:800 40px/1 "Barlow Condensed";color:#fff}
+.box .v{font:600 19px/1.3 "Source Sans 3";color:var(--ink)}
+.box .v small{display:block;color:var(--dim);font-size:16px;font-weight:400}
+.foot{position:absolute;left:50px;right:54px;bottom:42px;display:flex;align-items:flex-end;gap:20px}
+.foot img{height:56px}
+.foot .src{font:400 15px/1.3 "Source Sans 3";color:var(--dim)}
+</style>
+</head>
+<body>
+<div id="graphic">
+  <svg id="base" viewBox="0 0 1920 1080" aria-hidden="true"></svg>
+  <img src="regions.png" alt="">
+  <svg id="lines" viewBox="0 0 1920 1080" aria-hidden="true"></svg>
+  <div class="vig"></div>
+  <svg id="over" viewBox="0 0 1920 1080" aria-hidden="true"></svg>
+  <div id="cards"></div>
+  <div id="panel">
+    <div class="eyebrow">Newfoundland and Labrador<br>Saturday · 6 to 8 PM</div>
+    <h1>Trick-or-Treat<span>Forecast</span></h1>
+    <div class="lead">Whatever the costume, plan on <b>layers, hats, gloves and boots</b>. Snowsuits under the costumes won't be a bad idea in central Newfoundland!</div>
+    <div class="box"><div class="k">−1 h</div><div class="v">Clocks fall back at 2 AM tonight<small>Sunset Sunday: 4:43 PM in St. John's</small></div></div>
+    <div class="foot"><img src="logo-white.png" alt="Sheerr Weather"><div class="src">Sheerr Weather forecast for trick-or-treat time, Saturday, Oct. 31. Region lines are approximate.</div></div>
+  </div>
+</div>
+
+<!-- Sheerr night icon set (from nl-temps), lightened for the dark map -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <path id="i-cloudshape" d="M-17 8a9 9 0 0 1 1-17.9A12 12 0 0 1 7-11a9.5 9.5 0 0 1 10 19z"/>
+    <path id="i-moonshape" d="M4-12a12 12 0 1 0 10 18a10 10 0 0 1-10-18z" fill="#F5D46E"/>
+    <symbol id="moon" viewBox="-30 -30 60 60"><use href="#i-moonshape" transform="translate(-3,0) scale(1.35)"/></symbol>
+    <symbol id="moonpartly" viewBox="-30 -30 60 60"><use href="#i-moonshape" transform="translate(-8,-8)"/>
+      <use href="#i-cloudshape" transform="translate(5,9)" fill="#D9D3E6" stroke="#6B5E80" stroke-width="2.2"/></symbol>
+    <symbol id="moonmostly" viewBox="-30 -30 60 60"><use href="#i-moonshape" transform="translate(-11,-11) scale(.8)"/>
+      <use href="#i-cloudshape" transform="translate(2,5) scale(1.2)" fill="#C9C1D8" stroke="#6B5E80" stroke-width="2"/></symbol>
+    <symbol id="cloud" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,3) scale(1.3)" fill="#B7AEC8" stroke="#5E5273" stroke-width="1.8"/></symbol>
+    <symbol id="rain" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-5) scale(1.2)" fill="#B7AEC8" stroke="#5E5273" stroke-width="2"/>
+      <g stroke="#7FE06A" stroke-width="3" stroke-linecap="round"><path d="M-12 12l-3 8M-2 12l-3 8M8 12l-3 8"/></g></symbol>
+    <symbol id="showers" viewBox="-30 -30 60 60"><use href="#i-moonshape" transform="translate(-9,-11) scale(.8)"/>
+      <use href="#i-cloudshape" transform="translate(4,0) scale(1.05)" fill="#D9D3E6" stroke="#6B5E80" stroke-width="2.2"/>
+      <g stroke="#7FE06A" stroke-width="3" stroke-linecap="round"><path d="M-4 15l-2.5 7M6 15l-2.5 7"/></g></symbol>
+    <symbol id="snow" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-5) scale(1.2)" fill="#B7AEC8" stroke="#5E5273" stroke-width="2"/>
+      <g fill="#FFFFFF"><circle cx="-11" cy="16" r="3"/><circle cx="0" cy="20" r="3"/><circle cx="11" cy="16" r="3"/></g></symbol>
+    <symbol id="mix" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-5) scale(1.2)" fill="#B7AEC8" stroke="#5E5273" stroke-width="2"/>
+      <path d="M-10 12l-3 8M6 12l-3 8" stroke="#7FE06A" stroke-width="3" stroke-linecap="round"/><circle cx="0" cy="17" r="3" fill="#fff"/></symbol>
+    <symbol id="thunder" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-6) scale(1.2)" fill="#9C93AE" stroke="#5E5273" stroke-width="2"/>
+      <path d="M2 8l-8 11h6l-4 9 10-13h-6l4-7z" fill="#F2B630"/></symbol>
+    <symbol id="fog" viewBox="-30 -30 60 60"><g stroke="#B7AEC8" stroke-width="3.5" stroke-linecap="round"><path d="M-20-10h40M-24 0h40M-18 10h40M-22 20h30"/></g></symbol>
+    <symbol id="wind" viewBox="-30 -30 60 60"><g fill="none" stroke="#B7AEC8" stroke-width="3.5" stroke-linecap="round">
+      <path d="M-22-8h28a6 6 0 1 0-6-6M-22 2h36a6 6 0 1 1-6 6M-22 12h20"/></g></symbol>
+    <!-- wind arrow, pointing up (rotated to where the wind blows) -->
+    <symbol id="arrow" viewBox="-10 -10 20 20"><path d="M0-9l6 10h-4v8h-4v-8h-4z" fill="#FFB25C"/></symbol>
+    <!-- jack-o'-lantern town marker -->
+    <symbol id="jack" viewBox="-14 -15 28 28">
+      <path d="M-1-10q1-4 4-5" stroke="#5C7A2E" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      <ellipse cx="-5" cy="1" rx="7" ry="9" fill="#E8641A"/><ellipse cx="5" cy="1" rx="7" ry="9" fill="#E8641A"/>
+      <ellipse cx="0" cy="1" rx="6" ry="9.6" fill="#FF8424"/>
+      <path d="M-7-2l3-3 2 3zM7-2l-3-3-2 3zM-7 4q7 6 14 0l-2 1-1-1-2 2-2-2-2 2-2-2-1 1z" fill="#FFE27A"/>
+    </symbol>
+    <!-- bat -->
+    <symbol id="bat" viewBox="-50 -20 100 40" overflow="visible">
+      <path id="batpath" fill="#050208"/>
+    </symbol>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
+    <filter id="moonglow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="28"/></filter>
+    <radialGradient id="moonfill" cx="42%" cy="40%" r="62%"><stop offset="0" stop-color="#FFF6D6"/><stop offset=".7" stop-color="#F3D98E"/><stop offset="1" stop-color="#D9AE55"/></radialGradient>
+  </defs>
+</svg>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  var D = window.TT, NS = "http://www.w3.org/2000/svg";
+  function el(p, tag, a) { var e = document.createElementNS(NS, tag); for (var k in a) e.setAttribute(k, a[k]); p.appendChild(e); return e; }
+  var base = document.getElementById("base"), lines = document.getElementById("lines"), over = document.getElementById("over");
+  el(base, "rect", {width: 1920, height: 1080, fill: "#0B0716"});
+  el(base, "path", {d: D.other, fill: "#191226", stroke: "#33284A", "stroke-width": 1.2});
+  el(base, "path", {d: D.labrador, fill: "#1E1630", stroke: "#3D3056", "stroke-width": 1.2});
+  el(base, "path", {d: D.island, fill: "#271C38"});
+  el(lines, "path", {d: D.island, fill: "none", stroke: "#FF6A10", "stroke-width": 5, opacity: .35, filter: "url(#glow)", "stroke-linejoin": "round"});
+  el(lines, "path", {d: D.island, fill: "none", stroke: "#FF8A2A", "stroke-width": 1.6, "stroke-linejoin": "round"});
+
+  // regions: [key, name, icon, temperature, feels like, conditions, swatch, card x, y]; wording from the blog post
+  var R = [
+    ["avalon", "Avalon", "showers", "3° to 4°", "−2° to −3°", "Windy, gusts to 60 km/h. A few showers early in the evening.", "#FF7A1A", 1068, 770],
+    ["burin", "Burin and South Coast", "wind", "1° to 3°", "−3° to −4°", "Windy and mostly dry.", "#965AD2", 330, 900],
+    ["clarenville", "Clarenville, Bonavista and Terra Nova", "mix", "Near 2°", "−3°", "A few rain and snow showers.", "#78C85A", 1068, 470],
+    ["central", "Central", "snow", "Near 1°", "−3° to −5°", "Snow showers around Gander, and some snow on the ground.", "#5A96E6", 1068, 150],
+    ["west", "West Coast and GNP", "mix", "2° to 3°", null, "A few rain and snow showers.", "#EBC846", 18, 420],
+    ["labrador", "Labrador", "moon", "−2° to −5°", "−5° to −7°", "Dry and cold.", "#3D3056", 18, 40]
+  ];
+  var cards = document.getElementById("cards");
+  R.forEach(function (r) {
+    var c = document.createElement("div");
+    c.className = "card"; c.style.left = r[7] + "px"; c.style.top = r[8] + "px";
+    c.innerHTML = '<div class="rn"><span class="sw" style="background:' + r[6] + '"></span>' + r[1] + '</div><div class="row"><svg class="ic"><use href="#' + r[2] +
+      '"/></svg><div><div class="t">' + r[3] + '</div>' + (r[4] ? '<div class="f">Feels like <b>' + r[4] + '</b></div>' : '') + '</div></div><div class="c">' + r[5] + '</div>';
+    cards.appendChild(c);
+    if (D.centre[r[0]]) {                                   // leader from the card to the region
+      var p = D.centre[r[0]], cx = r[7] + 135, cy = r[8] + 60;
+      el(over, "line", {x1: p[0], y1: p[1], x2: cx, y2: cy, stroke: "#FF9A40", "stroke-width": 1.6, opacity: .6});
+      el(over, "use", {href: "#jack", x: p[0] - 15, y: p[1] - 16, width: 30, height: 30});
+    }
+  });
+})();
+</script>
+</body>
+</html>

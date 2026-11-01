@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Same Colour Same Time</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* Canada + U.S. coloured by clock time, today vs tomorrow. 16:9 1920x1080. Data: build_map.py -> map-data.js */
+:root{ --page:#DCE2E2; --paper:#EEF1F0; --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4; --accent:#1C8CC4; --gold:#F2C230; }
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1920px;margin:0 auto}
+.scaler{width:1920px;height:1080px;transform-origin:top left}
+.g{width:1920px;height:1080px;position:relative;overflow:hidden;background:var(--paper);color:var(--ink)}
+.top{position:absolute;left:64px;right:64px;top:36px;display:flex;align-items:flex-end;gap:40px}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:24px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:800;text-transform:uppercase;font-size:70px;line-height:.92;margin:4px 0 0;white-space:nowrap}
+.sub{font-size:22px;line-height:1.3;color:var(--ink-2);margin:0 0 4px;max-width:900px}
+.panel{position:absolute;top:180px;width:880px;height:800px;background:#fff;border:1px solid var(--rule);border-radius:14px;overflow:hidden;box-shadow:0 10px 26px -18px rgba(16,34,43,.6)}
+.panel .hd{display:flex;align-items:baseline;gap:14px;padding:14px 22px 8px;font-family:"Barlow Condensed",sans-serif}
+.panel .hd b{font-weight:800;font-size:40px;text-transform:uppercase;line-height:1}
+.panel .hd span{font-weight:600;font-size:20px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase}
+.panel svg{display:block;margin:0 10px}
+.cl{font-family:"Barlow Condensed",sans-serif;font-weight:700;paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round;fill:var(--ink)}
+.ct{font-family:"Barlow Condensed",sans-serif;font-weight:800;paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round;fill:var(--ink)}
+.leg{position:absolute;left:0;right:0;bottom:0;display:flex;flex-wrap:wrap;gap:6px 14px;padding:10px 22px 14px;border-top:1px solid #E4E9E9;background:#FAFBFB}
+.leg span{display:flex;align-items:center;gap:7px;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:19px;white-space:nowrap}
+.leg i{width:26px;height:16px;border-radius:3px;border:1px solid rgba(16,34,43,.2)}
+.leg small{font-weight:600;color:var(--ink-3);font-size:15px}
+.arrow{position:absolute;left:944px;top:540px;width:32px;text-align:center;font-family:"Barlow Condensed",sans-serif;font-weight:900;font-size:56px;line-height:1;color:var(--accent)}
+.foot{position:absolute;left:64px;right:300px;bottom:22px;font-size:15px;color:var(--ink-3);line-height:1.35}
+.logo{position:absolute;right:64px;bottom:20px}.logo img{height:50px;display:block}
+</style>
+</head>
+<body>
+<div class="stage"><div class="scaler" id="scaler"><div class="g" id="graphic">
+  <div class="top"><div><div class="eyebrow">Clocks fall back · Sunday, Nov. 1, 2 AM</div><h1>Same colour, same time</h1></div>
+    <p class="sub">Canada and the U.S. both turn clocks back an hour. Most places keep the same colour, so they stay matched. Saskatchewan, Yukon, Arizona and Quebec's Lower North Shore don't change, so they switch colours.</p></div>
+  <div class="panel" style="left:64px"><div class="hd"><b>Today</b><span>Saturday · daylight time</span></div><svg id="m0"></svg><div class="leg" id="l0"></div></div>
+  <div class="panel" style="left:976px"><div class="hd"><b>Tomorrow</b><span>Sunday · standard time</span></div><svg id="m1"></svg><div class="leg" id="l1"></div></div>
+  <div class="foot">Times are what clocks read when it's noon in St. John's. Zone boundaries simplified; Alaska and Hawaii not shown (Hawaii also doesn't change).</div>
+  <div class="logo"><img src="logo.png" alt="Sheerr Weather"></div>
+</div></div></div>
+<script src="map-data.js"></script>
+<script>
+(function(){
+  if (new URLSearchParams(location.search).has("export")) document.body.classList.add("export");
+  var D = window.TM, NS = "http://www.w3.org/2000/svg";
+  function el(p, tag, a, t){ var n = document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); if (t != null) n.textContent = t; p.appendChild(n); return n; }
+  // one colour per clock reading when it's noon in St. John's (hours behind Newfoundland), so a zone that moves
+  // with everyone keeps its colour and the ones that don't change their clocks take on a neighbour's colour
+  var COL = {"-4.5":"#9CC9E8", "-3.5":"#B8DDA6", "-2.5":"#F6D58A", "-1.5":"#D7B9E6", "-0.5":"#F2A7B0", "0":"#63BFAE"};
+  function ck(o, nl){ return String(o - nl); }
+  var NONE = {YT:1, SK:1, AZ:1, QA:1};
+  var CITY = {"Vancouver":"PT","Los Angeles":"PT","Whitehorse":"YT","Phoenix":"AZ","Calgary":"MT","Denver":"MT","Regina":"SK","Winnipeg":"CT","Chicago":"CT",
+              "Toronto":"ET","New York":"ET","Blanc-Sablon":"QA","Halifax":"AT","St. John's":"NT"};
+  var SHOW = ["Vancouver","Whitehorse","Calgary","Regina","Winnipeg","Toronto","Halifax","St. John's","Los Angeles","Phoenix","Denver","Chicago","New York","Blanc-Sablon"];
+  var POS = {"Vancouver":[-8,-10,"end"],"Los Angeles":[-8,6,"end"],"Whitehorse":[8,-8,"start"],"Phoenix":[0,22,"middle"],"Calgary":[0,-12,"middle"],
+             "Denver":[8,4,"start"],"Regina":[0,22,"middle"],"Winnipeg":[8,-8,"start"],"Chicago":[0,22,"middle"],"Toronto":[-8,-10,"end"],
+             "New York":[8,16,"start"],"Blanc-Sablon":[-6,-12,"end"],"Halifax":[-8,22,"end"],"St. John's":[0,24,"middle"]};
+  function clock(o, nl){ var h = 12 + o - nl, hh = Math.floor(h + 1e-6), mm = Math.round((h - hh) * 60); return ((hh + 11) % 12 + 1) + ":" + String(mm).padStart(2, "0") + (hh < 12 ? " AM" : " PM"); }
+  function draw(i, day){
+    var svg = document.getElementById("m" + i); svg.setAttribute("width", D.w); svg.setAttribute("height", D.h); svg.setAttribute("viewBox", "0 0 " + D.w + " " + D.h);
+    var off = D.off[day], nl = off.NT, defs = el(svg, "defs", {});
+    Object.keys(D.zones).forEach(function(k){
+      var c = COL[ck(off[k], nl)];
+      if (NONE[k]) { var p = el(defs, "pattern", {id:"h" + i + k, width:9, height:9, patternUnits:"userSpaceOnUse", patternTransform:"rotate(45)"});
+        el(p, "rect", {width:9, height:9, fill:c}); el(p, "rect", {width:2.5, height:9, fill:"#C9A21E", opacity:.55}); }
+      el(svg, "path", {d:D.zones[k], fill:NONE[k] ? "url(#h" + i + k + ")" : c, stroke:"#fff", "stroke-width":1, "stroke-linejoin":"round"}); });
+    SHOW.forEach(function(n){ var p = D.cities[n], o = POS[n];
+      el(svg, "circle", {cx:p[0], cy:p[1], r:4.5, fill:"#10222B", stroke:"#fff", "stroke-width":2});
+      el(svg, "text", {class:"cl", x:p[0] + o[0], y:p[1] + o[1], "font-size":17, "text-anchor":o[2]}, n); });
+    // legend: one entry per clock in use, with the zones on it
+    var groups = {}; Object.keys(off).forEach(function(k){ (groups[off[k]] = groups[off[k]] || []).push(k); });
+    var NAME = {PT:"Pacific", AZ:"Arizona", YT:"Yukon", MT:"Mountain", SK:"Sask.", CT:"Central", ET:"Eastern", QA:"Lower N. Shore", AT:"Atlantic", NT:"Nfld."};
+    document.getElementById("l" + i).innerHTML = Object.keys(groups).map(Number).sort(function(a, b){ return a - b; }).map(function(o){
+      return '<span><i style="background:' + COL[ck(o, nl)] + '"></i>' + clock(o, nl) + ' <small>' + groups[o].map(function(k){ return NAME[k]; }).join(", ") + '</small></span>'; }).join("");
+  }
+  draw(0, "today"); draw(1, "tomorrow");
+  var s = document.getElementById("scaler"), st = s.parentNode;
+  function fit(){ var k = document.body.classList.contains("export") ? 1 : Math.min(1, st.clientWidth / 1920); s.style.transform = "scale(" + k + ")"; st.style.height = (1080 * k) + "px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

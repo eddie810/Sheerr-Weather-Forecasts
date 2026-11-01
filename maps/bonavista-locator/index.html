@@ -1,0 +1,117 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Bonavista locator</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<script src="map.js"></script>
+<style>
+  html, body { margin: 0; background: transparent; }
+  body.preview { background: #7d8a90; }
+  #graphic { position: relative; width: 1080px; height: 1920px; overflow: hidden; }
+  #card { position: absolute; left: 64px; top: 150px; width: 640px; background: #EEF1F0; border-radius: 14px;
+          box-shadow: 0 18px 50px rgba(8, 20, 26, .38); overflow: hidden; transform-origin: 20% 0; }
+  #head { padding: 22px 26px 16px; }
+  #eyebrow { font: 700 26px/1 'Barlow Condensed'; letter-spacing: .08em; color: #1C8CC4; text-transform: uppercase; }
+  #title { font: 800 74px/0.95 'Barlow Condensed'; color: #10222B; text-transform: uppercase; margin-top: 8px; }
+  #sub { font: 400 25px/1.2 'Source Sans 3'; color: #4E656F; margin-top: 6px; }
+  #mapbox { position: relative; margin: 0 20px 20px; width: 600px; height: 520px; border-radius: 8px; overflow: hidden;
+            background: #CFE3EC; }
+  #mapbox svg { position: absolute; left: 0; top: 0; }
+  #credit { position: absolute; left: 64px; bottom: 72px; color: #fff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 2px 14px rgba(0, 0, 0, .35); }
+  #scrim { position: absolute; left: 0; right: 0; bottom: 0; height: 340px;
+           background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, .5)); }
+  #credit .k { display: block; font: 600 22px/1 'Barlow Condensed'; letter-spacing: .14em; text-transform: uppercase; opacity: .85; }
+  #credit .d { display: block; font: 400 26px/1.2 'Source Sans 3'; margin-top: 4px; opacity: .9; }
+  #credit .v { display: block; font: 600 34px/1.1 'Source Sans 3'; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div id="graphic">
+  <div id="card">
+    <div id="head">
+      <div id="eyebrow">Filmed in</div>
+      <div id="title">Bonavista</div>
+      <div id="sub">Bonavista Peninsula, Newfoundland</div>
+    </div>
+    <div id="mapbox"><svg id="map" width="600" height="520"></svg></div>
+  </div>
+  <div id="scrim"></div>
+  <div id="credit"><span class="k">Video credit</span><span class="v">Michael Plummer</span><span class="d">Wednesday, October 28 · 8:07 AM</span></div>
+</div>
+<script>
+const M = window.MAP, NS = 'http://www.w3.org/2000/svg';
+const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
+const svg = document.getElementById('map');
+const world = el('g', {}, svg);
+const land = el('g', {}, world);
+for (const d of M.land) el('path', { d, fill: '#F7F8F5', stroke: '#9DB0B6', 'stroke-width': 1.1, 'stroke-linejoin': 'round' }, land);
+const [px, py] = M.pin.xy;
+const refs = M.ref.map(r => {
+  const g = el('g', {}, world);
+  el('circle', { cx: r.xy[0], cy: r.xy[1], r: 4.5, fill: '#6E838C' }, g);
+  const t = el('text', { x: r.xy[0] + 9, y: r.xy[1] + 7, fill: '#6E838C', 'font-family': 'Barlow Condensed', 'font-weight': 600,
+                         'font-size': 20, 'letter-spacing': '0.04em' }, g);
+  t.textContent = r.name.toUpperCase();
+  if (r.name === "St. John's" || r.name === "Trinity") { t.setAttribute('x', r.xy[0] - 9); t.setAttribute('text-anchor', 'end'); }
+  return g;
+});
+// pin layer is not scaled with the map: positioned each frame from the zoom
+const pinL = el('g', {}, svg);
+const rings = [0, 1].map(() => el('circle', { r: 10, fill: 'none', stroke: '#1C8CC4', 'stroke-width': 3 }, pinL));
+const pin = el('g', {}, pinL);
+el('ellipse', { cx: 0, cy: 2, rx: 9, ry: 3.5, fill: 'rgba(16,34,43,.25)' }, pin);
+const drop = el('g', {}, pin);
+el('path', { d: 'M0,0 C-4,-12 -17,-20 -17,-34 A17,17 0 1 1 17,-34 C17,-20 4,-12 0,0Z', fill: '#1C8CC4', stroke: '#fff', 'stroke-width': 3 }, drop);
+el('circle', { cx: 0, cy: -34, r: 6.5, fill: '#fff' }, drop);
+const lab = el('g', {}, pinL);
+const lbg = el('rect', { x: -60, y: -104, width: 120, height: 36, rx: 5, fill: '#10222B' }, lab);
+const ltx = el('text', { x: 0, y: -77, fill: '#fff', 'text-anchor': 'middle', 'font-family': 'Barlow Condensed', 'font-weight': 700,
+                         'font-size': 26, 'letter-spacing': '0.05em' }, lab);
+ltx.textContent = 'BONAVISTA';
+
+const card = document.getElementById('card'), credit = document.getElementById('credit');
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const ease = v => 1 - Math.pow(1 - clamp(v), 3);
+const inout = v => (v = clamp(v), v < .5 ? 4 * v * v * v : 1 - Math.pow(-2 * v + 2, 3) / 2);
+const back = v => { v = clamp(v); const c = 1.9; return 1 + (c + 1) * Math.pow(v - 1, 3) + c * Math.pow(v - 1, 2); };
+const bounce = v => { v = clamp(v); const n = 7.5625, d = 2.75;
+  return v < 1 / d ? n * v * v : v < 2 / d ? n * (v -= 1.5 / d) * v + .75 : v < 2.5 / d ? n * (v -= 2.25 / d) * v + .9375 : n * (v -= 2.625 / d) * v + .984375; };
+
+// timeline (s): card pops in, pin drops, map eases in on the pin, card leaves; the credit stays
+const T = { cardIn: 0.3, pin: 0.95, label: 1.35, zoom: [1.2, 5.6], out: 6.0, credit: 0.7 };
+function setT(t) {
+  const a = back((t - T.cardIn) / 0.55), o = ease((t - T.out) / 0.45);
+  const s = (0.82 + 0.18 * a) * (1 - 0.12 * o);
+  card.style.opacity = clamp((t - T.cardIn) / 0.25) * (1 - o);
+  card.style.transform = `translateY(${(1 - a) * -30 - o * 20}px) scale(${s})`;
+  const z = 1 + 0.2 * inout((t - T.zoom[0]) / (T.zoom[1] - T.zoom[0]));
+  world.setAttribute('transform', `translate(${px} ${py}) scale(${z}) translate(${-px + (z - 1) * -40 / z} ${-py + (z - 1) * 50 / z})`);
+  const sx = px + (z - 1) * -40, sy = py + (z - 1) * 50;            // pin's screen position under the zoom
+  refs.forEach(g => g.setAttribute('opacity', 1));
+  const pd = clamp((t - T.pin) / 0.6);
+  pin.setAttribute('transform', `translate(${sx} ${sy})`);
+  pin.setAttribute('opacity', clamp((t - T.pin) / 0.12));
+  drop.setAttribute('transform', `translate(0 ${-(1 - bounce(pd)) * 120})`);
+  rings.forEach((r, i) => {
+    const p = ((t - T.pin - 0.5 - i * 0.7) / 1.4) % 1;
+    const on = t > T.pin + 0.5 + i * 0.7;
+    r.setAttribute('cx', sx); r.setAttribute('cy', sy);
+    r.setAttribute('r', 8 + 46 * ease(p)); r.setAttribute('opacity', on ? 0.9 * (1 - p) : 0);
+  });
+  const la = back((t - T.label) / 0.45);
+  lab.setAttribute('transform', `translate(${sx} ${sy + 14 * (1 - la)}) scale(${0.6 + 0.4 * la})`);
+  lab.setAttribute('opacity', clamp((t - T.label) / 0.2));
+  const c = ease((t - T.credit) / 0.5);
+  credit.style.opacity = c;
+  document.getElementById('scrim').style.opacity = c;
+  credit.style.transform = `translateY(${(1 - c) * -16}px)`;
+}
+const q = new URLSearchParams(location.search);
+if (!q.has('export')) document.body.classList.add('preview');
+window.setT = setT;
+setT(q.has('t') ? +q.get('t') : 3);
+</script>
+</body>
+</html>

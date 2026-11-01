@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Radar Video Frame</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* Sheerr frame for an existing radar video: the video is overlaid on #slot by ffmpeg (embed.sh) */
+:root{--paper:#EEF1F0;--ink:#10222B;--ink-2:#4E656F;--ink-3:#6E838C;--rule:#C9D3D4;--accent:#1C8CC4}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper)}
+.g{width:1080px;height:1350px;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;
+  font-family:"Source Sans 3",sans-serif;-webkit-font-smoothing:antialiased}
+.pad{padding-left:64px;padding-right:64px}
+.top{padding-top:150px;padding-bottom:46px}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:28px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;font-size:88px;line-height:.94;margin:6px 0 10px}
+.sub{font-size:29px;line-height:1.3;color:var(--ink-2);margin:0}
+#slot{height:764px;flex:none;background:#111;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.foot{margin-top:auto;padding-top:16px;padding-bottom:26px;display:flex;justify-content:space-between;align-items:center}
+.foot img{height:80px;display:block}
+.src{font-size:20px;color:var(--ink-3);text-align:right;line-height:1.35}
+</style>
+</head>
+<body>
+<div class="g" id="graphic">
+  <div class="top pad">
+    <div class="eyebrow" id="eyebrow">Holyrood radar · Saturday, October 10</div>
+    <h1 id="title">Rain over the Avalon</h1>
+    <p class="sub" id="sub">Radar loop ending 5:41 PM NDT.</p>
+  </div>
+  <div id="slot"></div>
+  <div class="foot pad">
+    <img src="logo.png" alt="Sheerr Weather">
+    <div class="src">Radar: Environment Canada, Holyrood (CASHR)<br>Loop via WeatherFront</div>
+  </div>
+</div>
+<script>
+  // optional overrides: frame.html?eyebrow=...&title=...&sub=...
+  var q = new URLSearchParams(location.search);
+  ["eyebrow","title","sub"].forEach(function(k){ if (q.get(k)) document.getElementById(k).textContent = q.get(k); });
+</script>
+</body>
+</html>

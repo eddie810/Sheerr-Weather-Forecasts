@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>YYT Days Between Snowflakes</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+:root{
+  --page:#DCE2E2;
+  --paper:#EEF1F0; --panel:#FFFFFF; --panel-2:#E4E9E9;
+  --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4; --grid:#DDE4E4;
+  --snow:#1C8CC4; --snow-2:#5AAEE3; --warm:#E08A3C; --warm-soft:rgba(224,138,60,.16);
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1080px;margin:0 auto}
+.scaler{width:1080px;height:1350px;transform-origin:top left}
+.g{width:1080px;height:1350px;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+.pad{padding-left:64px;padding-right:64px}
+.top{padding-top:44px}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:28px;letter-spacing:.1em;text-transform:uppercase;color:var(--snow)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:800;text-transform:uppercase;font-size:84px;line-height:.92;margin:6px 0 0}
+
+.hero{display:flex;align-items:flex-end;gap:28px;padding-top:26px}
+.num{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:300px;line-height:.78;color:var(--snow);letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums}
+.num-side{padding-bottom:14px}
+.num-side .u{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:84px;line-height:.9;text-transform:uppercase}
+.num-side .s{font-size:28px;line-height:1.3;color:var(--ink-2);margin-top:8px;max-width:440px}
+.num-side .s b{color:var(--ink);font-weight:600}
+
+.chart{margin-top:36px;background:var(--panel);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.chart svg{display:block}
+.lbl{font-family:"Barlow Condensed",sans-serif;font-weight:600;fill:var(--ink-3)}
+.val{font-family:"Barlow Condensed",sans-serif;font-weight:700;fill:var(--ink)}
+
+.ends{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--rule)}
+.end{padding:20px 0 22px 28px;border-left:1px solid var(--rule)}
+.end:first-child{padding-left:0;border-left:0}
+.end .q{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:24px;letter-spacing:.08em;text-transform:uppercase;color:var(--snow)}
+.end .a{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:48px;line-height:1.05;margin-top:2px}
+.end .n{font-size:22px;color:var(--ink-2);line-height:1.3;margin-top:4px}
+
+.foot{margin-top:auto;padding-top:12px;padding-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:24px}
+.foot img{height:70px;width:auto;display:block}
+.src{font-size:18px;color:var(--ink-3);text-align:right;line-height:1.35}
+</style>
+</head>
+<body>
+<div class="stage"><div class="scaler" id="scaler">
+<div class="g" id="graphic">
+  <div class="top pad">
+    <div class="eyebrow">St. John's International Airport (YYT)</div>
+    <h1>Days between snowflakes</h1>
+  </div>
+
+  <div class="hero pad">
+    <div class="num" id="num"></div>
+    <div class="num-side">
+      <div class="u">days</div>
+      <div class="s" id="since"></div>
+    </div>
+  </div>
+
+  <div class="chart"><svg id="chart" width="1080" height="560" viewBox="0 0 1080 560" role="img"></svg></div>
+
+  <div class="ends pad">
+    <div class="end"><div class="q" id="q0"></div><div class="a" id="a0"></div><div class="n" id="n0"></div></div>
+    <div class="end"><div class="q" id="q1"></div><div class="a" id="a1"></div><div class="n" id="n1"></div></div>
+  </div>
+
+  <div class="foot pad">
+    <img src="logo.png" alt="Sheerr Weather">
+    <div class="src">Environment Canada daily climate data, St. John's Intl A<br>A trace (T) is snow too light to measure</div>
+  </div>
+</div>
+</div></div>
+<script src="data.js"></script>
+<script>
+(function(){
+  var G = window.GAP, NS = "http://www.w3.org/2000/svg", svg = document.getElementById("chart");
+  function el(p, tag, a, text){ var n=document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); if (text != null) n.textContent=text; p.appendChild(n); return n; }
+  var M = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], ML = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  function md(s, long){ var m = +s.slice(5,7) - 1, d = +s.slice(8,10); return (long ? ML : M)[m] + " " + d; }
+
+  document.getElementById("num").textContent = G.days;
+  document.getElementById("since").innerHTML = "since snow was last seen at the airport, on <b>" + md(G.prev.date, true) + "</b>. Wet flakes mixed with rain on the night of <b>" + md(G.new.date, true) + "</b>.";
+
+  document.getElementById("q0").textContent = "Last snow · " + md(G.prev.date, true);
+  document.getElementById("a0").textContent = G.prev.snow + " cm";
+  document.getElementById("n0").textContent = "A raw start to June, with a high of just " + G.prev.max + "°C.";
+  document.getElementById("q1").textContent = "First flakes · " + md(G.new.date, true);
+  document.getElementById("a1").textContent = G.new.flag === "T" ? "Trace" : G.new.snow + " cm";
+  document.getElementById("n1").textContent = "Wet snow mixed with rain that evening as the temperature fell to near 2°C.";
+
+  // daily highs between the two snow days: one warm hue, one axis
+  var H = G.highs, n = H.length, X0 = 104, X1 = 1016, T0 = 130, T1 = 460, lo = 0, hi = 30;
+  var x = function(i){ return X0 + (X1 - X0) * i / (n - 1); }, y = function(v){ return T1 - (v - lo) / (hi - lo) * (T1 - T0); };
+  el(svg, "text", {class:"val", x:64, y:40, "font-size":26, "letter-spacing":"0.06em"}, "THE SUMMER IN BETWEEN");
+  el(svg, "text", {class:"lbl", x:X1, y:40, "font-size":22, "text-anchor":"end"}, "Daily high, °C");
+  [0, 10, 20, 30].forEach(function(v){
+    el(svg, "line", {x1:X0, x2:X1, y1:y(v), y2:y(v), stroke:"var(--grid)", "stroke-width":1});
+    el(svg, "text", {class:"lbl", x:X0 - 12, y:y(v) + 7, "font-size":20, "text-anchor":"end"}, v + "°");
+  });
+  var line = H.map(function(h, i){ return (i ? "L" : "M") + x(i).toFixed(1) + "," + y(h[1]).toFixed(1); }).join("");
+  el(svg, "path", {d:line + "L" + X1 + "," + T1 + "L" + X0 + "," + T1 + "Z", fill:"var(--warm-soft)"});
+  el(svg, "path", {d:line, fill:"none", stroke:"var(--warm)", "stroke-width":2.2, "stroke-linejoin":"round"});
+  // month ticks
+  H.forEach(function(h, i){
+    if (h[0].slice(8,10) === "01" && i > 0){
+      el(svg, "line", {x1:x(i), x2:x(i), y1:T1, y2:T1 + 8, stroke:"var(--rule)", "stroke-width":1.5});
+    }
+    if (h[0].slice(8,10) === "15") el(svg, "text", {class:"lbl", x:x(i), y:T1 + 30, "font-size":21, "text-anchor":"middle"}, M[+h[0].slice(5,7) - 1]);
+  });
+  el(svg, "line", {x1:X0, x2:X1, y1:T1, y2:T1, stroke:"var(--rule)", "stroke-width":1.5});
+  // warmest day
+  var wi = H.findIndex(function(h){ return h[0] === G.warm[0]; });
+  el(svg, "circle", {cx:x(wi), cy:y(G.warm[1]), r:6, fill:"var(--warm)", stroke:"#fff", "stroke-width":2.5});
+  el(svg, "text", {class:"val", x:x(wi) + 12, y:y(G.warm[1]) - 6, "font-size":22}, "Warmest: " + Math.round(G.warm[1]) + "° on " + md(G.warm[0]));
+  // the two snow days as flags
+  [[0, G.prev], [n - 1, G.new]].forEach(function(p, k){
+    var xx = x(p[0]);
+    el(svg, "line", {x1:xx, x2:xx, y1:86, y2:T1, stroke:"var(--snow)", "stroke-width":3});
+    var g = el(svg, "g", {transform:"translate(" + xx + "," + 88 + ")"});
+    el(g, "circle", {r:17, fill:"var(--snow)"});
+    // snowflake glyph
+    for (var a = 0; a < 3; a++) el(g, "line", {x1:-10 * Math.cos(a * Math.PI / 3), y1:-10 * Math.sin(a * Math.PI / 3), x2:10 * Math.cos(a * Math.PI / 3), y2:10 * Math.sin(a * Math.PI / 3), stroke:"#fff", "stroke-width":2.6, "stroke-linecap":"round"});
+    el(svg, "text", {class:"val", x:xx + (k ? -26 : 26), y:96, "font-size":24, fill:"var(--snow)", "text-anchor":k ? "end" : "start"}, md(p[1].date));
+  });
+  // span bracket label
+  el(svg, "text", {class:"val", x:(X0 + X1) / 2, y:T1 + 66, "font-size":26, "text-anchor":"middle", fill:"var(--snow)"}, "← " + G.days + " days without snow →");
+
+  var s=document.getElementById("scaler"), st=s.parentNode;
+  if (new URLSearchParams(location.search).has("export")) document.body.classList.add("export");
+  function fit(){ var k=document.body.classList.contains("export")?1:Math.min(1, st.clientWidth/1080); s.style.transform="scale("+k+")"; st.style.height=(1350*k)+"px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

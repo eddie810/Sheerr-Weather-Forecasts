@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Halloween Futurecast</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Creepster&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* Halloween RDPS precip-type story, Sat Oct 31 6:30 AM-9:30 PM NDT.
+   ?fmt=tv (16:9 1920x1080, default), ?fmt=social (4:5 Newfoundland) or ?fmt=lab (4:5 Labrador). ?anim: window.setT(t) for the movie;
+   otherwise ?at=<local hour, e.g. 19> draws that moment (default 7 PM). Data: build.py (data-*.js, pt-*.png) */
+:root{
+  --page:#0B0614; --ink:#F4EEE6; --ink-2:#C9B8DA; --ink-3:#9883B3;
+  --pumpkin:#F07A1A; --pumpkin-2:#FFB238; --slime:#8BE04E; --rule:rgba(240,122,26,.35);
+  --rain:#3FBF5A; --mix:#D957C2; --snow:#A9DBFF;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{margin:0 auto}
+.scaler{transform-origin:top left}
+.g{position:relative;overflow:hidden;color:var(--ink);background:radial-gradient(ellipse at 15% 10%,#3A1F5C 0%,#1D0F33 36%,#0E0719 78%)}
+.map{position:absolute;overflow:hidden}
+.map > *{position:absolute;left:0;top:0}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--pumpkin-2)}
+h1{font-family:"Creepster",cursive;font-weight:400;line-height:.92;margin:6px 0 10px;color:var(--pumpkin);letter-spacing:.02em;
+  text-shadow:0 0 18px rgba(240,122,26,.55),0 4px 0 #5A1E00}
+.sub{color:var(--ink-2);line-height:1.3;margin:0}
+.clock{font-family:"Barlow Condensed",sans-serif;font-weight:900;line-height:1;color:var(--ink)}
+.clock small{display:block;font-weight:700;letter-spacing:.12em;color:var(--ink-3);text-transform:uppercase}
+.bar{position:relative;height:14px;border-radius:7px;background:rgba(201,184,218,.18)}
+.bar .tt{position:absolute;top:0;bottom:0;border-radius:7px;background:rgba(240,122,26,.45);border:2px solid var(--pumpkin)}
+.bar .pk{position:absolute;top:50%;width:34px;height:34px;transform:translate(-50%,-50%)}
+.bar .ticks{position:absolute;left:0;right:0;top:20px;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:16px;color:var(--ink-3)}
+.bar .ticks span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.cap{background:rgba(18,10,34,.9);border:2px solid var(--rule);border-left:6px solid var(--pumpkin);border-radius:10px}
+.cap b{display:block;font-family:"Barlow Condensed",sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--pumpkin-2)}
+.cap span{display:block;color:var(--ink);line-height:1.3}
+.key{display:flex;gap:18px;font-family:"Barlow Condensed",sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.key i{display:inline-block;width:42px;height:16px;border-radius:3px;margin-right:8px;vertical-align:-1px}
+.card{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center}
+.card .box{display:flex;align-items:center;gap:4px;background:linear-gradient(180deg,#2A1545,#170B28);border:3px solid var(--pumpkin);
+  border-radius:12px;padding:4px 12px 4px 6px;box-shadow:0 0 16px rgba(240,122,26,.45),0 8px 18px -8px #000}
+.card .box svg{width:46px;height:46px}
+.card .t{font-family:"Barlow Condensed",sans-serif;font-weight:900;font-size:42px;line-height:1;color:var(--pumpkin-2);min-width:58px}
+.card .t.cold{color:#C9A7FF}
+.card .n{margin-top:4px;font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:19px;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--ink);text-shadow:0 0 4px #000,0 0 8px #000,0 2px 2px #000;white-space:nowrap}
+.low{position:absolute;transform:translate(-50%,-50%);text-align:center;font-family:"Barlow Condensed",sans-serif}
+.low b{display:block;font-weight:900;font-size:64px;line-height:.9;color:#FF4D4D;text-shadow:0 0 14px rgba(255,77,77,.8),0 0 3px #000}
+.low span{display:block;font-weight:800;font-size:18px;letter-spacing:.06em;color:#FFD0D0;text-shadow:0 0 6px #000;white-space:nowrap}
+.edge{position:absolute;font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:19px;letter-spacing:.05em;color:#FFD0D0;
+  background:rgba(120,20,30,.85);border:2px solid #FF4D4D;border-radius:8px;padding:4px 10px;white-space:nowrap;transform:translate(-50%,-50%)}
+.foot{position:absolute;display:flex;justify-content:space-between;align-items:center}
+.foot .logo{background:#fff;border-radius:12px;padding:8px 14px}
+.foot img{display:block}
+.src{color:var(--ink-3);line-height:1.35}
+
+/* ---------- 16:9 ---------- */
+.tv .g{width:1920px;height:1080px}
+.tv .map{left:0;top:0;width:1920px;height:1080px}
+.tv .col{position:absolute;left:0;top:0;bottom:0;width:640px;padding:56px 48px 0 56px;z-index:4;
+  background:linear-gradient(90deg,rgba(14,7,25,.97) 0%,rgba(14,7,25,.93) 78%,rgba(14,7,25,0) 100%)}
+.tv .eyebrow{font-size:24px}
+.tv h1{font-size:70px;white-space:nowrap}
+.tv .sub{font-size:23px}
+.tv .clock{font-size:96px;margin-top:30px}.tv .clock small{font-size:20px;margin-bottom:6px}
+.tv .bar{margin:22px 30px 40px 0}
+.tv .cap{margin-top:16px;padding:16px 20px;min-height:138px}
+.tv .cap b{font-size:24px}.tv .cap span{font-size:22px;margin-top:4px}
+.tv .key{margin-top:22px;font-size:20px}
+.tv .foot{left:56px;right:1300px;bottom:40px;flex-direction:column;align-items:flex-start;gap:12px}
+.tv .foot img{height:50px}.tv .src{font-size:14px;text-align:left}
+
+/* ---------- 4:5 ---------- */
+.social .g{width:1080px;height:1350px}
+.social .head{position:absolute;left:0;right:0;top:0;height:250px;padding:28px 50px 0;z-index:4}
+.social .eyebrow{font-size:23px}
+.social h1{font-size:78px;margin-bottom:6px}
+.social .sub{font-size:22px;max-width:700px}
+.social .map{left:0;top:250px;width:1080px;height:960px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.social .clockbox{position:absolute;right:44px;top:40px;text-align:right;z-index:5}
+.social .clock{font-size:76px}.social .clock small{font-size:17px;margin-bottom:4px}
+.social .cap{position:absolute;left:24px;top:270px;width:400px;padding:12px 16px;z-index:5}
+.social .cap b{font-size:20px}.social .cap span{font-size:19px;margin-top:3px}
+.social .bot{position:absolute;left:50px;right:50px;top:1222px;display:flex;justify-content:space-between;align-items:center;z-index:4}
+.social .key{font-size:19px}
+.social .foot{left:50px;right:50px;bottom:22px}
+.social .foot img{height:44px}.social .src{font-size:13px;text-align:right}
+</style>
+</head>
+<body>
+<!-- Sheerr icon set (from nl-temps) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="i-sunshape"><circle cx="0" cy="0" r="9" fill="#F2B630"/>
+      <g stroke="#F2B630" stroke-width="3" stroke-linecap="round">
+        <path d="M0-14v-5M0 14v5M-14 0h-5M14 0h5M-10-10l-3.5-3.5M10 10l3.5 3.5M-10 10l-3.5 3.5M10-10l3.5-3.5"/></g></g>
+    <path id="i-cloudshape" d="M-17 8a9 9 0 0 1 1-17.9A12 12 0 0 1 7-11a9.5 9.5 0 0 1 10 19z"/>
+    <path id="i-moonshape" d="M4-12a12 12 0 1 0 10 18a10 10 0 0 1-10-18z" fill="#E9C25A"/>
+    <symbol id="moon" viewBox="-30 -30 60 60"><use href="#i-moonshape" transform="translate(-3,0) scale(1.35)"/></symbol>
+    <symbol id="moonpartly" viewBox="-30 -30 60 60"><use href="#i-moonshape" transform="translate(-8,-8)"/>
+      <use href="#i-cloudshape" transform="translate(5,9)" fill="#fff" stroke="#6E838C" stroke-width="2.4"/></symbol>
+    <symbol id="moonmostly" viewBox="-30 -30 60 60"><use href="#i-moonshape" transform="translate(-11,-11) scale(.8)"/>
+      <use href="#i-cloudshape" transform="translate(2,5) scale(1.2)" fill="#E4E9E9" stroke="#6E838C" stroke-width="2"/></symbol>
+    <symbol id="sun" viewBox="-30 -30 60 60"><use href="#i-sunshape" transform="scale(1.2)"/></symbol>
+    <symbol id="partly" viewBox="-30 -30 60 60"><use href="#i-sunshape" transform="translate(-6,-7)"/>
+      <use href="#i-cloudshape" transform="translate(5,9)" fill="#fff" stroke="#6E838C" stroke-width="2.4"/></symbol>
+    <symbol id="mostly" viewBox="-30 -30 60 60"><use href="#i-sunshape" transform="translate(-10,-11) scale(.8)"/>
+      <use href="#i-cloudshape" transform="translate(2,5) scale(1.2)" fill="#E4E9E9" stroke="#6E838C" stroke-width="2"/></symbol>
+    <symbol id="cloud" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,3) scale(1.3)" fill="#C9D3D4" stroke="#4E656F" stroke-width="1.8"/></symbol>
+    <symbol id="rain" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-5) scale(1.2)" fill="#C9D3D4" stroke="#4E656F" stroke-width="2"/>
+      <g stroke="#1C8CC4" stroke-width="3" stroke-linecap="round"><path d="M-12 12l-3 8M-2 12l-3 8M8 12l-3 8"/></g></symbol>
+    <symbol id="showers" viewBox="-30 -30 60 60"><use href="#i-sunshape" transform="translate(-8,-10) scale(.8)"/>
+      <use href="#i-cloudshape" transform="translate(4,0) scale(1.05)" fill="#fff" stroke="#6E838C" stroke-width="2.2"/>
+      <g stroke="#1C8CC4" stroke-width="3" stroke-linecap="round"><path d="M-4 15l-2.5 7M6 15l-2.5 7"/></g></symbol>
+    <symbol id="snow" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-5) scale(1.2)" fill="#C9D3D4" stroke="#4E656F" stroke-width="2"/>
+      <g fill="#5AAEE3"><circle cx="-11" cy="16" r="3"/><circle cx="0" cy="20" r="3"/><circle cx="11" cy="16" r="3"/></g></symbol>
+    <symbol id="mix" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-5) scale(1.2)" fill="#C9D3D4" stroke="#4E656F" stroke-width="2"/>
+      <path d="M-10 12l-3 8M6 12l-3 8" stroke="#1C8CC4" stroke-width="3" stroke-linecap="round"/><circle cx="0" cy="17" r="3" fill="#5AAEE3"/></symbol>
+    <symbol id="thunder" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-6) scale(1.2)" fill="#A6AEB1" stroke="#4E656F" stroke-width="2"/>
+      <path d="M2 8l-8 11h6l-4 9 10-13h-6l4-7z" fill="#F2B630"/></symbol>
+    <symbol id="fog" viewBox="-30 -30 60 60"><g stroke="#6E838C" stroke-width="3.5" stroke-linecap="round"><path d="M-20-10h40M-24 0h40M-18 10h40M-22 20h30"/></g></symbol>
+    <symbol id="wind" viewBox="-30 -30 60 60"><g fill="none" stroke="#4E656F" stroke-width="3.5" stroke-linecap="round">
+      <path d="M-22-8h28a6 6 0 1 0-6-6M-22 2h36a6 6 0 1 1-6 6M-22 12h20"/></g></symbol>
+  </defs>
+</svg>
+<div class="stage" id="stage"><div class="scaler" id="scaler"><div class="g" id="graphic"></div></div></div>
+<script>
+  var _f = new URLSearchParams(location.search).get("fmt");
+  window.FMT = ["social", "lab", "labtv"].indexOf(_f) >= 0 ? _f : "tv";
+  document.write('<script src="data-' + FMT + '.js"><\/script>');
+</script>
+<script>
+(function(){
+  var Q = new URLSearchParams(location.search), FMT = window.FMT, TV = FMT === "tv" || FMT === "labtv", LAB = FMT.indexOf("lab") === 0, STILL = !Q.has("anim"), D = window.HP, NS = "http://www.w3.org/2000/svg";
+  var W = TV ? 1920 : 1080, H = TV ? 1080 : 1350, MW = D.w, MH = D.h, N = D.frames.length;
+  document.body.classList.add(TV ? "tv" : "social"); if (Q.has("export")) document.body.classList.add("export");
+  document.getElementById("stage").style.maxWidth = W + "px";
+  var g = document.getElementById("graphic");
+  function el(p, tag, a, t){ var n = document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); if (t != null) n.textContent = t; p.appendChild(n); return n; }
+  var seed = 31; function rnd(){ seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+  var clamp = function(x){ return Math.max(0, Math.min(1, x)); }, ease = function(x){ x = clamp(x); return x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; };
+
+  // ---------- layout ----------
+  var mapHtml = '<div class="map" id="map"><svg id="land" width="' + MW + '" height="' + MH + '"></svg>' +
+    '<img id="pa" width="' + MW + '" height="' + MH + '"><img id="pb" width="' + MW + '" height="' + MH + '">' +
+    '<svg id="ov" width="' + MW + '" height="' + MH + '"></svg><div id="cards"></div></div>';
+  var tick = '<div class="bar" id="bar"><div class="tt" id="tt"></div><svg class="pk" id="pk" viewBox="-20 -20 40 40"></svg><div class="ticks" id="ticks"></div></div>';
+  var key = '<div class="key"><span><i style="background:var(--rain)"></i>Rain</span><span><i style="background:var(--mix)"></i>Mix</span><span><i style="background:var(--snow)"></i>Snow</span></div>';
+  var src = 'RDPS (ECCC) ' + D.run.slice(11, 13) + 'Z ' + D.run.slice(5, 10).replace("10-", "Oct. ") + ' run · hourly precipitation type<br>Temperatures: RDPS · Boundaries: Natural Earth';
+  if (TV) g.innerHTML = '<svg id="sky" width="1920" height="1080" style="position:absolute;inset:0"></svg>' + mapHtml +
+    '<svg id="art" width="1920" height="1080" style="position:absolute;inset:0;z-index:5;pointer-events:none"></svg>' +
+    '<div class="col"><div class="eyebrow">' + (LAB ? 'Labrador · ' : STILL ? 'Newfoundland · ' : '') + (STILL ? 'Halloween · Sat. Oct. 31' : 'Halloween · Saturday, Oct. 31') + '</div><h1>Trick-or-Treat<br>' + (STILL ? 'Forecast' : 'Futurecast') + '</h1>' +
+    '<p class="sub" id="sub">' + (LAB ? '' : STILL ? 'Colder air arrives by evening: wet snow and flurries for parts of central and western Newfoundland, a few showers elsewhere.'
+      : 'Rain to start, then colder air brings wet snow and flurries to parts of the Island by trick-or-treat time.') + '</p>' +
+    '<div class="clock" id="clock"><small>' + (LAB ? 'Labrador time · AST' : STILL ? 'Forecast time · NDT' : 'Futurecast time · NDT') + '</small><span id="ct"></span></div>' + tick +
+    '<div class="cap" id="cap"><b id="capb"></b><span id="caps"></span></div>' + key + '</div>' +
+    '<div class="foot" style="z-index:5"><div class="logo"><img src="logo.png" alt="Sheerr Weather"></div><div class="src">' + src + '</div></div>';
+  else g.innerHTML = '<svg id="sky" width="1080" height="1350" style="position:absolute;inset:0"></svg>' +
+    '<div class="head"><div class="eyebrow">' + (LAB ? 'Labrador · ' : 'Newfoundland · ') + 'Halloween · Saturday, Oct. 31 · 7 PM</div><h1>Trick-or-Treat Forecast</h1>' +
+    '<p class="sub" id="sub">' + (LAB ? '' : 'Colder air arrives by evening: wet snow and flurries for parts of central and western Newfoundland, a few showers elsewhere.') + '</p></div>' +
+    '<span id="ct" style="display:none"></span>' + mapHtml + '<svg id="art" width="1080" height="1350" style="position:absolute;inset:0;z-index:5;pointer-events:none"></svg>' +
+    '<div class="cap" id="cap"><b id="capb"></b><span id="caps"></span></div>' +
+    '<div class="bot">' + key + '<div class="src" style="font-size:15px">Temperatures in each card · °C</div></div>' +
+    '<div class="foot"><div class="logo"><img src="logo.png" alt="Sheerr Weather"></div><div class="src">' + src + '</div></div>';
+
+  // ---------- sky: stars, moon, witch, bats ----------
+  var sky = document.getElementById("sky"), sd = el(sky, "defs", {});
+  var mg = el(sd, "radialGradient", {id:"moonglow"}); el(mg, "stop", {offset:"0", "stop-color":"#FFE9B0", "stop-opacity":".5"}); el(mg, "stop", {offset:"1", "stop-color":"#FFE9B0", "stop-opacity":"0"});
+  var mf = el(sd, "radialGradient", {id:"moonface", cx:"40%", cy:"38%"}); el(mf, "stop", {offset:"0", "stop-color":"#FFF6D6"}); el(mf, "stop", {offset:"1", "stop-color":"#F2C46A"});
+  for (var i = 0; i < 220; i++) el(sky, "circle", {cx:rnd() * W, cy:rnd() * H, r:rnd() * 1.6 + .3, fill:"#fff", opacity:(.2 + rnd() * .6).toFixed(2)});
+  var art = document.getElementById("art"), MOON = TV ? (STILL ? [1800, 120, 58] : [560, 165, 58]) : [985, 130, 60];
+  el(art, "circle", {cx:MOON[0], cy:MOON[1], r:MOON[2] * 2.1, fill:"url(#moonglow)"});
+  el(art, "circle", {cx:MOON[0], cy:MOON[1], r:MOON[2], fill:"url(#moonface)"});
+  [[-.25, -.3, .2], [.3, .2, .14], [.05, .38, .1]].forEach(function(c){ el(art, "circle", {cx:MOON[0] + c[0] * MOON[2], cy:MOON[1] + c[1] * MOON[2], r:c[2] * MOON[2], fill:"#E2AE55", opacity:.5}); });
+
+  // ---------- map: land, glow ----------
+  var land = document.getElementById("land"), ld = el(land, "defs", {});
+  var gf = el(ld, "filter", {id:"glow", x:"-20%", y:"-20%", width:"140%", height:"140%"}); el(gf, "feGaussianBlur", {stdDeviation:"6"});
+  el(land, "path", {d:D.other, fill:"#22143A", stroke:"#3B2560", "stroke-width":1.2});
+  el(land, "path", {d:D.nl, fill:"#2C1A48"});
+  el(land, "path", {d:D.nl, fill:"none", stroke:"#F07A1A", "stroke-width":9, opacity:.4, filter:"url(#glow)"});
+  var ov = document.getElementById("ov");
+  el(ov, "path", {d:D.nl, fill:"none", stroke:"#FFB238", "stroke-width":1.5, opacity:.8});
+  var isoA = el(ov, "g", {fill:"none", stroke:"#E9DDF7", "stroke-width":1.6}), isoB = el(ov, "g", {fill:"none", stroke:"#E9DDF7", "stroke-width":1.6});
+  function drawIso(gp, k){ gp.innerHTML = ""; D.frames[k].iso.forEach(function(s){ el(gp, "path", {d:s.d}); }); }
+  // witch flies in front of the moon (tv) / across the sky (social); bats
+  function witch(p, x, y, s){ var w = el(p, "g", {transform:"translate(" + x + "," + y + ") rotate(-12) scale(" + s + ")", fill:"#0B0614"});
+    el(w, "path", {d:"M-70 6 L60 -4 L62 0 L-68 10Z"}); el(w, "path", {d:"M55 -6 L92 -18 L96 -2 L92 14 L58 4Z"});
+    el(w, "path", {d:"M-14 2 C-10 -20 4 -28 14 -24 C20 -14 16 -2 10 4Z"}); el(w, "path", {d:"M10 4 C22 8 30 18 40 16 C30 26 14 20 4 8Z"});
+    el(w, "circle", {cx:-6, cy:-30, r:7}); el(w, "path", {d:"M-22 -34 L10 -38 L-2 -36 L-14 -66 L-8 -35Z"}); el(w, "path", {d:"M-4 -24 L-20 -12 L-18 -9 L-2 -20Z"}); return w; }
+  var WITCH = witch(art, MOON[0] - 10, MOON[1] + 8, TV ? .75 : .75);
+  function bat(p, x, y, s, rot){ return el(p, "path", {transform:"translate(" + x + "," + y + ") rotate(" + rot + ") scale(" + s + ")", fill:"#0B0614",
+    d:"M0 -2 C4 -10 10 -12 16 -8 C22 -14 30 -14 36 -6 C30 -6 26 -2 24 4 C20 0 14 0 10 4 C8 1 4 0 2 3 C1 1 -1 1 -2 3 C-4 0 -8 1 -10 4 C-14 0 -20 0 -24 4 C-26 -2 -30 -6 -36 -6 C-30 -14 -22 -14 -16 -8 C-10 -12 -4 -10 0 -2Z"}); }
+  var BATS = (TV ? (STILL ? [[1700, 60, .9], [1880, 250, .6], [1660, 200, .55]] : [[470, 70, .9], [630, 90, .6], [600, 250, .55], [1880, 60, .7], [1790, 120, .5]]) : [[880, 60, .8], [1040, 210, .6], [900, 200, .5]]).map(function(b){ return {b:b, el:bat(art, b[0], b[1], b[2], 0)}; });
+
+  // ---------- town cards ----------
+  var OFF = LAB ? {"Nain":[-120,-110], "Natuashish":[-180,-20], "Hopedale":[150,-150], "Makkovik":[170,-60], "Rigolet":[-160,-40],
+                   "Churchill Falls":[-60,-120], "Labrador City":[0,110], "Happy Valley-Goose Bay":[-130,90], "Cartwright":[150,-70],
+                   "Port Hope Simpson":[120,-40], "L'Anse au Loup":[120,70]} : TV ? {"St. John's":[150,90], "Clarenville":[190,-10], "Gander":[170,-110], "Grand Falls-Windsor":[40,-150], "Deer Lake":[-60,-130],
+                  "Corner Brook":[-170,0], "Port aux Basques":[-170,40], "Burgeo":[-60,140], "Marystown":[0,140], "St. Anthony":[160,0]}
+               : {"St. John's":[110,100], "Clarenville":[150,-30], "Gander":[110,-110], "Grand Falls-Windsor":[0,-150], "Deer Lake":[-90,-130],
+                  "Corner Brook":[-170,30], "Port aux Basques":[-110,120], "Burgeo":[20,170], "Marystown":[60,150], "St. Anthony":[170,10]};
+  var cards = document.getElementById("cards"), CARD = {};
+  Object.keys(D.towns).forEach(function(n){ var p = D.towns[n], o = OFF[n] || [0, -110], c = [p[0] + o[0], p[1] + o[1]];
+    el(ov, "line", {x1:p[0], y1:p[1], x2:c[0], y2:c[1], stroke:"#FFB238", "stroke-width":2, opacity:.8});
+    el(ov, "circle", {cx:p[0], cy:p[1], r:5.5, fill:"#FFB238", stroke:"#120A22", "stroke-width":2.5});
+    var d = document.createElement("div"); d.className = "card"; d.style.left = c[0] + "px"; d.style.top = c[1] + "px";
+    d.innerHTML = '<div class="box"><svg><use href="#cloud"/></svg><div class="t">0°</div></div><div class="n">' + n + '</div>';
+    cards.appendChild(d); CARD[n] = {use:d.querySelector("use"), t:d.querySelector(".t")}; });
+
+  // ---------- lows: L1 = the low crossing NL, L2 = the deepening Atlantic low ----------
+  var L1 = [], L2 = [];
+  D.frames.forEach(function(f, k){
+    var south = f.lows.filter(function(l){ return l.lat < 45.5; }).sort(function(a, b){ return a.p - b.p; })[0];
+    var prev = L1[k - 1], near = f.lows.filter(function(l){ return l.lat >= 45.5 && l.lat < 53; })
+      .sort(function(a, b){ return prev ? Math.hypot(a.x - prev.x, a.y - prev.y) - Math.hypot(b.x - prev.x, b.y - prev.y) : a.p - b.p; })[0];
+    L1.push(near || prev); L2.push(south || L2[k - 1]); });
+  var mapEl = document.getElementById("map");
+  function lowEl(lbl){ var d = document.createElement("div"); d.className = "low"; d.innerHTML = '<b>L</b><span>' + lbl + '</span>'; mapEl.appendChild(d);
+    var e = document.createElement("div"); e.className = "edge"; mapEl.appendChild(e); return {d:d, e:e, s:d.querySelector("span")}; }
+  var EL1 = lowEl(""), EL2 = lowEl("");
+
+  // ---------- clock + bar ----------
+  var T0 = 6.5;                                                 // frame 0 = 6:30 AM NDT
+  function fmtTime(h){ var hh = Math.floor(h), mm = Math.round((h - hh) * 60); if (mm === 60) { hh++; mm = 0; }
+    var ap = hh >= 12 ? "PM" : "AM", h12 = ((hh + 11) % 12) + 1; return "SAT " + h12 + ":" + String(mm).padStart(2, "0") + " " + ap; }
+  if (TV) {
+    var tt = document.getElementById("tt"), span = (N - 1);
+    tt.style.left = ((18 - T0) / span * 100) + "%"; tt.style.width = (2 / span * 100) + "%";
+    [7, 10, 13, 16, 19, 21].forEach(function(h){ var s = document.createElement("span"); s.style.left = ((h - T0) / span * 100) + "%";
+      s.textContent = ((h + 11) % 12 + 1) + (h >= 12 ? " PM" : " AM"); document.getElementById("ticks").appendChild(s); });
+    var pk = document.getElementById("pk");                     // jack-o'-lantern marker
+    el(pk, "ellipse", {cx:0, cy:2, rx:17, ry:14, fill:"#F07A1A", stroke:"#5A1E00", "stroke-width":2});
+    el(pk, "path", {d:"M-2 -12 q2 -6 6 -7", stroke:"#3B6B20", "stroke-width":3, fill:"none"});
+    el(pk, "path", {d:"M-9 -2 l4 -5 l4 5z M1 -2 l4 -5 l4 5z", fill:"#2A0E00"}); el(pk, "path", {d:"M-9 6 q9 7 18 0 l-3 0 l-2 2 l-2 -2 l-2 2 l-2 -2 l-2 2 l-2 -2z", fill:"#2A0E00"});
+  }
+  var CAPS = [[0, "Low #1 crosses the Island", "Showers and a little rain sweep across Newfoundland this morning as a weak low passes through."],
+              [6.5, "Low #2 strengthens offshore", "A second low deepens southeast of the Avalon while colder air wraps in behind the first."],
+              [11.5, "Trick-or-treat time", "Wet snow and flurries develop over central and western Newfoundland. A few showers elsewhere."]];
+
+  // ---------- state at fractional frame f (0 = 6:30 AM, N-1 = 9:30 PM) ----------
+  var pa = document.getElementById("pa"), pb = document.getElementById("pb"), loaded = -1;
+  function lerp(a, b, f){ return a + (b - a) * f; }
+  function placeLow(E, A, B, f, name){
+    if (!A || !B) { E.d.style.opacity = 0; E.e.style.opacity = 0; return; }
+    var x = lerp(A.x, B.x, f), y = lerp(A.y, B.y, f), p = Math.round(lerp(A.p, B.p, f));
+    var on = x > 30 && x < MW - 30 && y > 30 && y < MH - 30;
+    E.d.style.left = x + "px"; E.d.style.top = y + "px"; E.d.style.opacity = on ? 1 : 0; E.s.textContent = name + " · " + p + " hPa";
+    if (!on) { var cx = Math.max(130, Math.min(MW - 130, x)), cy = Math.max(30, Math.min(MH - 30, y)), ar = (y > MH ? "↓" : y < 0 ? "↑" : "") + (x > MW ? "→" : x < 0 ? "←" : "");
+      E.e.style.left = cx + "px"; E.e.style.top = cy + "px"; E.e.style.opacity = 1; E.e.textContent = name + " " + p + " hPa " + ar; }
+    else E.e.style.opacity = 0; }
+  function state(fr){
+    fr = Math.max(0, Math.min(N - 1, fr));
+    var k = Math.min(N - 2, Math.floor(fr)), f = fr - k;
+    if (loaded !== k) { pa.src = D.frames[k].png; pb.src = D.frames[k + 1].png; drawIso(isoA, k); drawIso(isoB, k + 1); loaded = k; }
+    pb.style.opacity = f; isoA.setAttribute("opacity", .55 * (1 - f)); isoB.setAttribute("opacity", .55 * f);
+    var local = T0 + fr;
+    document.getElementById("ct").textContent = fmtTime(LAB ? local - .5 : local);
+    Object.keys(CARD).forEach(function(n){ var A = D.frames[k].towns[n], B = D.frames[k + 1].towns[n], src = f < .5 ? A : B;
+      var t = Math.round(lerp(A.t, B.t, f)), night = local >= 17.75;
+      var ic = src.k === "rain" ? "rain" : src.k === "snow" ? "snow" : src.k === "mix" ? "mix" : night ? "moonmostly" : "cloud";
+      CARD[n].use.setAttribute("href", "#" + ic); CARD[n].t.textContent = t + "°"; CARD[n].t.classList.toggle("cold", t <= 0); });
+    if (!LAB) { placeLow(EL1, L1[k], L1[k + 1], f, "LOW #1"); placeLow(EL2, L2[k], L2[k + 1], f, "LOW #2"); }
+    else { [EL1, EL2].forEach(function(E){ E.d.style.opacity = 0; E.e.style.opacity = 0; }); }
+    var cp = LAB ? [0, "Bundle up, Big Land", "Dry for trick-or-treating, but cold: temperatures below freezing almost everywhere by 7 PM."]
+                 : CAPS.filter(function(c){ return fr >= c[0]; }).pop();
+    if (LAB) { var ts = Object.keys(CARD).map(function(n){ return Math.round(lerp(D.frames[k].towns[n].t, D.frames[k + 1].towns[n].t, f)); });
+      document.getElementById("sub").textContent = "Dry and cold for trick-or-treating across Labrador, with temperatures from " + Math.max.apply(null, ts) + "° to " + Math.min.apply(null, ts) + "° around 7 PM."; }
+    document.getElementById("capb").textContent = cp[1]; document.getElementById("caps").textContent = cp[2];
+    if (TV) document.getElementById("pk").style.left = (fr / (N - 1) * 100) + "%";
+  }
+
+  // ---------- movie timeline ----------
+  var INTRO = 2.6, HOLD = 4.5, SLOW = [11, 14];                // frames 11-14 (5:30-8:30 PM) play slower
+  var dts = []; for (var k = 0; k < N - 1; k++) dts.push(k >= SLOW[0] && k < SLOW[1] ? 2.3 : 1.25);
+  var MOVIE = dts.reduce(function(a, b){ return a + b; }, 0);
+  window.ANIM_LEN = INTRO + MOVIE + HOLD;
+  function frameAt(t){ var u = t - INTRO; if (u <= 0) return 0; for (var k = 0; k < dts.length; k++) { if (u < dts[k]) return k + u / dts[k]; u -= dts[k]; } return N - 1; }
+  window.setT = function(t){
+    state(frameAt(t));
+    var a = ease(t / 1.2); g.querySelector(TV ? ".col" : ".head").style.opacity = a;
+    mapEl.style.opacity = ease((t - .4) / 1.2);
+    BATS.forEach(function(b, i){ var x = b.b[0] + Math.sin(t * 1.3 + i) * 30, y = b.b[1] + Math.sin(t * 2.1 + i * 2) * 12;
+      b.el.setAttribute("transform", "translate(" + x + "," + y + ") rotate(" + (Math.sin(t * 6 + i) * 8) + ") scale(" + b.b[2] + "," + (b.b[2] * (0.7 + 0.3 * Math.abs(Math.sin(t * 9 + i)))) + ")"); });
+    WITCH.setAttribute("transform", "translate(" + (MOON[0] - 10 + Math.sin(t * .7) * 14) + "," + (MOON[1] + 8 + Math.sin(t * 1.1) * 6) + ") rotate(-12) scale(.75)");
+  };
+  function ready(){ var imgs = [].slice.call(document.images); return Promise.all(imgs.map(function(i){ return i.complete ? 0 : new Promise(function(r){ i.onload = i.onerror = r; }); })); }
+  if (Q.has("anim")) { window.setT(0); ready().then(function(){ window.READY = true; }); }
+  else { var at = +(Q.get("at") || (LAB ? 19.5 : 19)); state(at - T0); window.READY = true; }     // Labrador: 7 PM AST = 7:30 PM NDT
+
+  var sc = document.getElementById("scaler"), st = sc.parentNode;
+  sc.style.width = W + "px"; sc.style.height = H + "px"; g.style.width = W + "px"; g.style.height = H + "px";
+  function fit(){ var r = document.body.classList.contains("export") ? 1 : Math.min(1, st.clientWidth / W); sc.style.transform = "scale(" + r + ")"; st.style.height = (H * r) + "px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

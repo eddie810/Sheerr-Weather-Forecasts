@@ -1,0 +1,11 @@
+{
+  "name": "sheerr-weather-graphics",
+  "private": true,
+  "description": "Sheerr Weather graphics: pages are rendered to PNG/MP4 with Playwright (headless Chrome).",
+  "scripts": {
+    "shot": "node tools/shot.js"
+  },
+  "dependencies": {
+    "playwright": "1.56.1"
+  }
+}

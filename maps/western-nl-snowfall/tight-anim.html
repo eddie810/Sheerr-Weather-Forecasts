@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Long Range Snowfall Loop</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+:root{
+  --page:#DCE2E2;
+  --paper:#EEF1F0; --panel:#FFFFFF;
+  --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4;
+  --s1:#D4ECF8; --s2:#93CDEE; --s3:#4AA3DD; --s4:#2367B3; --s5:#5B3FA6; --s6:#8E3E9E;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1080px;margin:0 auto}
+.scaler{width:1080px;height:1350px;transform-origin:top left}
+
+.g{width:1080px;height:1350px;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+.pad{padding-left:64px;padding-right:64px}
+.top{padding-top:34px;padding-bottom:22px}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:26px;letter-spacing:.1em;text-transform:uppercase;color:var(--s4)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;font-size:76px;line-height:.94;margin:4px 0 8px}
+.sub{font-size:27px;line-height:1.3;color:var(--ink-2);margin:0}
+
+.map{position:relative;height:900px;flex:none;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  background:url(hillshade-tight.png) 0 0/1080px 900px no-repeat, #fdfdfd url(map-tight.png) 0 0/1080px 900px no-repeat;overflow:hidden}
+.map svg{position:absolute;inset:0}
+.region{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.3em;
+  paint-order:stroke;stroke:#fff;stroke-width:7px;stroke-linejoin:round}
+.town{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;
+  paint-order:stroke;stroke:#fff;stroke-width:7px;stroke-linejoin:round;fill:var(--ink)}
+
+.legend{display:flex;align-items:center;gap:22px;padding-top:16px;padding-bottom:4px;background:var(--panel);padding-bottom:16px;border-bottom:1px solid var(--rule)}
+.legend .t{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:26px;text-transform:uppercase;letter-spacing:.06em;margin-right:6px}
+.legend .row{display:flex;flex-direction:column;align-items:flex-start;gap:4px;flex:1;font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:25px;line-height:1}
+.legend i{width:100%;height:26px;border:1px solid rgba(16,34,43,.2)}
+
+.foot{margin-top:auto;padding-top:14px;padding-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:24px}
+.foot img{height:72px;width:auto;display:block}
+.src{font-size:19px;color:var(--ink-3);text-align:right;line-height:1.35}
+.clock{position:absolute;right:64px;top:22px;background:var(--ink);color:#fff;padding:10px 18px 12px;text-align:right;min-width:230px}
+.clock .t{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:46px;line-height:1;font-variant-numeric:tabular-nums}
+.clock .s{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:21px;letter-spacing:.06em;text-transform:uppercase;color:#9FB4BC;margin-top:4px}
+.bar{position:absolute;left:0;right:0;bottom:0;height:10px;background:rgba(16,34,43,.15);z-index:2}
+.bar i{display:block;height:100%;background:var(--s3)}
+</style>
+</head>
+<body>
+<div class="stage"><div class="scaler" id="scaler">
+<div class="g" id="graphic">
+  <div class="top pad">
+    <div class="eyebrow" id="eyebrow"></div>
+    <h1>Snow on the Long Range</h1>
+    <p class="sub">The heaviest snow sits on the plateau east of Gros Morne, with 15 to 25 cm.
+      Coastal communities like Rocky Harbour and Cow Head see next to nothing.</p>
+  </div>
+
+  <div class="map">
+    <svg id="ov" viewBox="0 0 1080 900" aria-hidden="true"></svg>
+  </div>
+
+  <div class="legend pad">
+      <div class="t">Snowfall</div>
+      <div class="row"><i style="background:var(--s1)"></i>2–5 cm</div>
+      <div class="row"><i style="background:var(--s2)"></i>5–10 cm</div>
+      <div class="row"><i style="background:var(--s3)"></i>10–15 cm</div>
+      <div class="row"><i style="background:var(--s4)"></i>15–20 cm</div>
+      <div class="row"><i style="background:var(--s5)"></i>20+ cm</div>
+  </div>
+
+  <div class="foot pad">
+    <img src="logo.png" alt="Sheerr Weather">
+    <div class="src" id="src">RDPS 10 km · 8:1 snow ratio · ECCC MSC GeoMet<br>© Mapbox © OpenStreetMap · Natural Earth</div>
+  </div>
+</div>
+</div></div>
+<script src="contours-tight.js"></script>
+<script src="frames-tight.js"></script>
+<script>
+(function(){
+  var D = window.SNOW, NS = "http://www.w3.org/2000/svg", svg = document.getElementById("ov");
+  function el(p, tag, a, text){ var n=document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); if (text) n.textContent=text; p.appendChild(n); return n; }
+  var COL = {2:"#D4ECF8", 5:"#93CDEE", 10:"#4AA3DD", 15:"#2367B3", 20:"#5B3FA6", 30:"#8E3E9E"};
+
+  var defs = el(svg, "defs", {});
+  el(el(defs, "clipPath", {id:"isl"}), "path", {d:D.island});
+
+  // snow bands: faint off the Island, full strength on it (the hillshade shows through)
+  var outside = el(svg, "g", {opacity:.25});
+  var inside = el(svg, "g", {"clip-path":"url(#isl)", opacity:.72});
+  // bands are swapped per frame by show(i) below
+  [].forEach(function(b){
+  });
+  var lines = el(svg, "g", {"clip-path":"url(#isl)"});
+
+
+  [D.island, D.labrador].forEach(function(d, i){
+    el(svg, "path", {d:d, fill:"none", stroke:"#fff", "stroke-width":5, "stroke-linejoin":"round"});
+    el(svg, "path", {d:d, fill:"none", stroke:i ? "#6E838C" : "#10222B", "stroke-width":i ? 1.6 : 2.2, "stroke-linejoin":"round"});
+  });
+
+
+  // water and range labels
+  function water(x, y, t, rot){ el(svg, "text", {x:x, y:y, transform:"rotate("+(rot||0)+" "+x+" "+y+")", "font-family":"Source Sans 3, sans-serif", "font-style":"italic", "font-size":24, "letter-spacing":"0.12em", fill:"#7C9099", "text-anchor":"middle"}, t); }
+  water(170, 430, "Gulf of St. Lawrence");
+  water(930, 230, "White Bay", -60);
+  el(svg, "text", {class:"region", x:600, y:455, "font-size":28, fill:"#10222B", "letter-spacing":"0.22em", transform:"rotate(-58 600 455)"}, "Long Range Mountains");
+
+  var POS = { // label offsets [dx, dy, anchor]
+    "Corner Brook":[-14,8,"end"], "Deer Lake":[14,8,"start"], "Woody Point":[-14,10,"end"],
+    "Rocky Harbour":[-14,6,"end"], "Cow Head":[-14,6,"end"], "Parson's Pond":[-14,6,"end"],
+    "Daniel's Harbour":[-14,6,"end"], "Port au Choix":[-14,6,"end"], "Hampden":[14,8,"start"],
+    "Jackson's Arm":[14,8,"start"], "Baie Verte":[14,-10,"start"]
+  };
+  Object.keys(D.towns).forEach(function(n){
+    var t = D.towns[n], p = t.xy, o = POS[n];
+    el(svg, "circle", {cx:p[0], cy:p[1], r:7, fill:"#10222B", stroke:"#fff", "stroke-width":3});
+    el(svg, "text", {class:"town", x:p[0]+o[0], y:p[1]+o[1], "font-size":26, "text-anchor":o[2]}, n);
+  });
+  Object.keys(D.peaks).forEach(function(n){
+    var p = D.peaks[n].xy;
+    el(svg, "path", {d:"M"+p[0]+","+(p[1]-10)+" l9,15 h-18 Z", fill:"#10222B", stroke:"#fff", "stroke-width":2.5, "paint-order":"stroke"});
+    el(svg, "text", {class:"town", x:p[0]+14, y:p[1]+4, "font-size":22, fill:"#4E656F", "font-style":"italic"}, n);
+  });
+
+  var A = window.ANIM, n = A.frames.length, fin = A.frames[n - 1].max;
+  document.getElementById("eyebrow").textContent = "Snowfall building · " + A.from + " to " + A.to;
+  document.querySelector(".sub").textContent = "Snow piles up on the plateau east of Gros Morne, reaching up to about " + fin +
+    " cm by " + A.to + ". The coast and valleys stay mostly bare.";
+  document.getElementById("src").innerHTML = "HRDPS 2.5 km, " + A.run.replace("HRDPS ", "") + " · " + A.ratio +
+    ":1 ratio · elevation-adjusted<br>ECCC MSC GeoMet · © Mapbox © OpenStreetMap · Natural Earth";
+  var map = document.querySelector(".map");
+  map.insertAdjacentHTML("beforeend", '<div class="clock"><div class="t" id="time"></div><div class="s" id="tot"></div></div><div class="bar"><i id="prog"></i></div>');
+
+  // show(i): draw frame i's accumulated-snow bands; render-anim.js screenshots each one
+  window.show = function(i){
+    var f = A.frames[i];
+    [outside, inside].forEach(function(g){ while (g.firstChild) g.removeChild(g.firstChild); });
+    f.bands.forEach(function(b){
+      if (!b.d) return;
+      el(outside, "path", {d:b.d, fill:COL[b.from], "fill-rule":"evenodd"});
+      el(inside, "path", {d:b.d, fill:COL[b.from], "fill-rule":"evenodd"});
+    });
+    document.getElementById("time").textContent = f.time;
+    document.getElementById("tot").textContent = "Up to " + f.max + " cm so far";
+    document.getElementById("prog").style.width = ((i + 1) / n * 100) + "%";
+    return Promise.resolve();
+  };
+  window.FRAME_COUNT = n;
+  var q = new URLSearchParams(location.search);
+  if (q.has("export")) show(+(q.get("frame") || n - 1));
+  else { var k = 0; (function tick(){ show(k); k = (k + 1) % n; setTimeout(tick, k === 0 ? 1500 : 160); })(); }
+})();
+(function(){
+  var s=document.getElementById("scaler"), st=s.parentNode;
+  if (new URLSearchParams(location.search).has("export")) document.body.classList.add("export");
+  function fit(){ var k=document.body.classList.contains("export")?1:Math.min(1, st.clientWidth/1080); s.style.transform="scale("+k+")"; st.style.height=(1350*k)+"px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

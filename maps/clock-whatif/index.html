@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>No More Clock Changes</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* St. John's solstices under permanent standard vs daylight time. Social 4:5 (1080x1350) or ?fmt=tv 16:9. Data: data.js */
+:root{ --page:#DCE2E2; --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --night:#1B2A44; --day:#F2B630; --day-2:#FFD77A; --warn:#F07A3A; }
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{margin:0 auto}
+.scaler{transform-origin:top left}
+.g{position:relative;overflow:hidden;color:#fff;background:linear-gradient(180deg,#0E2238 0%,#1E3A5C 42%,#4A4876 72%,#7A5A82 100%)}
+.stars i{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff}
+.pill{display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);border-radius:40px;
+  padding:7px 18px 8px;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:24px;letter-spacing:.1em;text-transform:uppercase}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:900;text-transform:uppercase;line-height:.88;margin:20px 0 0}
+h1 em{font-style:normal;color:#FFC85A}
+.sub{color:#DCE6F2;line-height:1.3;margin:16px 0 0}
+.col{background:#fff;color:var(--ink);border-radius:16px;box-shadow:0 14px 34px -16px rgba(0,0,0,.6);overflow:hidden}
+.col .hd{padding:16px 22px 12px;color:#fff}
+.col .hd b{display:block;font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:34px;text-transform:uppercase;line-height:1}
+.col .hd span{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:18px;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
+.col.std .hd{background:#2B5FB0}.col.dst .hd{background:#C2410C}
+.season{padding:14px 22px 16px;border-top:1px solid #E4E9E9}
+.season .lab{display:flex;justify-content:space-between;align-items:baseline;font-family:"Barlow Condensed",sans-serif}
+.season .lab b{font-weight:800;font-size:24px;text-transform:uppercase}
+.season .lab span{font-weight:600;font-size:17px;color:var(--ink-3);letter-spacing:.04em}
+.bar{position:relative;height:30px;border-radius:8px;background:var(--night);margin:10px 0 6px;overflow:hidden}
+.bar i{position:absolute;top:0;bottom:0;background:linear-gradient(90deg,var(--day-2),var(--day) 20%,var(--day) 80%,var(--day-2))}
+.bar u{position:absolute;top:0;bottom:0;border-left:1px dashed rgba(255,255,255,.35)}
+.ticks{position:relative;height:16px;font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:14px;color:var(--ink-3)}
+.ticks span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.ticks span:first-child{transform:none}.ticks span:last-child{transform:translateX(-100%)}
+.times{display:flex;justify-content:space-between;margin-top:6px;font-family:"Barlow Condensed",sans-serif}
+.times div span{display:block;font-weight:600;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.times div b{font-weight:800;font-size:40px;line-height:1;font-variant-numeric:tabular-nums}
+.times div b small{font-size:20px;margin-left:3px}
+.times div.hot b{color:var(--warn)}
+.times div.hot em{display:block;font-style:normal;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:16px;color:var(--warn);text-transform:uppercase;letter-spacing:.04em}
+.now{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);border-radius:14px;padding:14px 20px;font-size:21px;line-height:1.35;color:#E8EEF6}
+.now b{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:24px;text-transform:uppercase;color:#FFC85A;margin-right:6px}
+.foot{position:absolute;text-align:center;color:#C9D3E6;font-size:15px;line-height:1.4}
+
+/* 4:5 */
+.social .g{width:1080px;height:1350px}
+.social .top{position:absolute;left:56px;right:56px;top:46px}
+.social h1{font-size:104px}
+.social .sub{font-size:26px}
+.social .cols{position:absolute;left:40px;right:40px;top:505px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.social .nowbox{position:absolute;left:40px;right:40px;top:1150px}
+.social .season{padding:20px 24px 22px}
+.social .bar{height:40px;margin:12px 0 8px}
+.social .times div b{font-size:50px}
+.social .times div b small{font-size:24px}
+.social .foot{left:40px;right:40px;bottom:26px}
+/* 16:9 */
+.tv .g{width:1920px;height:1080px}
+.tv .top{position:absolute;left:80px;top:70px;width:640px}
+.tv h1{font-size:110px}
+.tv .sub{font-size:27px}
+.tv .cols{position:absolute;left:780px;right:64px;top:64px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.tv .nowbox{position:absolute;left:80px;width:640px;top:740px}
+.tv .col .hd{padding:22px 30px 18px}.tv .col .hd b{font-size:44px}.tv .col .hd span{font-size:21px}
+.tv .season{padding:30px 30px 34px}
+.tv .season .lab b{font-size:32px}.tv .season .lab span{font-size:20px}
+.tv .bar{height:56px;margin:16px 0 8px}
+.tv .ticks{font-size:17px;height:20px}
+.tv .times{margin-top:12px}
+.tv .times div span{font-size:18px}
+.tv .times div b{font-size:72px}.tv .times div b small{font-size:30px}
+.tv .times div.hot em{font-size:20px}
+.tv .foot{left:780px;right:64px;bottom:22px}
+</style>
+</head>
+<body>
+<div class="stage" id="stage"><div class="scaler" id="scaler"><div class="g" id="graphic">
+  <div class="stars" id="stars"></div>
+  <div class="top">
+    <div class="pill">St. John's · longest &amp; shortest days</div>
+    <h1>What if we<br><em>stopped</em><br>changing clocks?</h1>
+    <p class="sub">Daylight doesn't change, only the clock. Here's when the sun would rise and set on the longest and shortest days if we picked one time all year.</p>
+  </div>
+  <div class="cols" id="cols"></div>
+  <div class="nowbox"><div class="now"><b>What we do now:</b><span id="now"></span></div></div>
+  <div class="foot">Sunrise and sunset for St. John's, June 21 and Dec. 21 · Standard time NST (UTC−3:30), daylight time NDT (UTC−2:30) · calculated</div>
+</div></div></div>
+<script src="data.js"></script>
+<script>
+(function(){
+  var D = window.WI, Q = new URLSearchParams(location.search), TV = Q.get("fmt") === "tv", W = TV ? 1920 : 1080, H = TV ? 1080 : 1350;
+  document.body.classList.add(TV ? "tv" : "social"); if (Q.has("export")) document.body.classList.add("export");
+  document.getElementById("stage").style.maxWidth = W + "px";
+  function fmt(h){ var hh = Math.floor(h), m = Math.round((h - hh) * 60); if (m === 60) { hh++; m = 0; } return ((hh + 11) % 12 + 1) + ":" + String(m).padStart(2, "0"); }
+  function ap(h){ return h < 12 ? "AM" : "PM"; }
+  function hm(x){ var h = Math.floor(x), m = Math.round((x - h) * 60); return h + " h " + m + " min"; }
+  function season(key, z, name, date){
+    var r = D[key][z], pct = function(h){ return (h / 24 * 100) + "%"; };
+    var earlyRise = r[0] < 4.5, lateRise = r[0] > 8.5, earlySet = r[1] < 16.5, lateSet = r[1] > 20.75;
+    var grid = [6, 12, 18].map(function(h){ return '<u style="left:' + pct(h) + '"></u>'; }).join("");
+    return '<div class="season"><div class="lab"><b>' + name + '</b><span>' + date + ' · ' + hm(D[key].len) + ' of daylight</span></div>' +
+      '<div class="bar">' + grid + '<i style="left:' + pct(r[0]) + ';width:calc(' + pct(r[1]) + ' - ' + pct(r[0]) + ')"></i></div>' +
+      '<div class="ticks"><span style="left:0">12 AM</span><span style="left:25%">6 AM</span><span style="left:50%">Noon</span><span style="left:75%">6 PM</span><span style="left:100%">12 AM</span></div>' +
+      '<div class="times"><div' + (earlyRise || lateRise ? ' class="hot"' : '') + '><span>Sunrise</span><b>' + fmt(r[0]) + '<small>' + ap(r[0]) + '</small></b>' +
+        (earlyRise ? '<em>Very early</em>' : lateRise ? '<em>Dark morning commute</em>' : '') + '</div>' +
+      '<div style="text-align:right"' + (earlySet || lateSet ? ' class="hot"' : '') + '><span>Sunset</span><b>' + fmt(r[1]) + '<small>' + ap(r[1]) + '</small></b>' +
+        (earlySet ? '<em>Dark by suppertime</em>' : lateSet ? '<em>Late summer evenings</em>' : '') + '</div></div></div>';
+  }
+  var cols = document.getElementById("cols");
+  [["std", "Standard time all year", "Clocks stay where they are this Sunday"], ["dst", "Daylight time all year", "Clocks stay 'sprung forward'"]].forEach(function(c){
+    var d = document.createElement("div"); d.className = "col " + c[0];
+    d.innerHTML = '<div class="hd"><b>' + c[1] + '</b><span>' + c[2] + '</span></div>' + season("summer", c[0], "Longest day", "June 21") + season("winter", c[0], "Shortest day", "Dec. 21");
+    cols.appendChild(d); });
+  document.getElementById("now").textContent = "Summer on daylight time (sunrise " + fmt(D.summer.dst[0]) + " AM, sunset " + fmt(D.summer.dst[1]) + " PM), winter on standard time (sunrise " +
+    fmt(D.winter.std[0]) + " AM, sunset " + fmt(D.winter.std[1]) + " PM). Switching gives us the later evenings in summer and the earlier sunrises in winter.";
+  var seed = 9; function rnd(){ seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+  var st = document.getElementById("stars");
+  for (var i = 0; i < 90; i++) { var s = document.createElement("i"); s.style.left = (rnd() * W) + "px"; s.style.top = (rnd() * H * .45) + "px"; s.style.opacity = .2 + rnd() * .6; st.appendChild(s); }
+  var sc = document.getElementById("scaler"), sp = sc.parentNode;
+  sc.style.width = W + "px"; sc.style.height = H + "px";
+  function fit(){ var k = document.body.classList.contains("export") ? 1 : Math.min(1, sp.clientWidth / W); sc.style.transform = "scale(" + k + ")"; sp.style.height = (H * k) + "px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

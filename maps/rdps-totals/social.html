@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rain and Snow Map</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* 4:5 social post (1080x1350): combined rain/snow map for the province. Data: data-storm-social.js (build.py ... storm-social) */
+:root{
+  --page:#DCE2E2; --paper:#EEF1F0; --panel:#FFFFFF;
+  --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4;
+  --rain:#1F9447; --snow:#1F4E9E;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1080px;margin:0 auto}
+.scaler{width:1080px;height:1350px;transform-origin:top left}
+.g{width:1080px;height:1350px;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+.pad{padding-left:56px;padding-right:56px}
+.top{padding-top:30px;padding-bottom:20px}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:25px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:800;text-transform:uppercase;font-size:62px;line-height:.95;margin:4px 0 0}
+h1 .r{color:var(--rain)} h1 .s{color:var(--snow)}
+.map{position:relative;width:1080px;height:990px;flex:none;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  background:#e9eef0 url(map-storm-social.png) 0 0/1080px 990px no-repeat;overflow:hidden}
+.map img.shade{position:absolute;inset:0;width:1080px;height:990px}
+.map svg#ov{position:absolute;inset:0}
+.val{font-family:"Barlow Condensed",sans-serif;font-weight:700;paint-order:stroke;stroke:#fff;stroke-width:7px;stroke-linejoin:round;fill:var(--ink)}
+.nm{font-family:"Barlow Condensed",sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.03em;paint-order:stroke;stroke:#fff;stroke-width:6px;stroke-linejoin:round;fill:var(--ink-2)}
+.key{position:absolute;left:24px;bottom:24px;width:430px;background:#fff;border:1px solid var(--rule);
+  box-shadow:0 4px 18px -8px rgba(16,34,43,.4);padding:14px 18px 12px}
+.key .when{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:24px;text-transform:uppercase;letter-spacing:.03em}
+.key .rl{display:flex;align-items:baseline;gap:8px;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:20px;
+  text-transform:uppercase;letter-spacing:.08em;margin-top:12px}
+.key .rl span{font-weight:600;font-size:16px;color:var(--ink-3);letter-spacing:.04em}
+.ramp{display:flex;margin-top:5px}
+.ramp div{flex:1}
+.ramp i{display:block;height:20px;border-right:2px solid #fff}
+.ramp b{display:block;font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:17px;color:var(--ink-2);margin-top:2px}
+.key .line{display:flex;align-items:center;gap:10px;margin-top:12px;font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:18px;color:var(--ink-2)}
+.facts{display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--panel);border-bottom:1px solid var(--rule)}
+.fact{padding:12px 0 14px 22px;border-left:1px solid var(--rule)}
+.fact:first-child{padding-left:0;border-left:0}
+.fact .q{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:19px;letter-spacing:.08em;text-transform:uppercase}
+.fact .a{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:40px;line-height:1.05}
+.fact .a small{font-size:22px;font-weight:700}
+.fact .n{font-size:17px;color:var(--ink-2);line-height:1.25}
+.foot{margin-top:auto;padding-top:10px;padding-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:24px}
+.foot img{height:62px;width:auto;display:block}
+.src{font-size:15px;color:var(--ink-3);text-align:right;line-height:1.35}
+</style>
+</head>
+<body>
+<div class="stage"><div class="scaler" id="scaler">
+<div class="g" id="graphic">
+  <div class="top pad">
+    <div class="eyebrow" id="eyebrow">Newfoundland &amp; Labrador · Friday–Saturday storm</div>
+    <h1><span class="r">Rain</span> on the Island, <span class="s">snow</span> in Labrador</h1>
+  </div>
+  <div class="map">
+    <img class="shade" src="mix-shade-storm-social.png" alt="">
+    <svg id="ov" viewBox="0 0 1080 990" aria-hidden="true"></svg>
+    <div class="key">
+      <div class="when" id="when"></div>
+      <div class="rl" style="color:var(--rain)">Rain <span>mm</span></div><div class="ramp" id="rr"></div>
+      <div class="rl" style="color:var(--snow)">Snow <span>cm · 10:1</span></div><div class="ramp" id="rs"></div>
+      <div class="line"><svg width="46" height="10"><path d="M2 5H44" stroke="#fff" stroke-width="6"/><path d="M2 5H44" stroke="#10222B" stroke-width="2.6" stroke-dasharray="10 6"/></svg>Rain–snow line
+        <svg width="46" height="14" style="margin-left:18px"><path d="M2 7H34" stroke="#fff" stroke-width="9"/><path d="M2 7H32" stroke="#C62828" stroke-width="5"/><path d="M30 1L44 7L30 13Z" fill="#C62828"/></svg>Track of the low</div>
+    </div>
+  </div>
+  <div class="facts pad" id="facts"></div>
+  <div class="foot pad">
+    <img src="logo.png" alt="Sheerr Weather">
+    <div class="src" id="src"></div>
+  </div>
+</div>
+</div></div>
+<script src="data-storm-social.js"></script>
+<script src="track-storm-social.js"></script>
+<script>
+(function(){
+  var D = window.TOT, K = D.kinds.mix, NS = "http://www.w3.org/2000/svg", svg = document.getElementById("ov"), q = new URLSearchParams(location.search);
+  function el(p, tag, a, text){ var n=document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); if (text != null) n.textContent=text; p.appendChild(n); return n; }
+  if (q.has("export")) document.body.classList.add("export");
+  var W = 1080, H = 990;
+
+  el(svg, "path", {d:D.outlines, fill:"none", stroke:"#10222B", "stroke-width":1.4, opacity:.5, "stroke-linejoin":"round"});
+  (D.roads || []).forEach(function(r){
+    el(svg, "path", {d:r.d, fill:"none", stroke:"#fff", "stroke-width":r.major ? 5 : 3.5, "stroke-linejoin":"round", "stroke-linecap":"round", opacity:.85});
+    el(svg, "path", {d:r.d, fill:"none", stroke:r.major ? "#3B3F45" : "#5E6369", "stroke-width":r.major ? 2.4 : 1.5, "stroke-linejoin":"round", "stroke-linecap":"round"});
+  });
+  el(svg, "path", {d:K.line, fill:"none", stroke:"#fff", "stroke-width":6, "stroke-linejoin":"round", opacity:.9});
+  el(svg, "path", {d:K.line, fill:"none", stroke:"#10222B", "stroke-width":2.6, "stroke-dasharray":"12 7", "stroke-linejoin":"round"});
+
+  // key
+  function ramp(id, bands){
+    document.getElementById(id).innerHTML = bands.map(function(b){ return '<div><i style="background:' + b[1] + '"></i><b>' + b[0] + '</b></div>'; }).join("");
+  }
+  ramp("rr", K.rain_bands); ramp("rs", K.snow_bands);
+  document.getElementById("when").textContent = D.from.replace(" NDT", "") + " to " + D.to;
+  document.getElementById("src").innerHTML = "RDPS 10 km (ECCC), " + new Date(D.run).toISOString().slice(11,13) + "Z run · shading shows the dominant type<br>© Mapbox © OpenStreetMap · Natural Earth";
+
+  // track of the low: smooth curve through the 3-hourly centres, arrowhead at the end, "L" markers at a few times
+  var T = (window.TRACK || {}).points || [], trackBoxes = [];
+  if (T.length > 2){
+    var P = T.map(function(p){ return p.xy; });
+    var d = "M" + P[0][0] + "," + P[0][1];
+    for (var i = 0; i < P.length - 1; i++){               // Catmull-Rom -> cubic Bezier
+      var p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || p2;
+      d += "C" + (p1[0] + (p2[0] - p0[0]) / 6) + "," + (p1[1] + (p2[1] - p0[1]) / 6) + " " +
+                 (p2[0] - (p3[0] - p1[0]) / 6) + "," + (p2[1] - (p3[1] - p1[1]) / 6) + " " + p2[0] + "," + p2[1];
+    }
+    var defs = el(svg, "defs", {}), mk = el(defs, "marker", {id:"ah", viewBox:"0 0 10 10", refX:5, refY:5, markerWidth:4.2, markerHeight:4.2, orient:"auto-start-reverse"});
+    el(mk, "path", {d:"M0,0 L10,5 L0,10 Z", fill:"#C62828"});
+    el(svg, "path", {d:d, fill:"none", stroke:"#fff", "stroke-width":12, "stroke-linecap":"round", opacity:.9});
+    el(svg, "path", {d:d, fill:"none", stroke:"#C62828", "stroke-width":6.5, "stroke-linecap":"round", "marker-end":"url(#ah)"});
+    T.forEach(function(p, i){
+      if (i % 2 || p.xy[0] < 30 || p.xy[0] > W - 30 || p.xy[1] < 30) return;   // every 6 h, on the map
+      if (p.xy[0] < 480 && p.xy[1] > 630) return;                                // under the key
+      var g = el(svg, "g", {transform:"translate(" + p.xy[0] + "," + p.xy[1] + ")"});
+      el(g, "circle", {r:15, fill:"#C62828", stroke:"#fff", "stroke-width":3});
+      el(g, "text", {y:7, "text-anchor":"middle", "font-family":"Barlow Condensed, sans-serif", "font-weight":800, "font-size":21, fill:"#fff"}, "L");
+      var lbl = p.t.replace(" AM", " am").replace(" PM", " pm");
+      var right = p.xy[0] < W - 120;                    // time label right of the L where there's room
+      el(svg, "text", {class:"nm", x:p.xy[0] + (right ? 20 : -20), y:p.xy[1] + 6, "font-size":18, "text-anchor":right ? "start" : "end", style:"fill:#9B1C1C"}, lbl);
+      trackBoxes.push(right ? [p.xy[0] - 18, p.xy[1] - 18, p.xy[0] + 100, p.xy[1] + 18] : [p.xy[0] - 110, p.xy[1] - 18, p.xy[0] + 18, p.xy[1] + 18]);
+    });
+  }
+
+  // summary strip: wettest rain town, snowiest town, towns getting both
+  var ns = Object.keys(K.towns);
+  var wet = ns.reduce(function(a, n){ return K.towns[n][0] > K.towns[a][0] ? n : a; });
+  var sn = ns.reduce(function(a, n){ return K.towns[n][1] > K.towns[a][1] ? n : a; });
+  var both = ns.filter(function(n){ return K.towns[n][0] >= 2 && K.towns[n][1] >= 1; });
+  document.getElementById("facts").innerHTML =
+    '<div class="fact"><div class="q" style="color:var(--rain)">Most rain</div><div class="a">' + K.towns[wet][0] + ' <small>mm</small></div><div class="n">' + wet + ' · south coast</div></div>' +
+    '<div class="fact"><div class="q" style="color:var(--snow)">Most snow</div><div class="a">' + K.towns[sn][1] + ' <small>cm</small></div><div class="n">' + sn + ' · southeast Labrador</div></div>' +
+    '<div class="fact"><div class="q">Rain and snow</div><div class="a">Mixed</div><div class="n">' + (both.length ? both.join(", ") : "None of the towns") + '</div></div>';
+
+  // town labels: amount(s) with units, placed on the first free side
+  var taken = [[16, 640, 470, 980]].concat(trackBoxes);
+  Object.keys(D.xy).forEach(function(n){ var p = D.xy[n]; taken.push([p[0] - 7, p[1] - 7, p[0] + 7, p[1] + 7]); });
+  function free(b){ return b[0] > 6 && b[2] < W - 6 && b[1] > 6 && b[3] < H - 6 &&
+    taken.every(function(t){ return b[2] < t[0] || b[0] > t[2] || b[3] < t[1] || b[1] > t[3]; }); }
+  var tv = function(n){ var v = K.towns[n]; return v[0] + v[1]; };
+  Object.keys(D.xy).sort(function(a, b){ return tv(b) - tv(a); }).forEach(function(n){
+    var p = D.xy[n], v = K.towns[n];
+    var parts = v[1] >= 1 && v[0] >= 2 ? [[v[0], "mm"], [v[1], "cm"]] : v[1] >= 1 ? [[v[1], "cm"]] : [[v[0], "mm"]];
+    var w = Math.max(parts.reduce(function(a, pt){ return a + String(pt[0]).length * 17 + pt[1].length * 10 + 10; }, 0) + (parts.length - 1) * 26,
+                     n.length * 9.5), h = 46;
+    var sides = [[11, -25, "start", 11], [-11, -25, "end", -11 - w], [0, 27, "middle", -w / 2], [0, -54, "middle", -w / 2]], pick = null;
+    for (var i = 0; i < sides.length && !pick; i++){
+      var sd = sides[i], b = [p[0] + sd[3], p[1] + sd[1], p[0] + sd[3] + w, p[1] + sd[1] + h];
+      if (free(b)) pick = [sd, b];
+    }
+    if (!pick) return;
+    taken.push(pick[1]);
+    var sd = pick[0];
+    el(svg, "circle", {cx:p[0], cy:p[1], r:5.5, fill:"#10222B", stroke:"#fff", "stroke-width":2.5});
+    var t = el(svg, "text", {class:"val", x:p[0] + sd[0], y:p[1] + sd[1] + 25, "font-size":31, "text-anchor":sd[2]});
+    parts.forEach(function(pt, i){
+      if (i) el(t, "tspan", {"font-size":24, dx:3}, "+ ");
+      el(t, "tspan", {fill: pt[1] === "cm" ? "#1F4E9E" : "#14703A"}, String(pt[0]));
+      el(t, "tspan", {"font-size":20, dx:2}, pt[1] + (i < parts.length - 1 ? " " : ""));
+    });
+    el(svg, "text", {class:"nm", x:p[0] + sd[0], y:p[1] + sd[1] + 44, "font-size":17, "text-anchor":sd[2]}, n);
+  });
+
+  var s=document.getElementById("scaler"), st=s.parentNode;
+  function fit(){ var k=document.body.classList.contains("export")?1:Math.min(1, st.clientWidth/1080); s.style.transform="scale("+k+")"; st.style.height=(1350*k)+"px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

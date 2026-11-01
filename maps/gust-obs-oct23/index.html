@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Observed Peak Gusts</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Observed peak gusts (ECCC stations), Fri Oct 23 midnight-3:30 PM NDT. ?fmt=social (1080x1350) or ?fmt=tv (1920x1080) */
+:root{
+  --page:#DCE2E2; --paper:#EEF1F0; --panel:#FFFFFF;
+  --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4; --accent:#1C8CC4;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{margin:0 auto}
+.scaler{transform-origin:top left}
+.g{background:var(--paper);color:var(--ink);position:relative;overflow:hidden;display:flex;flex-direction:column}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:800;text-transform:uppercase;line-height:.92;margin:6px 0 10px}
+.sub{color:var(--ink-2);margin:0;line-height:1.3}
+.chart{background:var(--panel);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);position:relative}
+.row{display:grid;align-items:center;position:relative}
+.nm{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;line-height:1;text-align:right}
+.nm small{display:block;font-weight:600;color:var(--ink-3);letter-spacing:.06em;margin-top:3px}
+.track{position:relative;height:100%}
+.bar{position:absolute;left:0;border-radius:0 6px 6px 0}
+.val{position:absolute;display:flex;align-items:baseline;gap:8px;white-space:nowrap}
+.val b{font-family:"Barlow Condensed",sans-serif;font-weight:800;line-height:1}
+.val b small{font-weight:700}
+.val span{font-family:"Barlow Condensed",sans-serif;font-weight:600;color:var(--ink-2);text-transform:uppercase;letter-spacing:.04em}
+.tag{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:#10222B;color:#fff;border-radius:4px;padding:2px 8px 3px}
+.row.yyt .nm{color:var(--accent)}
+.grid{position:absolute;top:0;bottom:0;border-left:1px dashed #D5DDDE}
+.grid i{position:absolute;font-style:normal;font-family:"Barlow Condensed",sans-serif;font-weight:600;color:var(--ink-3);transform:translateX(-50%);white-space:nowrap}
+.notes{display:grid;grid-template-columns:1fr 1fr}
+.note b{display:block;font-family:"Barlow Condensed",sans-serif;font-weight:800;text-transform:uppercase;color:var(--ink)}
+.note{color:var(--ink-2);line-height:1.3}
+.foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center}
+.src{color:var(--ink-3);text-align:right;line-height:1.35}
+
+/* ---------- social 1080x1350 ---------- */
+.social{width:1080px;height:1350px}
+.social .pad{padding-left:56px;padding-right:56px}
+.social .top{padding-top:40px;padding-bottom:24px}
+.social .eyebrow{font-size:26px}
+.social h1{font-size:84px}
+.social .sub{font-size:26px}
+.social .chart{padding:44px 56px 8px}
+.social .row{grid-template-columns:230px 1fr;gap:20px;height:68px}
+.social .row:nth-child(2){height:88px}
+.social .row:nth-child(2) .bar{top:14px}
+.social .row:nth-child(2) .nm{align-self:start;margin-top:12px}
+.social .row:nth-child(2) .val{top:34px !important}
+.social .nm{font-size:27px}.social .nm small{font-size:16px}
+.social .bar{top:14px;height:40px}
+.social .val b{font-size:38px}.social .val b small{font-size:20px}.social .val span{font-size:19px}
+.social .tag{font-size:16px}
+.social .grid i{top:-32px;font-size:18px}
+.social .notes{gap:28px;padding-top:22px}
+.social .note{font-size:20px}.social .note b{font-size:24px;margin-bottom:2px}
+.social .foot{padding-top:12px;padding-bottom:24px}
+.social .foot img{height:64px}
+.social .src{font-size:16px}
+
+/* ---------- broadcast 1920x1080 ---------- */
+.tv{width:1920px;height:1080px}
+.tv .pad{padding-left:72px;padding-right:72px}
+.tv .top{padding-top:38px;padding-bottom:22px;display:flex;align-items:flex-end;gap:56px}
+.tv .top > div{flex:none}
+.tv .eyebrow{font-size:26px}
+.tv h1{font-size:84px;margin-bottom:0}
+.tv .sub{font-size:25px;max-width:760px;margin-left:auto;padding-bottom:6px}
+.tv .chart{padding:48px 72px 16px}
+.tv .row{grid-template-columns:300px 1fr;gap:24px;height:64px}
+.tv .nm{font-size:27px}.tv .nm small{font-size:15px}
+.tv .bar{top:12px;height:40px}
+.tv .val b{font-size:36px}.tv .val b small{font-size:19px}.tv .val span{font-size:19px}
+.tv .tag{font-size:16px}
+.tv .grid i{top:-32px;font-size:18px}
+.tv .notes{gap:48px;padding-top:22px}
+.tv .note{font-size:19px}.tv .note b{font-size:23px;margin-bottom:2px}
+.tv .foot{padding-top:10px;padding-bottom:22px}
+.tv .foot img{height:58px}
+.tv .src{font-size:15px}
+</style>
+</head>
+<body>
+<div class="stage" id="stage"><div class="scaler" id="scaler"><div class="g" id="graphic"></div></div></div>
+<script>
+(function(){
+  var q = new URLSearchParams(location.search), fmt = q.get("fmt") === "tv" ? "tv" : "social";
+  var W = fmt === "tv" ? 1920 : 1080, H = fmt === "tv" ? 1080 : 1350;
+  if (q.has("export")) document.body.classList.add("export");
+  var g = document.getElementById("graphic"); g.classList.add(fmt);
+  document.getElementById("stage").style.maxWidth = W + "px";
+
+  // ECCC station peak gusts, Fri Oct 23, midnight to 3:30 PM NDT (hourly reports)
+  var OBS = [
+    {n:"Sagona Island", r:"Fortune Bay", v:115, d:"NNE", t:"3:30 PM", tag:"Still rising"},
+    {n:"Burgeo", r:"South Coast", v:94, d:"NE", t:"1:30 PM"},
+    {n:"Marticot Island", r:"Placentia Bay", v:88, d:"NNE", t:"3:30 PM"},
+    {n:"Grates Cove", r:"Avalon", v:86, d:"ENE", t:"8:30 AM"},
+    {n:"Bonavista", r:"Northeast Coast", v:83, d:"NE", t:"8:30 AM"},
+    {n:"St. Alban's", r:"Bay d'Espoir", v:80, d:"NE", t:"3:30 PM"},
+    {n:"St. Lawrence", r:"Burin Peninsula", v:80, d:"NE", t:"1:30 PM"},
+    {n:"Argentia", r:"Placentia Bay", v:77, d:"NE", t:"11:30 AM"},
+    {n:"St. John's (YYT)", r:"Airport", v:72, d:"", t:"10:30 AM", yyt:true},
+    {n:"Pools Island", r:"Bonavista Bay", v:72, d:"N", t:"3:30 PM"}
+  ];
+  var BANDS = [[40,"#FFF1B8"],[50,"#FFDD7A"],[60,"#FDBD4F"],[70,"#F79A3E"],[80,"#EE7136"],[90,"#DC4A33"],[100,"#B8303F"],[120,"#8C2452"],[140,"#5E1F5E"]];
+  function col(v){ var c = BANDS[0][1]; BANDS.forEach(function(b){ if (v >= b[0]) c = b[1]; }); return c; }
+  var MAX = fmt === "tv" ? 150 : 170;          // tv: room for the value + tag after the longest bar
+
+  var top = '<div class="top pad"><div><div class="eyebrow">Friday, Oct. 23 · Midnight to 3:30 PM NDT</div><h1>Peak wind gusts' + (fmt === "tv" ? '' : '<br>') + ' so far</h1></div>' +
+    '<p class="sub">Strongest gusts recorded at Environment Canada weather stations across eastern and southern Newfoundland.</p></div>';
+  var rows = OBS.map(function(o){
+    var meta = (o.d ? o.d + " · " : "") + o.t;
+    return '<div class="row' + (o.yyt ? ' yyt' : '') + '"><div class="nm">' + o.n + '<small>' + o.r + '</small></div>' +
+      '<div class="track"><div class="bar" style="width:' + (o.v / MAX * 100) + '%;background:' + col(o.v) + '"></div>' +
+      '<div class="val" style="left:calc(' + (o.v / MAX * 100) + '% + 14px);top:50%;transform:translateY(-50%)"><b>' + o.v + '<small> km/h</small></b><span>' + meta + '</span>' +
+      (o.tag ? '<em class="tag"' + (fmt === "tv" ? '' : ' style="position:absolute;left:0;top:100%;margin-top:6px"') + '>' + o.tag + ' ↑</em>' : '') + '</div></div></div>';
+  }).join("");
+  var chart = '<div class="chart"><div id="gridwrap" style="position:absolute;inset:0;pointer-events:none"></div>' + rows + '</div>';
+  var notes = '<div class="notes pad"><div class="note"><b>South coast still climbing</b>Sagona Island went from 109 to 115 km/h between 2:30 and 3:30 PM.</div>' +
+    '<div class="note"><b>Likely a bit low</b>Stations report hourly; a stronger gust between reports wouldn’t show up here.</div></div>';
+  var foot = '<div class="foot pad"><img src="logo.png" alt="Sheerr Weather"><div class="src">Environment Canada weather stations · hourly reports<br>Peak gust in the 10 minutes before each report</div></div>';
+  g.innerHTML = top + chart + notes + foot;
+
+  // gridlines at 40..120 km/h, aligned to the bar track
+  var tr = document.querySelector(".track"), ch = document.querySelector(".chart"), gw = document.getElementById("gridwrap");
+  var x0 = tr.getBoundingClientRect().left - ch.getBoundingClientRect().left, tw = tr.getBoundingClientRect().width;
+  var k = document.body.classList.contains("export") ? 1 : 1;   // measured before scaling
+  (fmt === "tv" ? [20, 40, 60, 80, 100, 120, 140] : [40, 80, 120]).forEach(function(v){
+    var gl = document.createElement("div"); gl.className = "grid";
+    gl.style.left = (x0 + v / MAX * tw) + "px"; gl.style.top = (fmt === "tv" ? 40 : 40) + "px"; gl.style.bottom = "12px";
+    gl.innerHTML = '<i>' + v + (v === (fmt === "tv" ? 140 : 120) ? ' km/h' : '') + '</i>'; gw.appendChild(gl);
+  });
+
+  var s = document.getElementById("scaler"), st = s.parentNode;
+  s.style.width = W + "px"; s.style.height = H + "px"; g.style.width = W + "px"; g.style.height = H + "px";
+  function fit(){ var r = document.body.classList.contains("export") ? 1 : Math.min(1, st.clientWidth / W); s.style.transform = "scale(" + r + ")"; st.style.height = (H * r) + "px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

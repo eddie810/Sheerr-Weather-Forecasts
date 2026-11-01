@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Temperature Drop</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* Full-bleed 1920x1080 broadcast map. ?kind=rain|snow|gust  &clean (map + shading only)  &nolabels (no town values) */
+:root{--ink:#10222B;--ink-2:#4E656F;--ink-3:#6E838C;--rule:#C9D3D4;--page:#DCE2E2}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1920px;margin:0 auto}
+.scaler{width:1920px;height:1080px;transform-origin:top left}
+.g{position:relative;width:1920px;height:1080px;overflow:hidden;background:#e9eef0 0 0/1920px 1080px no-repeat}
+.g img.shade{position:absolute;inset:0;width:1920px;height:1080px}
+.g svg{position:absolute;inset:0}
+.val{font-family:"Barlow Condensed",sans-serif;font-weight:700;paint-order:stroke;stroke:#fff;stroke-width:7px;stroke-linejoin:round;fill:var(--ink)}
+.nm{font-family:"Barlow Condensed",sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.03em;paint-order:stroke;stroke:#fff;stroke-width:6px;stroke-linejoin:round;fill:var(--ink-2)}
+.panel{position:absolute;left:48px;bottom:44px;background:rgba(255,255,255,.95);border:1px solid var(--rule);box-shadow:0 4px 18px -8px rgba(16,34,43,.4);
+  padding:18px 22px 16px;width:520px}
+.panel .k{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:40px;text-transform:uppercase;line-height:1}
+.panel .t{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:22px;color:var(--ink-2);margin-top:4px;letter-spacing:.02em}
+.ramp{display:flex;margin-top:14px}
+.ramp div{flex:1}
+.ramp i{display:block;height:24px;border-right:2px solid #fff}
+.ramp b{display:block;font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:20px;color:var(--ink-2);margin-top:3px}
+.panel .rl{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);margin-top:12px;margin-bottom:-8px}
+.panel .src{font-size:15px;color:var(--ink-3);margin-top:10px}
+.logo{position:absolute;right:48px;bottom:40px;height:70px;background:rgba(255,255,255,.9);padding:8px 14px;border-radius:6px}
+.clean .panel,.clean .logo,.clean svg .lab{display:none}
+.ramp.cats div{flex:none;margin-right:28px}
+.ramp.cats i{width:150px}
+.ramp.cats b{font-size:24px!important}
+</style>
+</head>
+<body>
+<div class="stage"><div class="scaler" id="scaler">
+<div class="g" id="graphic">
+  <img class="shade" id="shade" src="shade.png" alt="">
+  <svg id="ov" viewBox="0 0 1920 1080" aria-hidden="true"></svg>
+  <div class="panel"><div class="k" id="k"></div><div class="t" id="t"></div><div class="ramp" id="ramp"></div><div class="src" id="src"></div></div>
+  <img class="logo" src="logo.png" alt="Sheerr Weather">
+</div>
+</div></div>
+<script src="data.js"></script>
+<script>
+(function(){
+  // Town labels "11° → 4°" (12:30 PM -> 6:30 PM), shaded by the change; placement as on the rdps-totals maps
+  var D = window.DROP, q = new URLSearchParams(location.search);
+  var NS = "http://www.w3.org/2000/svg", svg = document.getElementById("ov");
+  function el(p, tag, a, text){ var n=document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); if (text != null) n.textContent=text; p.appendChild(n); return n; }
+  if (q.has("export")) document.body.classList.add("export");
+  document.getElementById("graphic").style.backgroundImage = "url(map.png)";
+  el(svg, "path", {d:D.outlines, fill:"none", stroke:"#10222B", "stroke-width":1.6, opacity:.55, "stroke-linejoin":"round"});
+  (D.roads || []).forEach(function(r){
+    el(svg, "path", {d:r.d, fill:"none", stroke:"#fff", "stroke-width":r.major ? 6 : 4.5, "stroke-linejoin":"round", "stroke-linecap":"round", opacity:.85});
+    el(svg, "path", {d:r.d, fill:"none", stroke:r.major ? "#3B3F45" : "#5E6369", "stroke-width":r.major ? 2.8 : 1.8, "stroke-linejoin":"round", "stroke-linecap":"round"});
+  });
+  document.getElementById("k").textContent = "Temperature drop";
+  document.getElementById("t").textContent = D.day + " " + D.from + " to " + D.to;
+  document.getElementById("ramp").outerHTML = '<div class="ramp">' + D.bands.map(function(b){ return '<div><i style="background:' + b[1] + '"></i><b>' + b[0] + '</b></div>'; }).join("") +
+    '<div style="flex:.9"><b style="margin-top:27px">°C</b></div></div>';
+  var run = new Date(D.run);
+  document.getElementById("src").textContent = "HRDPS 2.5 km, " + run.toISOString().slice(11,13) + "Z run · shading: change in temperature over the afternoon · ECCC · © Mapbox";
+
+  var taken = [[40, 800, 580, 1045], [1670, 960, 1880, 1048]];
+  function free(b){ return b[0] > 8 && b[2] < 1912 && b[1] > 8 && b[3] < 1072 &&
+    taken.every(function(t){ return b[2] < t[0] || b[0] > t[2] || b[3] < t[1] || b[1] > t[3]; }); }
+  Object.keys(D.xy).forEach(function(n){ var p = D.xy[n]; taken.push([p[0] - 8, p[1] - 8, p[0] + 8, p[1] + 8]); });
+  var order = Object.keys(D.xy).sort(function(a, b){ return (D.towns[a][1] - D.towns[a][0]) - (D.towns[b][1] - D.towns[b][0]); });   // biggest drops first
+  order.forEach(function(n){
+    var p = D.xy[n], v = D.towns[n], w = Math.max(String(v[0]).length * 19 + String(v[1]).length * 19 + 74, n.length * 10.5), h = 52;
+    var sides = [[12, -28, "start", 12], [-12, -28, "end", -12 - w], [0, 30, "middle", -w / 2], [0, -60, "middle", -w / 2],
+                 [12, -64, "start", 12], [12, 14, "start", 12]];
+    var pick = null;
+    for (var i = 0; i < sides.length && !pick; i++){
+      var sd = sides[i], b = [p[0] + sd[3], p[1] + sd[1], p[0] + sd[3] + w, p[1] + sd[1] + h];
+      if (free(b)) pick = [sd, b];
+    }
+    if (!pick) return;
+    taken.push(pick[1]);
+    var sd = pick[0], g = el(svg, "g", {class:"lab"});
+    el(g, "circle", {cx:p[0], cy:p[1], r:6, fill:"#10222B", stroke:"#fff", "stroke-width":2.5});
+    var t = el(g, "text", {class:"val", x:p[0] + sd[0], y:p[1] + sd[1] + 28, "font-size":34, "text-anchor":sd[2]});
+    el(t, "tspan", {fill:"#4E656F"}, v[0] + "°");
+    el(t, "tspan", {"font-size":24, dx:5, fill:"#4E656F"}, "→");
+    el(t, "tspan", {dx:5, fill:v[1] - v[0] <= -4 ? "#1F4E9E" : "#10222B"}, v[1] + "°");
+    el(g, "text", {class:"nm", x:p[0] + sd[0], y:p[1] + sd[1] + 49, "font-size":19, "text-anchor":sd[2]}, n);
+  });
+  var s=document.getElementById("scaler"), st=s.parentNode;
+  function fit(){ var k=document.body.classList.contains("export")?1:Math.min(1, st.clientWidth/1920); s.style.transform="scale("+k+")"; st.style.height=(1080*k)+"px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

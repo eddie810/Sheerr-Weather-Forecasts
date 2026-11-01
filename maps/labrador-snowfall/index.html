@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Labrador Snowfall Map</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+:root{
+  --page:#DCE2E2;
+  --paper:#EEF1F0; --panel:#FFFFFF;
+  --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4;
+  --s1:#D4ECF8; --s2:#93CDEE; --s3:#4AA3DD; --s4:#2367B3; --s5:#5B3FA6;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1080px;margin:0 auto}
+.scaler{width:1080px;height:1350px;transform-origin:top left}
+
+.g{width:1080px;height:1350px;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+.pad{padding-left:64px;padding-right:64px}
+.top{padding-top:34px;padding-bottom:22px}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:26px;letter-spacing:.1em;text-transform:uppercase;color:var(--s4)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;font-size:76px;line-height:.94;margin:4px 0 8px}
+.sub{font-size:27px;line-height:1.3;color:var(--ink-2);margin:0}
+
+.map{position:relative;height:900px;flex:none;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  background:#fdfdfd url(map.png) 0 0/1080px 900px no-repeat;overflow:hidden}
+.map svg{position:absolute;inset:0}
+.region{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.3em;
+  paint-order:stroke;stroke:#fff;stroke-width:7px;stroke-linejoin:round}
+.town{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;
+  paint-order:stroke;stroke:#fff;stroke-width:7px;stroke-linejoin:round;fill:var(--ink)}
+
+.legend{display:flex;align-items:center;gap:22px;padding-top:22px;padding-bottom:4px;background:var(--panel);padding-bottom:22px;border-bottom:1px solid var(--rule)}
+.legend .t{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:26px;text-transform:uppercase;letter-spacing:.06em;margin-right:6px}
+.legend .row{display:flex;flex-direction:column;align-items:flex-start;gap:4px;flex:1;font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:25px;line-height:1}
+.legend i{width:100%;height:26px;border:1px solid rgba(16,34,43,.2)}
+
+.foot{margin-top:auto;padding-top:14px;padding-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:24px}
+.foot img{height:72px;width:auto;display:block}
+.src{font-size:19px;color:var(--ink-3);text-align:right;line-height:1.35}
+</style>
+</head>
+<body>
+<div class="stage"><div class="scaler" id="scaler">
+<div class="g" id="graphic">
+  <div class="top pad">
+    <div class="eyebrow">Model snowfall · Sunday to Monday morning</div>
+    <h1>How much snow for Labrador?</h1>
+    <p class="sub">The Canadian high-resolution model puts the most snow in western Labrador.
+      Most of central Labrador and the coast see little or none.</p>
+  </div>
+
+  <div class="map">
+    <svg id="ov" viewBox="0 0 1080 900" aria-hidden="true"></svg>
+  </div>
+
+  <div class="legend pad">
+      <div class="t">Snowfall</div>
+      <div class="row"><i style="background:var(--s1)"></i>2–5 cm</div>
+      <div class="row"><i style="background:var(--s2)"></i>5–10 cm</div>
+      <div class="row"><i style="background:var(--s3)"></i>10–15 cm</div>
+      <div class="row"><i style="background:var(--s4)"></i>15–20 cm</div>
+      <div class="row"><i style="background:var(--s5)"></i>20+ cm</div>
+  </div>
+
+  <div class="foot pad">
+    <img src="../labrador-west-sws/logo.png" alt="Sheerr Weather">
+    <div class="src" id="src">HRDPS 2.5 km · 10:1 snow ratio · ECCC MSC GeoMet<br>© Mapbox © OpenStreetMap · Natural Earth</div>
+  </div>
+</div>
+</div></div>
+<script src="contours.js"></script>
+<script>
+(function(){
+  var D = window.SNOW, NS = "http://www.w3.org/2000/svg", svg = document.getElementById("ov");
+  function el(p, tag, a, text){ var n=document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); if (text) n.textContent=text; p.appendChild(n); return n; }
+  var COL = {2:"#D4ECF8", 5:"#93CDEE", 10:"#4AA3DD", 15:"#2367B3", 20:"#5B3FA6"};
+
+  var defs = el(svg, "defs", {});
+  var cp = el(defs, "clipPath", {id:"lab"});
+  el(cp, "path", {d:D.labrador});
+
+  // snow bands: faint outside Labrador, full strength inside it
+  var outside = el(svg, "g", {opacity:.28});
+  var inside = el(svg, "g", {"clip-path":"url(#lab)", opacity:.88});
+  D.bands.forEach(function(b){
+    el(outside, "path", {d:b.d, fill:COL[b.from], "fill-rule":"evenodd"});
+    el(inside, "path", {d:b.d, fill:COL[b.from], "fill-rule":"evenodd"});
+  });
+  var lines = el(svg, "g", {"clip-path":"url(#lab)"});
+  D.lines.forEach(function(l){ el(lines, "path", {d:l.d, fill:"none", stroke:"rgba(16,34,43,.35)", "stroke-width":1.2}); });
+
+  // Labrador outline (coast + Québec border)
+  el(svg, "path", {d:D.labrador, fill:"none", stroke:"#fff", "stroke-width":6, "stroke-linejoin":"round"});
+  el(svg, "path", {d:D.labrador, fill:"none", stroke:"#10222B", "stroke-width":2.4, "stroke-linejoin":"round"});
+
+  el(svg, "text", {class:"region", x:430, y:585, "font-size":40, fill:"#10222B"}, "Labrador");
+  el(svg, "text", {class:"region", x:110, y:470, "font-size":34, fill:"#6E838C"}, "Québec");
+
+  var POS = { // label offsets [dx, dy, anchor]
+    "Labrador City":[14,-14,"start"], "Churchill Falls":[14,-12,"start"], "Happy Valley-Goose Bay":[0,32,"middle"],
+    "Nain":[-14,6,"end"], "Hopedale":[-14,6,"end"], "Natuashish":[-14,6,"end"], "Makkovik":[-14,-10,"end"],
+    "Cartwright":[-14,-10,"end"], "Mary's Harbour":[-14,6,"end"]
+  };
+  Object.keys(D.towns).forEach(function(n){
+    var t = D.towns[n], p = t.xy, o = POS[n];
+    el(svg, "circle", {cx:p[0], cy:p[1], r:7, fill:"#10222B", stroke:"#fff", "stroke-width":3});
+    el(svg, "text", {class:"town", x:p[0]+o[0], y:p[1]+o[1], "font-size":26, "text-anchor":o[2]}, n);
+  });
+
+  var run = new Date(D.run);
+  document.getElementById("src").innerHTML = "HRDPS 2.5 km, " +
+    run.toISOString().slice(11,13) + "Z run " + run.toLocaleDateString("en-CA",{month:"short",day:"numeric",timeZone:"UTC"}) +
+    " · 10:1 snow ratio · ECCC MSC GeoMet<br>© Mapbox © OpenStreetMap · Natural Earth";
+})();
+(function(){
+  var s=document.getElementById("scaler"), st=s.parentNode;
+  if (new URLSearchParams(location.search).has("export")) document.body.classList.add("export");
+  function fit(){ var k=document.body.classList.contains("export")?1:Math.min(1, st.clientWidth/1080); s.style.transform="scale("+k+")"; st.style.height=(1350*k)+"px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

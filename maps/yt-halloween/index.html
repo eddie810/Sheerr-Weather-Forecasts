@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tricky Halloween Thumbnail</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Creepster&display=swap">
+<style>
+/* YouTube thumbnail 1280x720: blurred Halloween precip-type map (bg.jpg, from halloween-ptype) under the title */
+:root{ --page:#0B0614; --pumpkin:#F07A1A; --pumpkin-2:#FFB238; --slime:#8BE04E; --snow:#A9DBFF; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px}
+body.export{padding:0}
+.g{width:1280px;height:720px;position:relative;overflow:hidden;background:#0B0614;font-family:"Barlow Condensed",sans-serif}
+.bg{position:absolute;inset:-30px;background:url(bg.jpg) center/cover;filter:blur(7px) saturate(1.15) brightness(.8)}
+.shade{position:absolute;inset:0;background:radial-gradient(ellipse at 38% 52%,rgba(11,6,20,.78) 0%,rgba(11,6,20,.55) 45%,rgba(11,6,20,.15) 80%)}
+.txt{position:absolute;left:58px;top:58px;width:1100px}
+.tag{display:inline-block;background:var(--pumpkin);color:#1A0A00;font-weight:900;font-size:34px;letter-spacing:.08em;text-transform:uppercase;
+  padding:5px 16px 6px;border-radius:6px;box-shadow:0 6px 16px -6px #000}
+h1{margin:18px 0 0;font-family:"Creepster",cursive;font-weight:400;font-size:106px;line-height:.92;color:#F4EEE6;letter-spacing:.01em;
+  text-shadow:0 0 22px rgba(0,0,0,.9),0 5px 0 #2A0E3E}
+h1 .o{color:var(--pumpkin);text-shadow:0 0 26px rgba(240,122,26,.75),0 5px 0 #5A1E00}
+h1 .s{color:var(--snow);text-shadow:0 0 26px rgba(169,219,255,.7),0 5px 0 #14305A}
+.chip{position:absolute;left:300px;bottom:54px;display:flex;gap:14px}
+.chip span{font-weight:900;font-size:36px;text-transform:uppercase;letter-spacing:.04em;padding:4px 16px 6px;border-radius:8px;color:#0B0614}
+.moon{position:absolute;right:60px;top:300px;width:170px;height:170px;border-radius:50%;
+  background:radial-gradient(circle at 40% 38%,#FFF6D6,#F2C46A);box-shadow:0 0 70px 20px rgba(255,233,176,.35)}
+.logo{position:absolute;left:58px;bottom:40px;background:#fff;border-radius:12px;padding:9px 16px;box-shadow:0 8px 24px -10px #000}
+.logo img{height:56px;display:block}
+svg.art{position:absolute;inset:0}
+</style>
+</head>
+<body>
+<div class="g" id="graphic">
+  <div class="bg"></div><div class="shade"></div>
+  <div class="moon"></div>
+  <svg class="art" id="art" width="1280" height="720"></svg>
+  <div class="txt">
+    <div class="tag">Saturday · Oct. 31</div>
+    <h1>Halloween Forecast<br>Looking More <span class="o">Tricky</span><br>Than <span class="s">Treaty</span></h1>
+  </div>
+  <div class="chip"><span style="background:#3FBF5A">Rain</span><span style="background:#D957C2">Mix</span><span style="background:#A9DBFF">Snow?</span></div>
+  <div class="logo"><img src="logo.png" alt="Sheerr Weather"></div>
+</div>
+<script>
+(function(){
+  if (new URLSearchParams(location.search).has("export")) document.body.classList.add("export");
+  var NS = "http://www.w3.org/2000/svg", art = document.getElementById("art");
+  function el(p, tag, a){ var n = document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); p.appendChild(n); return n; }
+  // witch across the moon
+  var w = el(art, "g", {transform:"translate(1135,392) rotate(-12) scale(1.15)", fill:"#0B0614"});
+  ["M-70 6 L60 -4 L62 0 L-68 10Z", "M55 -6 L92 -18 L96 -2 L92 14 L58 4Z", "M-14 2 C-10 -20 4 -28 14 -24 C20 -14 16 -2 10 4Z",
+   "M10 4 C22 8 30 18 40 16 C30 26 14 20 4 8Z", "M-22 -34 L10 -38 L-2 -36 L-14 -66 L-8 -35Z", "M-4 -24 L-20 -12 L-18 -9 L-2 -20Z"].forEach(function(d){ el(w, "path", {d:d}); });
+  el(w, "circle", {cx:-6, cy:-30, r:7});
+  var B = "M0 -2 C4 -10 10 -12 16 -8 C22 -14 30 -14 36 -6 C30 -6 26 -2 24 4 C20 0 14 0 10 4 C8 1 4 0 2 3 C1 1 -1 1 -2 3 C-4 0 -8 1 -10 4 C-14 0 -20 0 -24 4 C-26 -2 -30 -6 -36 -6 C-30 -14 -22 -14 -16 -8 C-10 -12 -4 -10 0 -2Z";
+  [[990, 300, 1.3, -8], [1220, 520, .9, 10], [950, 470, .7, -12], [1230, 280, .6, 6]].forEach(function(b){
+    el(art, "path", {d:B, fill:"#0B0614", transform:"translate(" + b[0] + "," + b[1] + ") rotate(" + b[3] + ") scale(" + b[2] + ")"}); });
+  // falling snowflakes on the right side
+  for (var i = 0, s = 7; i < 26; i++) { s = (s * 16807) % 2147483647; var x = 700 + (s % 560); s = (s * 16807) % 2147483647; var y = 480 + (s % 230);
+    el(art, "circle", {cx:x, cy:y, r:2 + (s % 4), fill:"#fff", opacity:.75}); }
+})();
+</script>
+</body>
+</html>

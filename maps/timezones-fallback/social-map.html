@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How Time Zones Change</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* Canada + U.S. clock at one moment, Oct 31 vs Nov 1, social 4:5 (1080x1350). Data: build_map.py -> map-data.js */
+:root{ --page:#DCE2E2; --paper:#EEF1F0; --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4; --accent:#1C8CC4; }
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1080px;margin:0 auto}
+.scaler{width:1080px;height:1350px;transform-origin:top left}
+.g{width:1080px;height:1350px;position:relative;overflow:hidden;background:var(--paper);color:var(--ink)}
+.top{position:absolute;left:0;right:0;top:0;height:150px;background:#10222B;color:#fff;padding:26px 48px 0}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:23px;letter-spacing:.12em;text-transform:uppercase;color:#7CC6EE}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:900;text-transform:uppercase;font-size:60px;line-height:.95;margin:6px 0 0}
+.blk{position:absolute;left:28px;right:28px;height:500px}
+.blk .dt{position:absolute;left:20px;top:10px;font-family:"Barlow Condensed",sans-serif}
+.blk .dt b{display:block;font-weight:900;font-size:50px;text-transform:uppercase;line-height:1;border-bottom:5px solid var(--ink);padding-bottom:2px}
+.blk .dt span{display:block;font-weight:600;font-size:19px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-top:6px}
+.blk svg{position:absolute;left:0;top:0}
+.tag{font-family:"Barlow Condensed",sans-serif;font-weight:800}
+.note b{font-family:"Barlow Condensed",sans-serif;font-weight:800;color:var(--ink);font-size:21px;text-transform:uppercase}
+.note{position:absolute;left:48px;right:48px;bottom:74px;display:flex;gap:14px;align-items:center;font-size:19px;line-height:1.3;color:var(--ink-2)}
+.note i{flex:none;width:44px;height:22px;border-radius:4px;background:repeating-linear-gradient(45deg,#fff 0 3px,#C9D3D4 3px 7px);border:1px solid var(--rule)}
+.foot{position:absolute;left:48px;right:48px;bottom:22px;display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--ink-3)}
+.foot img{height:44px;display:block}
+/* ?fmt=tv: 16:9 1920x1080, maps side by side */
+.tv .stage{max-width:1920px}
+.g.tv{width:1920px;height:1080px}
+.g.tv .top{height:140px;padding:24px 64px 0}
+.g.tv .blk{top:160px !important;width:900px;height:760px;right:auto}
+.g.tv .blk.b{left:992px}
+.g.tv .blk .dt{left:24px;top:8px}
+.g.tv .note{bottom:70px;left:64px;right:64px}
+.g.tv .foot{left:64px;right:64px}
+</style>
+</head>
+<body>
+<div class="stage"><div class="scaler" id="scaler"><div class="g" id="graphic">
+  <div class="top"><div class="eyebrow">Daylight time ends Sunday, Nov. 1 · 2 AM</div><h1>How the time zones change</h1></div>
+  <div class="blk" style="top:166px"><svg id="m0"></svg><div class="dt"><b>Saturday, Oct. 31</b><span>Daylight time</span></div></div>
+  <div class="blk b" style="top:680px"><svg id="m1"></svg><div class="dt"><b>Sunday, Nov. 1</b><span>Standard time</span></div></div>
+  <div class="note"><i></i><div><b>New this year:</b> B.C., Alberta, the N.W.T., Manitoba and northwestern Ontario no longer change their clocks. Striped areas stay put (also Yukon, Saskatchewan, Arizona and Quebec's Lower North Shore). Same moment on both maps: 12 PM in Toronto and New York on Saturday.</div></div>
+  <div class="foot"><img src="logo.png" alt="Sheerr Weather"><span>Zone boundaries simplified · Alaska and Hawaii not shown</span></div>
+</div></div></div>
+<script src="map-data.js"></script>
+<script>
+(function(){
+  if (new URLSearchParams(location.search).has("export")) document.body.classList.add("export");
+  var D = window.TM, NS = "http://www.w3.org/2000/svg", UTC = 16;                // 16:00 UTC = noon EDT Saturday (Toronto/New York)
+  function el(p, tag, a, t){ var n = document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); if (t != null) n.textContent = t; p.appendChild(n); return n; }
+  // bold colour per clock reading (UTC offset)
+  var COL = {"-8":"#2E7FD8", "-7":"#46B6E8", "-6":"#2FC08F", "-5":"#E8366F", "-4":"#F5B800", "-3.5":"#8A5BD6", "-3":"#F07A1A", "-2.5":"#7B3FB8"};
+  var NONE = {BC:1, YT:1, AB:1, SK:1, MB:1, AZ:1, QA:1};
+  function t(o){ var h = UTC + o, hh = Math.floor(h + 1e-6), mm = Math.round((h - hh) * 60); return ((hh + 11) % 12 + 1) + (mm ? ":" + String(mm).padStart(2, "0") : "") + (hh < 12 ? " AM" : " PM"); }
+  var MOVE = {AT:[600, 172], QA:[640, 278], NT:[800, 236], AT2:[700, 342], YT:[163.8, 100], NUW:[330, 70], NUC:[420, 120], AB2:[240, 135]};
+  var Q = new URLSearchParams(location.search), TV = Q.get("fmt") === "tv", W = TV ? 1920 : 1080, H = TV ? 1080 : 1350;
+  if (TV) { document.body.classList.add("tv"); document.getElementById("graphic").classList.add("tv"); }
+  function draw(i, day){
+    var svg = document.getElementById("m" + i);
+    svg.setAttribute("width", TV ? 900 : 1024); svg.setAttribute("height", TV ? 760 : 500);
+    if (TV) svg.setAttribute("viewBox", "0 -110 " + D.w + " " + (D.h + 110)); svg.setAttribute("viewBox", "0 0 " + D.w + " " + D.h);
+    svg.setAttribute("preserveAspectRatio", "xMaxYMid meet");
+    var off = D.off[day], defs = el(svg, "defs", {});
+    Object.keys(D.zones).forEach(function(k){
+      var c = COL[String(off[k])];
+      if (NONE[k]) { var p = el(defs, "pattern", {id:"h" + i + k, width:7, height:7, patternUnits:"userSpaceOnUse", patternTransform:"rotate(45)"});
+        el(p, "rect", {width:7, height:7, fill:c}); el(p, "rect", {width:2.2, height:7, fill:"#fff", opacity:.5}); }
+      el(svg, "path", {d:D.zones[k], fill:NONE[k] ? "url(#h" + i + k + ")" : c, stroke:"#fff", "stroke-width":1.1, "stroke-linejoin":"round"}); });
+    // international border, drawn heavy so the two countries read as separate
+    el(svg, "path", {d:D.border, fill:"none", stroke:"#fff", "stroke-width":6, "stroke-linejoin":"round", "stroke-linecap":"round"});
+    el(svg, "path", {d:D.border, fill:"none", stroke:"#10222B", "stroke-width":2.6, "stroke-linejoin":"round", "stroke-linecap":"round"});
+    var CPOS = {"CANADA":[560, 118], "UNITED STATES":[455, 540]};       // clear of the clock tags
+    Object.keys(D.countries).forEach(function(n){ var p = CPOS[n] || D.countries[n];
+      el(svg, "text", {x:p[0], y:p[1], "text-anchor":"middle", "font-family":"Barlow Condensed, sans-serif", "font-weight":900, "font-size":30,
+        "letter-spacing":"5", fill:"#fff", opacity:.95, stroke:"#10222B", "stroke-width":3, "paint-order":"stroke"}, n); });
+    Object.keys(D.tags).forEach(function(k){
+      var z = k.replace(/\d$/, ""), p = MOVE[k] || D.tags[k], txt = t(off[z]), w = txt.length * 8 + 14;
+      if (MOVE[k]) el(svg, "line", {x1:D.tags[k][0], y1:D.tags[k][1], x2:p[0], y2:p[1], stroke:"#10222B", "stroke-width":1.4});
+      var g = el(svg, "g", {transform:"translate(" + p[0] + "," + p[1] + ")"});
+      el(g, "rect", {x:-w / 2, y:-12, width:w, height:24, rx:3, fill:"#10222B", stroke:"#fff", "stroke-width":1.4});
+      el(g, "text", {class:"tag", x:0, y:6, "text-anchor":"middle", "font-size":17, fill:"#fff"}, txt); });
+  }
+  draw(0, "today"); draw(1, "tomorrow");
+  var s = document.getElementById("scaler"), st = s.parentNode;
+  s.style.width = W + "px"; s.style.height = H + "px";
+  function fit(){ var k = document.body.classList.contains("export") ? 1 : Math.min(1, st.clientWidth / W); s.style.transform = "scale(" + k + ")"; st.style.height = (H * k) + "px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

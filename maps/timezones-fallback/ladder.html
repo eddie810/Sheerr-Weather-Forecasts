@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Who Matches Whom</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* Canada + U.S. clocks by UTC offset, today (Sat Oct 31) vs tomorrow (Sun Nov 1). 16:9 1920x1080 */
+:root{ --page:#DCE2E2; --paper:#EEF1F0; --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4; --accent:#1C8CC4; --gold:#F2C230; --gold-ink:#7A5A00; }
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1920px;margin:0 auto}
+.scaler{width:1920px;height:1080px;transform-origin:top left}
+.g{width:1920px;height:1080px;position:relative;overflow:hidden;background:var(--paper);color:var(--ink)}
+.top{position:absolute;left:64px;right:64px;top:40px;display:flex;align-items:flex-end;gap:40px}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:24px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:800;text-transform:uppercase;font-size:72px;line-height:.92;margin:4px 0 0;white-space:nowrap}
+.sub{font-size:22px;line-height:1.3;color:var(--ink-2);margin:0 0 4px;max-width:1000px}
+.logo{position:absolute;right:64px;bottom:22px}.logo img{height:52px;display:block}
+.band{position:absolute;left:64px;right:64px;display:grid;grid-template-columns:180px repeat(8,1fr);gap:8px}
+.band .day{display:flex;flex-direction:column;justify-content:center;font-family:"Barlow Condensed",sans-serif}
+.band .day b{font-weight:800;font-size:40px;text-transform:uppercase;line-height:1}
+.band .day span{font-weight:600;font-size:18px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase}
+.c{background:#fff;border:1px solid var(--rule);border-radius:10px;padding:8px 8px 10px;display:flex;flex-direction:column;gap:6px}
+.c.empty{background:transparent;border-style:dashed}
+.c .h{text-align:center;border-bottom:1px solid #E4E9E9;padding-bottom:6px;margin-bottom:2px}
+.c .h b{display:block;font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+.c .h b small{font-size:16px;margin-left:2px;color:var(--ink-3)}
+.c .h span{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:15px;color:var(--ink-3);letter-spacing:.04em}
+.chip{display:flex;align-items:center;gap:6px;border-radius:7px;padding:5px 8px;background:#F2F5F6;font-family:"Barlow Condensed",sans-serif}
+.chip i{font-style:normal;font-weight:800;font-size:12px;letter-spacing:.06em;border-radius:3px;padding:1px 4px;color:#fff;flex:none}
+.chip i.ca{background:#C8102E}.chip i.us{background:#1B4FA0}
+.chip b{font-weight:700;font-size:20px;line-height:1.05;white-space:nowrap}
+.chip em{font-style:normal;font-weight:600;font-size:15px;color:var(--ink-3);margin-left:auto}
+.chip.fix{background:#FFF1C2;outline:2px solid var(--gold)}
+.chip.fix em{color:var(--gold-ink);font-weight:800}
+.mid{position:absolute;left:64px;right:64px;top:500px;text-align:center;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:22px;color:var(--ink-2);letter-spacing:.04em}
+.mid b{color:var(--accent)}
+.tk{position:absolute;left:64px;right:64px;top:820px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.tk div{background:#FFF1C2;border-left:6px solid var(--gold);border-radius:8px;padding:12px 16px;font-size:20px;line-height:1.3;color:var(--ink-2)}
+.tk b{display:block;font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:26px;text-transform:uppercase;color:var(--ink)}
+.key{position:absolute;left:64px;right:360px;bottom:30px;display:flex;gap:30px;align-items:center;font-size:18px;color:var(--ink-2)}
+.key .chip{display:inline-flex}
+.key .src{margin-left:auto;font-size:14px;color:var(--ink-3);text-align:right}
+</style>
+</head>
+<body>
+<div class="stage"><div class="scaler" id="scaler"><div class="g" id="graphic">
+  <div class="top"><div><div class="eyebrow">Canada &amp; U.S. · clocks fall back Sunday, Nov. 1</div><h1>Who matches whom?</h1></div>
+    <p class="sub">Cities in the same column share the same clock time. Most move together, so nothing changes between them. The <b style="color:var(--gold-ink)">gold</b> ones don't change their clocks, so they slide into a new column.</p></div>
+  <div class="logo"><img src="logo.png" alt="Sheerr Weather"></div>
+  <div class="band" id="today" style="top:200px"></div>
+  <div class="mid">▼ Clocks go back one hour Sunday at 2 AM in both countries ▼ &nbsp;·&nbsp; time shown = <b>when it's noon in St. John's</b></div>
+  <div class="band" id="tmrw" style="top:550px"></div>
+  <div class="tk">
+    <div><b>Yukon</b>Today on Vancouver &amp; L.A. time → tomorrow on Calgary &amp; Denver time</div>
+    <div><b>Saskatchewan</b>Today on Calgary &amp; Denver time → tomorrow on Winnipeg &amp; Chicago time</div>
+    <div><b>Lower North Shore, Que.</b>Today on Toronto &amp; New York time → tomorrow on Halifax time</div>
+  </div>
+  <div class="key"><span class="chip"><i class="ca">CA</i><b>Canada</b></span><span class="chip"><i class="us">US</i><b>United States</b></span>
+    <span class="chip fix"><b>No clock change</b></span>
+    <div class="src">Most of Arizona and Hawaii (not shown) also stay on standard time all year · zone boundaries simplified</div></div>
+</div></div></div>
+<script>
+(function(){
+  if (new URLSearchParams(location.search).has("export")) document.body.classList.add("export");
+  var COLS = [-8, -7, -6, -5, -4, -3.5, -3, -2.5];
+  // [name, country, today offset, today abbr, tomorrow offset, tomorrow abbr]
+  var P = [["Vancouver","ca",-7,"PDT",-8,"PST"],["Los Angeles","us",-7,"PDT",-8,"PST"],
+    ["Whitehorse","ca",-7,"MST",-7,"MST"],["Phoenix","us",-7,"MST",-7,"MST"],
+    ["Calgary","ca",-6,"MDT",-7,"MST"],["Denver","us",-6,"MDT",-7,"MST"],
+    ["Regina","ca",-6,"CST",-6,"CST"],
+    ["Winnipeg","ca",-5,"CDT",-6,"CST"],["Chicago","us",-5,"CDT",-6,"CST"],
+    ["Toronto","ca",-4,"EDT",-5,"EST"],["New York","us",-4,"EDT",-5,"EST"],
+    ["Blanc-Sablon","ca",-4,"AST",-4,"AST"],["San Juan, P.R.","us",-4,"AST",-4,"AST"],
+    ["Halifax","ca",-3,"ADT",-4,"AST"],["St. John's","ca",-2.5,"NDT",-3.5,"NST"]];
+  function off(o){ var a = Math.abs(o), h = Math.floor(a), m = Math.round((a - h) * 60); return "UTC−" + h + (m ? ":" + m : ""); }
+  function clock(o, nl){ var h = 12 + o - nl, hh = Math.floor(h + 1e-6), mm = Math.round((h - hh) * 60); return ((hh + 11) % 12 + 1) + ":" + String(mm).padStart(2, "0") + "<small>" + (hh < 12 ? "AM" : "PM") + "</small>"; }
+  function band(id, k, title, sub, nl){
+    var el = document.getElementById(id), html = '<div class="day"><b>' + title + '</b><span>' + sub + '</span></div>';
+    COLS.forEach(function(o){
+      var who = P.filter(function(p){ return p[k] === o; });
+      html += '<div class="c' + (who.length ? '' : ' empty') + '"><div class="h"><b>' + clock(o, nl) + '</b><span>' + off(o) + '</span></div>' +
+        who.map(function(p){ var fix = p[2] === p[4]; return '<div class="chip' + (fix ? ' fix' : '') + '"><i class="' + p[1] + '">' + p[1].toUpperCase() + '</i><b>' + p[0] + '</b><em>' + (k === 2 ? p[3] : p[5]) + '</em></div>'; }).join("") + '</div>';
+    });
+    el.innerHTML = html;
+  }
+  band("today", 2, "Today", "Sat · daylight time", -2.5);
+  band("tmrw", 4, "Tomorrow", "Sun · standard time", -3.5);
+  var s = document.getElementById("scaler"), st = s.parentNode;
+  function fit(){ var k = document.body.classList.contains("export") ? 1 : Math.min(1, st.clientWidth / 1920); s.style.transform = "scale(" + k + ")"; st.style.height = (1080 * k) + "px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

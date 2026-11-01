@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Northeast Avalon Lows</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+:root{
+  --page:#DCE2E2;
+  --paper:#EEF1F0; --panel:#FFFFFF;
+  --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4;
+  --accent:#1C8CC4; --cold:#2367B3;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1080px;margin:0 auto}
+.scaler{width:1080px;height:1350px;transform-origin:top left}
+
+.g{width:1080px;height:1350px;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+.pad{padding-left:64px;padding-right:64px}
+.top{padding-top:34px;padding-bottom:22px}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:26px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;font-size:76px;line-height:.94;margin:4px 0 8px}
+.sub{font-size:27px;line-height:1.3;color:var(--ink-2);margin:0}
+.sub b{color:var(--ink);font-weight:600}
+
+.map{position:relative;height:940px;flex:none;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  background:#fdfdfd 0 0/1080px 940px no-repeat;overflow:hidden}
+.map svg.ov{position:absolute;inset:0}
+.card{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center}
+.card .box{background:#fff;border:1px solid var(--rule);border-radius:10px;padding:2px 14px;box-shadow:0 2px 8px -3px rgba(16,34,43,.35)}
+.card .t{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:48px;line-height:1.05;font-variant-numeric:tabular-nums}
+.card.cold .box{background:var(--cold);border-color:var(--cold)}
+.card.cold .t{color:#fff}
+.card .n{margin-top:3px;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:22px;text-transform:uppercase;
+  letter-spacing:.02em;white-space:nowrap;color:var(--ink);text-align:center;line-height:1.05;
+  text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 6px #fff,0 0 6px #fff}
+.card .n small{display:block;font-size:17px;font-weight:600;color:var(--ink-2);letter-spacing:.04em}
+
+.scale{background:var(--panel);border-bottom:1px solid var(--rule);padding-top:14px;padding-bottom:16px;display:flex;align-items:center;gap:22px}
+.scale .k{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:24px;text-transform:uppercase;letter-spacing:.06em;line-height:1.1}
+.scale .k span{display:block;font-weight:600;font-size:19px;color:var(--ink-3);letter-spacing:.04em}
+.scale .ramp{flex:1;display:flex}
+.scale .ramp div{flex:1;text-align:left}
+.scale .ramp i{display:block;height:24px}
+.scale .ramp b{display:block;font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:21px;color:var(--ink-2);margin-top:3px;transform:translateX(-50%);width:max-content}
+.scale .ramp div:first-child b{transform:none}
+
+.foot{margin-top:auto;padding-top:12px;padding-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:24px}
+/* sponsor slot: ?sponsor=file.png drops a logo in; otherwise the space is left clear to add one later */
+.sponsor{width:300px;height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none}
+.sponsor .k{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.sponsor .slot{flex:1;width:100%;display:flex;align-items:center;justify-content:center}
+.sponsor img{max-width:100%;max-height:68px;display:block}
+.sponsor.guide .slot{border:2px dashed #B9C3C6;border-radius:6px}
+.foot img{height:72px;width:auto;display:block}
+.src{font-size:16px;color:var(--ink-3);text-align:center;line-height:1.35}
+</style>
+</head>
+<body>
+<div class="stage"><div class="scaler" id="scaler">
+<div class="g" id="graphic">
+  <div class="top pad">
+    <div class="eyebrow" id="eyebrow"></div>
+    <h1>Coldest so far this morning</h1>
+    <p class="sub" id="sub"></p>
+  </div>
+
+  <div class="map" style="background-image:url(shade.png),url(map.png)">
+    <svg class="ov" id="ov" viewBox="0 0 1080 940" aria-hidden="true"></svg>
+    <div id="cards"></div>
+  </div>
+
+  <div class="scale pad">
+    <div class="k">Lowest since midnight<span>°C</span></div>
+    <div class="ramp" id="ramp"></div>
+  </div>
+
+  <div class="foot pad">
+    <img src="logo.png" alt="Sheerr Weather">
+    <div class="src" id="src"></div>
+    <div class="sponsor" id="sponsor"><div class="k">Presented by</div><div class="slot" id="slot"></div></div>
+  </div>
+</div>
+</div></div>
+<script src="data.js"></script>
+<script>
+(function(){
+  var D = window.LOWS, NS = "http://www.w3.org/2000/svg", svg = document.getElementById("ov"), q = new URLSearchParams(location.search);
+  function el(p, tag, a, text){ var n=document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); if (text) n.textContent=text; p.appendChild(n); return n; }
+  function fmt(v){ return (v < 0 ? "−" : "") + Math.abs(v).toFixed(1) + "°"; }
+
+  // sponsor slot
+  var sp = q.get("sponsor");
+  if (sp) document.getElementById("slot").innerHTML = '<img src="' + sp.replace(/"/g, "") + '" alt="Sponsor">';
+  else if (q.has("guide")) document.getElementById("sponsor").classList.add("guide");
+  if (q.has("nosponsor")) document.getElementById("sponsor").style.display = "none";
+
+  var names = Object.keys(D.towns), lows = names.map(function(n){ return D.towns[n].low; });
+  var min = Math.min.apply(null, lows), coldest = names.filter(function(n){ return D.towns[n].low === min; });
+  document.getElementById("eyebrow").textContent = "Northeast Avalon · " + D.weekday + ", " + D.date;
+  document.getElementById("sub").innerHTML = "Lowest since midnight, as of " + D.asof + " Coldest: <b>" + fmt(min) + " in " + coldest.join(" and ") + "</b>.";
+  document.getElementById("src").innerHTML = D.nstations + " stations: Weather Underground personal stations<br>(The Weather Company) and Environment Canada<br>© Mapbox © OpenStreetMap";
+
+  el(svg, "path", {d:D.coast, fill:"none", stroke:"#fff", "stroke-width":4, "stroke-linejoin":"round", opacity:.8});
+  el(svg, "path", {d:D.coast, fill:"none", stroke:"#10222B", "stroke-width":1.4, "stroke-linejoin":"round", opacity:.7});
+  // every station used, as a small dot
+  D.stations.forEach(function(s){ if (s.ok) el(svg, "circle", {cx:s.xy[0], cy:s.xy[1], r:3.2, fill:"#10222B", opacity:.45}); });
+
+  // card offsets from the town anchor (map px)
+  var OFF = {"St. John's":[70,40], "Mount Pearl":[-120,50], "Paradise":[-30,-80], "Conception Bay South":[40,-90],
+             "Portugal Cove–St. Philip's":[-40,-90], "Torbay":[-100,0], "Flatrock":[110,0], "Pouch Cove":[110,30],
+             "Logy Bay":[80,-60], "Bell Island":[-20,-90], "YYT Airport":[-40,90]};
+  var cards = document.getElementById("cards");
+  names.forEach(function(n){
+    var t = D.towns[n], p = t.xy, o = OFF[n] || [0,-80], c = [p[0] + o[0], p[1] + o[1]];
+    el(svg, "line", {x1:p[0], y1:p[1], x2:c[0], y2:c[1], stroke:"#10222B", "stroke-width":1.6, opacity:.55});
+    el(svg, "circle", {cx:p[0], cy:p[1], r:6, fill:"#10222B", stroke:"#fff", "stroke-width":2.5});
+    var d = document.createElement("div");
+    d.className = "card" + (t.low === min ? " cold" : ""); d.style.left = c[0] + "px"; d.style.top = (c[1] + 14) + "px";
+    var label = n === "Portugal Cove–St. Philip's" ? "Portugal Cove–<br>St. Philip's" : n === "Conception Bay South" ? "Conception<br>Bay South" : n;
+    d.innerHTML = '<div class="box"><div class="t">' + fmt(t.low) + '</div></div><div class="n">' + label + (t.official ? "<small>Environment Canada</small>" : "") + '</div>';
+    cards.appendChild(d);
+  });
+
+  var ramp = document.getElementById("ramp");
+  D.bands.forEach(function(v){
+    var d = document.createElement("div");
+    d.innerHTML = '<i style="background:' + D.colours[v] + '"></i><b>' + (v < 0 ? "−" + -v : v) + '°</b>';
+    ramp.appendChild(d);
+  });
+
+  var s=document.getElementById("scaler"), st=s.parentNode;
+  if (q.has("export")) document.body.classList.add("export");
+  function fit(){ var k=document.body.classList.contains("export")?1:Math.min(1, st.clientWidth/1080); s.style.transform="scale("+k+")"; st.style.height=(1350*k)+"px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

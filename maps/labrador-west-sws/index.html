@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Labrador West Snow Alert</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --page:#DCE2E2; --page-ink:#10222B; --page-ink-2:#4E656F; --page-rule:#B9C3C6;
+  --paper:#EEF1F0; --panel:#FFFFFF; --panel-2:#E4E9E9;
+  --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C;
+  --rule:#C9D3D4;
+  --alert:#5B666B; --alert-line:#3F4A4F;
+  --snow:#1C8CC4; --snow-bg:#E3F1F9;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; --page-ink:#E7EEF0; --page-ink-2:#9FB4BC; --page-rule:#26404D; } }
+:root[data-theme="dark"]{ --page:#0C171D; --page-ink:#E7EEF0; --page-ink-2:#9FB4BC; --page-rule:#26404D; }
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;
+  -webkit-font-smoothing:antialiased;color:var(--page-ink)}
+.bar{max-width:1080px;margin:0 auto 14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;
+  font-family:"IBM Plex Mono",monospace;font-size:13px}
+.bar span{color:var(--page-ink-2);letter-spacing:.06em;text-transform:uppercase}
+.bar button{font:inherit;padding:7px 12px;border:1px solid var(--page-rule);background:transparent;
+  color:var(--page-ink);cursor:pointer}
+.bar button[aria-pressed="true"]{background:var(--page-ink);color:var(--page);border-color:var(--page-ink)}
+.stage{max-width:1080px;margin:0 auto}
+.scaler{width:1080px;transform-origin:top left}
+body.export{padding:0}
+body.export .bar{display:none}
+
+/* ---------- the graphic: fixed-size light card, two formats ---------- */
+.g{width:1080px;height:1350px;background:var(--paper);color:var(--ink);position:relative;
+  display:flex;flex-direction:column;overflow:hidden}
+.g.story{height:1920px}
+/* 64px side padding keeps all text inside Instagram's 3:4 profile-grid crop (~34px each side) */
+.pad{padding-left:64px;padding-right:64px}
+
+.banner{background:var(--alert);color:#fff;display:flex;align-items:center;gap:22px;padding-top:24px;padding-bottom:22px}
+.banner .head{display:flex;align-items:center;gap:22px}
+.banner svg{flex:none}
+.banner .type{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:52px;line-height:1;
+  text-transform:uppercase;letter-spacing:.01em;white-space:nowrap}
+.banner .meta{margin-left:auto;text-align:right;white-space:nowrap;font-family:"Barlow Condensed",sans-serif;
+  font-weight:600;font-size:24px;line-height:1.2;letter-spacing:.04em;text-transform:uppercase}
+.banner .meta b{display:block;font-weight:700;font-size:30px}
+
+.top{padding-top:28px;padding-bottom:24px}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:26px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-2)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;
+  font-size:80px;line-height:.94;letter-spacing:-.01em;margin:6px 0 10px}
+.sub{font-size:28px;line-height:1.3;color:var(--ink-2);margin:0}
+.sub strong{color:var(--ink)}
+
+.map{position:relative;flex:1 1 auto;min-height:0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  background:#fdfdfd url(map.png) center/1080px 720px no-repeat;overflow:hidden}
+.map svg.ov{position:absolute;left:0;top:50%;width:1080px;height:720px;margin-top:-360px}
+.region{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;
+  letter-spacing:.3em;paint-order:stroke;stroke:#fff;stroke-width:7px;stroke-linejoin:round}
+.town{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;
+  paint-order:stroke;stroke:#fff;stroke-width:8px;stroke-linejoin:round;fill:var(--ink)}
+.town.minor{font-weight:600;fill:var(--ink-2)}
+
+.inset{position:absolute;left:64px;bottom:22px;width:230px;background:#fff;border:1px solid var(--rule);
+  box-shadow:0 2px 10px -4px rgba(16,34,43,.35)}
+.inset .cap{padding:6px 10px;border-bottom:1px solid var(--rule);font-family:"Barlow Condensed",sans-serif;
+  font-weight:600;font-size:17px;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap;color:var(--ink-2)}
+.inset svg{display:block}
+.key{position:absolute;right:64px;bottom:22px;background:rgba(255,255,255,.95);border:1px solid var(--rule);
+  padding:12px 16px;display:flex;flex-direction:column;gap:8px;font-family:"Barlow Condensed",sans-serif;
+  font-weight:600;font-size:23px;color:var(--ink)}
+.key div{display:flex;align-items:center;gap:12px}
+.key i{width:32px;height:22px;flex:none}
+.key .a{background:rgba(107,119,124,.4);border:3px solid var(--alert-line)}
+.key .b{height:0;border-top:3px dashed var(--ink)}
+
+/* Sheerr Weather forecast: one total snowfall range */
+.fc{background:var(--snow-bg);border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:30px;
+  padding-top:18px;padding-bottom:20px}
+.fc .lab{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:28px;line-height:1.1;
+  text-transform:uppercase;letter-spacing:.06em;color:var(--snow)}
+.fc .lab span{display:block;font-weight:600;font-size:24px;color:var(--ink-2);letter-spacing:.08em}
+.fc .amt{margin-left:auto;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:96px;line-height:.9;
+  color:var(--snow);white-space:nowrap}
+.fc .amt small{font-size:52px;font-weight:600}
+
+.facts{display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--panel);border-bottom:1px solid var(--rule)}
+.fact{padding:18px 0 20px 28px;border-left:1px solid var(--rule)}
+.fact:first-child{padding-left:0;border-left:0}
+.q{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:23px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.big{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:58px;line-height:1;margin-top:2px}
+.big small{font-size:34px;font-weight:600}
+.note{font-size:23px;color:var(--ink-2);line-height:1.25;margin-top:6px}
+
+.foot{padding-top:16px;padding-bottom:20px;display:flex;justify-content:space-between;align-items:center;gap:24px}
+.foot img{height:76px;width:auto;display:block}
+.src{font-size:19px;color:var(--ink-3);text-align:right;line-height:1.35}
+
+/* ---------- story 9:16: text stays out of the top ~250px (profile bar) and bottom ~300px (reply bar) ---------- */
+.g.story .banner{flex-direction:column;align-items:flex-start;gap:10px;padding-top:262px;padding-bottom:30px}
+.g.story .banner .type{font-size:66px;white-space:normal}
+.g.story .banner .meta{margin-left:0;text-align:left;font-size:28px}
+.g.story .banner .meta b{display:inline;font-size:34px;margin-right:12px}
+.g.story h1{font-size:96px}
+.g.story .sub{font-size:31px}
+.g.story .inset{bottom:auto;top:22px}
+.g.story .foot{padding-bottom:22px}
+.tail{display:none}
+.g.story .tail{display:block;flex:none;height:290px;background:var(--alert)}
+.g.story .src{font-size:20px}
+</style>
+</head>
+<body>
+<div class="bar">
+  <span>Format</span>
+  <button type="button" data-f="feed" aria-pressed="true">Feed · 4:5 · 1080×1350</button>
+  <button type="button" data-f="story" aria-pressed="false">Story · 9:16 · 1080×1920</button>
+</div>
+<div class="stage"><div class="scaler" id="scaler">
+<div class="g" id="graphic">
+
+  <div class="banner pad">
+    <div class="head">
+      <svg width="58" height="52" viewBox="0 0 58 52" aria-hidden="true">
+        <path d="M29 3 L55 49 H3 Z" fill="#fff"/>
+        <rect x="26" y="18" width="6" height="17" rx="2" fill="#5B666B"/>
+        <circle cx="29" cy="41.5" r="3.6" fill="#5B666B"/>
+      </svg>
+      <div class="type">Special Weather Statement</div>
+    </div>
+    <div class="meta"><b>Until Mon 6 AM ADT</b>Environment Canada</div>
+  </div>
+
+  <div class="top pad">
+    <div class="eyebrow">Labrador City · Wabush · Labrador West</div>
+    <h1>First snow of the season</h1>
+    <p class="sub">Snow arrives <strong>Sunday afternoon</strong>. Expect slippery roads and walkways
+      for Thanksgiving travel, and give yourself extra time.</p>
+  </div>
+
+  <div class="map">
+    <svg class="ov" id="ov" viewBox="0 0 1080 720" aria-hidden="true"></svg>
+    <div class="inset">
+      <div class="cap">Newfoundland &amp; Labrador</div>
+      <svg id="inset" viewBox="0 0 230 250" width="228" height="248" aria-hidden="true"></svg>
+    </div>
+    <div class="key">
+      <div><i class="a"></i>Special Weather Statement</div>
+      <div><i class="b"></i>Labrador–Québec border</div>
+    </div>
+  </div>
+
+  <div class="fc pad">
+    <div class="lab">Sheerr Weather forecast<span>Total snowfall · Sun PM to Mon AM</span></div>
+    <div class="amt">5–10 <small>cm</small></div>
+  </div>
+
+  <div class="facts pad">
+    <div class="fact">
+      <div class="q">Starts</div>
+      <div class="big">Sun <small>PM</small></div>
+      <div class="note">Sunday afternoon, Oct&nbsp;11.</div>
+    </div>
+    <div class="fact">
+      <div class="q">Ends</div>
+      <div class="big">Mon <small>6 AM</small></div>
+      <div class="note">Early Thanksgiving Monday.</div>
+    </div>
+    <div class="fact">
+      <div class="q">Temps</div>
+      <div class="big">Near <small>0°</small></div>
+      <div class="note">Amounts vary over short distances.</div>
+    </div>
+  </div>
+
+  <div class="foot pad">
+    <img src="logo.png" alt="Sheerr Weather">
+    <div class="src">Alert issued Sat Oct 10, 4:50 AM ADT · Environment Canada<br>
+      © Mapbox © OpenStreetMap · Natural Earth</div>
+  </div>
+  <div class="tail" aria-hidden="true"></div>
+</div>
+</div></div>
+<script src="overlay.js"></script>
+<script>
+(function(){
+  var O = window.OVERLAY, NS = "http://www.w3.org/2000/svg";
+  function el(parent, tag, attrs, text){
+    var n = document.createElementNS(NS, tag);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (text) n.textContent = text;
+    parent.appendChild(n); return n;
+  }
+
+  // main map: the NL outline in this frame is all land border with Québec
+  var ov = document.getElementById("ov");
+  el(ov, "path", {d:O.main.nl, fill:"none", stroke:"#fff", "stroke-width":7, "stroke-linejoin":"round"});
+  el(ov, "path", {d:O.main.nl, fill:"none", stroke:"#10222B", "stroke-width":3, "stroke-dasharray":"12 6", "stroke-linejoin":"round"});
+  el(ov, "text", {class:"region", x:690, y:395, "font-size":42, fill:"#10222B"}, "Labrador");
+  el(ov, "text", {class:"region", x:160, y:250, "font-size":34, fill:"#6E838C", "text-anchor":"middle"}, "Québec");
+
+  var T = O.main.towns;
+  function town(name, dx, dy, anchor, size, minor){
+    var p = T[name];
+    el(ov, "circle", {cx:p[0], cy:p[1], r:minor?6:9, fill:minor?"#6E838C":"#10222B", stroke:"#fff", "stroke-width":3});
+    el(ov, "text", {class:"town"+(minor?" minor":""), x:p[0]+dx, y:p[1]+dy, "font-size":size, "text-anchor":anchor}, name);
+  }
+  town("Labrador City", 14, -14, "start", 34);
+  town("Wabush", 16, 26, "start", 34);
+  town("Fermont", 0, 36, "middle", 26, true);
+  town("Churchill Falls", 14, -12, "start", 26, true);
+
+  // locator inset
+  var ins = document.getElementById("inset");
+  el(ins, "rect", {width:230, height:250, fill:"#E9F2F6"});
+  el(ins, "path", {d:O.inset.qc, fill:"#F4F4F2", stroke:"#B9C3C6", "stroke-width":1});
+  el(ins, "path", {d:O.inset.nl, fill:"#FFFFFF", stroke:"#10222B", "stroke-width":1.4, "stroke-linejoin":"round"});
+  el(ins, "path", {d:O.inset.alert, fill:"#6B777C", stroke:"#3F4A4F", "stroke-width":1.2});
+  var f = O.inset.frame;
+  el(ins, "rect", {x:f[0], y:f[1], width:f[2]-f[0], height:f[3]-f[1], fill:"none", stroke:"#10222B", "stroke-width":2});
+  el(ins, "text", {x:178, y:58, "font-family":"Barlow Condensed, sans-serif", "font-weight":700, "font-size":17, "letter-spacing":"0.12em", fill:"#10222B", "text-anchor":"middle"}, "LABRADOR");
+  el(ins, "text", {x:58, y:205, "font-family":"Barlow Condensed, sans-serif", "font-weight":600, "font-size":15, "letter-spacing":"0.12em", fill:"#6E838C", "text-anchor":"middle"}, "QUÉBEC");
+})();
+
+// format switch (?format=story or the buttons) + fit-to-width preview
+(function(){
+  var g = document.getElementById("graphic"), s = document.getElementById("scaler"), st = s.parentNode;
+  var q = new URLSearchParams(location.search);
+  if (q.has("export")) document.body.classList.add("export");
+  function H(){ return g.classList.contains("story") ? 1920 : 1350; }
+  function fit(){
+    var k = document.body.classList.contains("export") ? 1 : Math.min(1, st.clientWidth/1080);
+    s.style.transform = "scale("+k+")"; s.style.height = H()+"px"; st.style.height = (H()*k)+"px";
+  }
+  function set(f){
+    g.classList.toggle("story", f === "story");
+    document.querySelectorAll(".bar button").forEach(function(b){ b.setAttribute("aria-pressed", String(b.dataset.f === f)); });
+    try { localStorage.setItem("lw-format", f); } catch(e){}
+    fit();
+  }
+  document.querySelectorAll(".bar button").forEach(function(b){ b.addEventListener("click", function(){ set(b.dataset.f); }); });
+  var saved = null; try { saved = localStorage.getItem("lw-format"); } catch(e){}
+  set(q.get("format") || saved || "feed");
+  window.addEventListener("resize", fit);
+})();
+</script>
+</body>
+</html>

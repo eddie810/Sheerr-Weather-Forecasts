@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SE Labrador Snow Potential</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* 1920x1080, same look as rdps-totals. The top ~200 px is left clear for a header added later. ?nonote hides the coast note. */
+:root{--ink:#10222B;--ink-2:#4E656F;--ink-3:#6E838C;--rule:#C9D3D4;--page:#DCE2E2;--warn:#F2C230}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1920px;margin:0 auto}
+.scaler{width:1920px;height:1080px;transform-origin:top left}
+.g{position:relative;width:1920px;height:1080px;overflow:hidden;background:#e9eef0 url(map.png) 0 0/1920px 1080px no-repeat}
+.g img.shade{position:absolute;inset:0;width:1920px;height:1080px}
+.g svg{position:absolute;inset:0}
+.nm{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.03em;paint-order:stroke;stroke:#fff;stroke-width:7px;stroke-linejoin:round;fill:var(--ink)}
+.panel{position:absolute;left:48px;bottom:44px;background:rgba(255,255,255,.95);border:1px solid var(--rule);box-shadow:0 4px 18px -8px rgba(16,34,43,.4);
+  padding:18px 22px 16px;width:540px}
+.panel .k{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:40px;text-transform:uppercase;line-height:1}
+.panel .t{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:22px;color:var(--ink-2);margin-top:4px;letter-spacing:.02em}
+.panel .r{display:flex;align-items:center;gap:14px;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:28px;margin-top:10px}
+.panel .r i{width:52px;height:26px;flex:none;border:1px solid var(--rule)}
+.panel .r span{font-weight:600;font-size:21px;color:var(--ink-2)}
+.panel .src{font-size:15px;color:var(--ink-3);margin-top:12px;line-height:1.35}
+.note{position:absolute;background:rgba(255,255,255,.95);border:1px solid var(--rule);border-left:6px solid var(--warn);box-shadow:0 4px 18px -8px rgba(16,34,43,.4);
+  font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:26px;line-height:1.15;color:var(--ink);padding:12px 18px;width:320px}
+.logo{position:absolute;right:48px;bottom:40px;height:70px;background:rgba(255,255,255,.9);padding:8px 14px;border-radius:6px}
+</style>
+</head>
+<body>
+<div class="stage"><div class="scaler" id="scaler">
+<div class="g" id="graphic">
+  <img class="shade" src="zones.png" alt="">
+  <svg id="ov" viewBox="0 0 1920 1080" aria-hidden="true"></svg>
+  <div class="panel">
+    <div class="k">Snow potential</div>
+    <div class="t">Friday to Sunday · chance of 10+ cm</div>
+    <div class="r"><i style="background:#2367B3"></i>Significant snow likely</div>
+    <div class="r"><i style="background:#8CC8EE"></i>Significant snow possible</div>
+    <div class="r"><i style="background:transparent"></i>Significant snow unlikely</div>
+    <div class="src" id="src"></div>
+  </div>
+  <div class="note" id="note">Rain may mix in near the coast Saturday afternoon, cutting into totals.</div>
+  <img class="logo" src="logo.png" alt="Sheerr Weather">
+</div>
+</div></div>
+<script src="data.js"></script>
+<script>
+(function(){
+  var D = window.SNOWPOT, NS = "http://www.w3.org/2000/svg", svg = document.getElementById("ov"), q = new URLSearchParams(location.search);
+  function el(p, tag, a, t){ var n=document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); if (t != null) n.textContent=t; p.appendChild(n); return n; }
+  [2, 3].forEach(function(k){ el(svg, "path", {d:D.edges[k], fill:"none", stroke:"#1A4F8A", "stroke-width":1.4, opacity:.6, "stroke-linejoin":"round"}); });
+  // roads over the shading: white casing, grey line; trunk routes heavier
+  D.roads.forEach(function(r){
+    el(svg, "path", {d:r.d, fill:"none", stroke:"#fff", "stroke-width":r.trunk ? 6 : 4.5, "stroke-linejoin":"round", "stroke-linecap":"round", opacity:.85});
+    el(svg, "path", {d:r.d, fill:"none", stroke:r.trunk ? "#4A4F55" : "#6B6F75", "stroke-width":r.trunk ? 2.6 : 1.8, "stroke-linejoin":"round", "stroke-linecap":"round"});
+  });
+  // Quebec-Labrador border: dashed, with a white casing so it reads over the shading
+  el(svg, "path", {d:D.border, fill:"none", stroke:"#fff", "stroke-width":5, "stroke-linejoin":"round", opacity:.8});
+  el(svg, "path", {d:D.border, fill:"none", stroke:"#10222B", "stroke-width":2.2, "stroke-dasharray":"10 6", "stroke-linejoin":"round", opacity:.8});
+  // coastline on top
+  el(svg, "path", {d:D.coast, fill:"none", stroke:"#10222B", "stroke-width":1.8, opacity:.7, "stroke-linejoin":"round"});
+  D.shields.forEach(function(sh){
+    var x = sh.xy[0], y = sh.xy[1], w = sh.ref.length * 11 + 16;
+    if (x < 30 || x > 1890 || y < 220 || y > 1060 || (x < 600 && y > 730)) return;      // off-frame, in the header space or under the key
+    var g = el(svg, "g", {transform:"translate(" + x + "," + y + ")"});
+    el(g, "rect", {x:-w/2, y:-13, width:w, height:26, rx:5, fill:"#fff", stroke:"#10222B", "stroke-width":1.8});
+    el(g, "text", {x:0, y:7, "text-anchor":"middle", "font-family":"Barlow Condensed, sans-serif", "font-weight":700, "font-size":19, fill:"#10222B"}, sh.ref);
+  });
+  // label side per town: [dx, dy, anchor]
+  var SIDE = {"HV-GB":[12,7,"start"], "Rigolet":[12,7,"start"], "Cartwright":[-12,7,"end"], "Black Tickle":[12,7,"start"],
+              "Charlottetown":[-12,-4,"end"], "Port Hope Simpson":[-12,10,"end"], "Mary's Harbour":[12,7,"start"],
+              "Red Bay":[12,7,"start"], "L'Anse au Clair":[-12,7,"end"], "St. Anthony":[12,7,"start"]};
+  Object.keys(D.towns).forEach(function(n){
+    var p = D.towns[n], o = SIDE[n] || [12,7,"start"];
+    el(svg, "circle", {cx:p[0], cy:p[1], r:6, fill:"#10222B", stroke:"#fff", "stroke-width":2.5});
+    el(svg, "text", {class:"nm", x:p[0] + o[0], y:p[1] + o[1], "font-size":26, "text-anchor":o[2]}, n);
+  });
+  var run = new Date(D.run);
+  document.getElementById("src").textContent = "Canadian ensemble (GEPS), " + ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][run.getUTCDay()] + " " +
+    String(run.getUTCHours()).padStart(2,"0") + "Z run: chance of 10+ mm of snow (melted) in any 24 hours, Fri–Sun. Most falls Saturday. ECCC · © Mapbox";
+  var mh = D.towns["Mary's Harbour"], note = document.getElementById("note");
+  note.style.left = (mh[0] + 110) + "px"; note.style.top = (mh[1] + 40) + "px";
+  if (q.has("nonote")) note.style.display = "none";
+  if (q.has("export")) document.body.classList.add("export");
+  var s=document.getElementById("scaler"), st=s.parentNode;
+  function fit(){ var k=document.body.classList.contains("export")?1:Math.min(1, st.clientWidth/1920); s.style.transform="scale("+k+")"; st.style.height=(1080*k)+"px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

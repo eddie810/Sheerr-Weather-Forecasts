@@ -1,0 +1,5 @@
+test-*.png
+t[0-9]*.png
+_3d/
+frames/
+_3d_story/

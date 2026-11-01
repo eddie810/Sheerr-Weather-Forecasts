@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ECT 50 Race Weather</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* ECT 50 race-day weather: 3D fly-along of the route on satellite terrain, social 4:5 (1080x1350).
+   Serve over HTTP (ES module): python3 -m http.server 8767 -> /index.html?export ; window.setT(t) draws frame t */
+:root{
+  --page:#DCE2E2; --paper:#EEF1F0; --panel:#FFFFFF;
+  --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4; --accent:#1C8CC4; --route:#FFB21F;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1080px;margin:0 auto}
+.scaler{width:1080px;height:1350px;transform-origin:top left}
+.g{width:1080px;height:1350px;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+.pad{padding-left:64px;padding-right:64px}
+.top{padding-top:28px;padding-bottom:18px}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:26px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:800;text-transform:uppercase;font-size:80px;line-height:.94;margin:4px 0 8px}
+.sub{font-size:26px;line-height:1.3;color:var(--ink-2);margin:0}
+.map{position:relative;height:1020px;flex:none;border-top:1px solid var(--rule);overflow:hidden;background:#0B1824}
+.map canvas{position:absolute;inset:0;width:1080px;height:1020px}
+.pin{position:absolute;left:0;top:0;pointer-events:none;font-family:"Barlow Condensed",sans-serif;white-space:nowrap;transition:none}
+.pin .tag{display:inline-flex;align-items:baseline;gap:8px;background:rgba(16,34,43,.86);color:#fff;border-radius:6px;padding:5px 10px 6px;
+  box-shadow:0 3px 10px -4px rgba(0,0,0,.6);transform:translate(-50%,-100%)}
+.pin .tag b{font-weight:800;font-size:23px;text-transform:uppercase;letter-spacing:.02em}
+.pin .tag span{font-weight:600;font-size:18px;color:#BFD3DA}
+.pin.on .tag{background:var(--route);color:var(--ink)}
+.pin.on .tag span{color:#5A3E00}
+.clock{position:absolute;left:24px;top:22px;background:rgba(255,255,255,.95);border-radius:10px;padding:10px 16px 12px;width:262px;
+  box-shadow:0 6px 20px -10px rgba(0,0,0,.6)}
+.clock .k{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:18px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.clock .km{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:46px;line-height:1;font-variant-numeric:tabular-nums}
+.clock .km small{font-size:24px;font-weight:700}
+.clock .bar{position:relative;height:8px;background:#E2E8EA;border-radius:4px;margin-top:8px}
+.clock .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--route);border-radius:4px}
+.clock .bar u{position:absolute;top:-3px;width:3px;height:14px;background:var(--ink);border-radius:2px;transform:translateX(-50%)}
+.card{position:absolute;left:24px;right:24px;bottom:22px;background:rgba(255,255,255,.96);border-radius:12px;padding:16px 22px 16px;
+  box-shadow:0 10px 30px -14px rgba(0,0,0,.7);transform-origin:50% 100%}
+.card .hd{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--rule);padding-bottom:8px}
+.card .hd b{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:40px;text-transform:uppercase;line-height:1}
+.card .hd span{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:22px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
+.card .rows{display:grid;grid-template-columns:1fr 1fr;gap:0 26px;margin-top:10px}
+.card .row{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;align-items:center}
+.card .who{grid-column:1/3;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:19px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.card .who em{font-style:normal;color:var(--ink);letter-spacing:.02em;font-size:22px;margin-left:6px}
+.card .tmp{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:56px;line-height:1}
+.card .wx{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:22px;line-height:1.25;color:var(--ink)}
+.card .wx .ar{display:inline-block;width:22px;height:22px;vertical-align:-4px;margin-right:4px}
+.card .wx span{color:var(--ink-2);font-weight:600}
+.foot{margin-top:auto;padding-top:8px;padding-bottom:10px;display:flex;justify-content:space-between;align-items:center;background:var(--paper)}
+.foot img{height:58px;display:block}
+.src{font-size:15px;color:var(--ink-3);text-align:right;line-height:1.35}
+
+/* ---------- ?fmt=tv: 16:9 broadcast, full-bleed map with overlay panels ---------- */
+body.tv .stage{max-width:1920px}
+body.tv .scaler,body.tv .g{width:1920px;height:1080px}
+body.tv .g{position:relative;display:block}
+body.tv .map{position:absolute;inset:0;height:1080px;border-top:0}
+body.tv .map canvas{width:1920px;height:1080px}
+body.tv .top{position:absolute;left:40px;top:36px;z-index:3;width:700px;background:rgba(255,255,255,.95);border-radius:12px;
+  padding:22px 30px 20px;box-shadow:0 10px 30px -14px rgba(0,0,0,.7)}
+body.tv h1{font-size:72px}
+body.tv .sub{font-size:23px}
+body.tv .clock{left:auto;right:40px;top:36px}
+body.tv .card{left:auto;right:40px;bottom:40px;width:860px}
+body.tv .foot{position:absolute;left:40px;bottom:40px;z-index:3;width:auto;gap:28px;border-radius:12px;padding:12px 22px;
+  background:rgba(255,255,255,.95);box-shadow:0 10px 30px -14px rgba(0,0,0,.7)}
+body.tv .foot img{height:50px}
+body.tv .src{font-size:13px;text-align:left}
+</style>
+</head>
+<body>
+<div class="stage"><div class="scaler" id="scaler">
+<div class="g" id="graphic">
+  <div class="top pad">
+    <div class="eyebrow" id="eyebrow"></div>
+    <h1>Race-day weather</h1>
+    <p class="sub" id="sub"></p>
+  </div>
+  <div class="map" id="map">
+    <canvas id="gl" width="1080" height="1020"></canvas>
+    <canvas id="fx" width="1080" height="1020"></canvas>
+    <div id="pins"></div>
+    <div class="clock"><div class="k">ECT 50 · distance</div><div class="km"><span id="km">0.0</span> <small>km</small></div>
+      <div class="bar" id="bar"><i id="barfill"></i></div></div>
+    <div class="card" id="card"></div>
+  </div>
+  <div class="foot pad"><img src="logo.png" alt="Sheerr Weather"><div class="src" id="src"></div></div>
+</div>
+</div></div>
+<script>
+  // ?fmt=tv -> 1920x1080 (set before scene.js reads the canvas size)
+  window.TV = new URLSearchParams(location.search).get("fmt") === "tv";
+  if (TV){ document.body.classList.add("tv"); ["gl","fx"].forEach(function(id){ var c = document.getElementById(id); c.width = 1920; c.height = 1080; }); }
+</script>
+<script src="race.js"></script>
+<script src="terrain.js"></script>
+<script>
+  if (new URLSearchParams(location.search).has("export")) document.body.classList.add("export");
+  (function(){ var s = document.getElementById("scaler"), st = s.parentNode;
+    function fit(){ var k = document.body.classList.contains("export") ? 1 : Math.min(1, st.clientWidth / (TV ? 1920 : 1080)); s.style.transform = "scale(" + k + ")"; st.style.height = ((TV ? 1080 : 1350) * k) + "px"; }
+    window.addEventListener("resize", fit); fit(); })();
+</script>
+<script type="module" src="scene.js"></script>
+</body>
+</html>

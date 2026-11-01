@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Atlantic Wave Heights</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* 3D significant wave height + MSLP loop, 4:5 social (1080x1350). Serve over HTTP (ES module + fetch):
+   python3 -m http.server 8766   ->  /index.html   (?export for capture) */
+:root{
+  --page:#DCE2E2;
+  --paper:#EEF1F0; --panel:#FFFFFF;
+  --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4;
+  --accent:#1C8CC4;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1080px;margin:0 auto}
+.scaler{width:1080px;height:1350px;transform-origin:top left}
+.g{width:1080px;height:1350px;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+.pad{padding-left:64px;padding-right:64px}
+.top{padding-top:34px;padding-bottom:22px}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:26px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;font-size:76px;line-height:.94;margin:4px 0 8px}
+.sub{font-size:27px;line-height:1.3;color:var(--ink-2);margin:0}
+
+.map{position:relative;height:960px;flex:none;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);background:#E6ECEE;overflow:hidden}
+.map canvas{position:absolute;inset:0;width:1080px;height:960px}
+.lbl{position:absolute;left:0;top:0;transform:translate(-50%,-50%);text-align:center;pointer-events:none;
+  font-family:"Barlow Condensed",sans-serif;line-height:1;white-space:nowrap}
+.hl b{display:block;font-weight:800;font-size:64px;text-shadow:0 0 4px #fff,0 0 4px #fff,0 0 10px #fff}
+.hl span{display:block;font-weight:700;font-size:23px;color:var(--ink);margin-top:-2px;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 6px #fff,0 0 6px #fff}
+.hl.L b{color:#C8312F} .hl.H b{color:#1F5FA8}
+.city{transform:translate(-6px,-6px);text-align:left}
+.city i{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--ink);border:2.5px solid #fff;vertical-align:middle}
+.city span{font-weight:700;font-size:21px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink);margin-left:5px;vertical-align:middle;
+  text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 6px #fff,0 0 6px #fff}
+.clock{position:absolute;left:24px;top:24px;width:300px;background:#fff;border:1px solid var(--rule);border-radius:10px;
+  box-shadow:0 4px 18px -8px rgba(16,34,43,.45);padding:12px 16px 14px}
+.clock .d{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:40px;text-transform:uppercase;line-height:1}
+.clock .h{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:24px;color:var(--ink-2);margin-top:2px}
+.clock .bar{position:relative;height:8px;background:#E3E9EB;border-radius:4px;margin-top:12px;overflow:hidden}
+.clock .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:4px}
+.clock .days{display:flex;justify-content:space-between;font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:16px;color:var(--ink-3);margin-top:4px;text-transform:uppercase}
+.clock .pk{margin-top:10px;padding-top:9px;border-top:1px solid var(--rule);font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:21px;color:var(--ink-2)}
+.clock .pk b{font-weight:800;font-size:28px;color:var(--ink)}
+.legend{position:absolute;right:24px;bottom:22px;background:rgba(255,255,255,.92);border:1px solid var(--rule);border-radius:8px;
+  padding:8px 14px;font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:19px;color:var(--ink-2);line-height:1.45}
+.legend svg{vertical-align:middle;margin-right:8px}
+
+.scale{background:var(--panel);border-bottom:1px solid var(--rule);padding-top:14px;padding-bottom:16px;display:flex;align-items:center;gap:22px}
+.scale .k{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:24px;text-transform:uppercase;letter-spacing:.06em;line-height:1.1}
+.scale .k span{display:block;font-weight:600;font-size:19px;color:var(--ink-3);letter-spacing:.04em}
+.scale .rampw{flex:1}
+.scale .ramp{height:24px;border-radius:3px}
+.scale .ticks{position:relative;height:24px}
+.scale .ticks b{position:absolute;top:3px;transform:translateX(-50%);font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:21px;color:var(--ink-2)}
+.foot{margin-top:auto;padding-top:12px;padding-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:24px}
+.foot img{height:72px;width:auto;display:block}
+.src{font-size:16px;color:var(--ink-3);text-align:center;line-height:1.35}
+.sponsor{width:300px;height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none}
+.sponsor .k{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.sponsor .slot{flex:1;width:100%}
+</style>
+</head>
+<body>
+<div class="stage"><div class="scaler" id="scaler">
+<div class="g" id="graphic">
+  <div class="top pad">
+    <div class="eyebrow" id="eyebrow">Atlantic Canada &amp; U.S. East Coast · Next 5 days</div>
+    <h1 id="title">Wave heights</h1>
+    <p class="sub" id="sub">A low off the U.S. East Coast builds seas to 8 m midweek, then heads for the Grand Banks by Friday.</p>
+  </div>
+  <div class="map" id="map">
+    <canvas id="gl" width="1080" height="960"></canvas>
+    <canvas id="swell" width="1080" height="960"></canvas>
+    <div id="labels"></div>
+    <div class="clock" id="clock">
+      <div class="d" id="cd"></div><div class="h" id="ch"></div>
+      <div class="bar"><i id="cbar"></i></div><div class="days" id="cdays"></div>
+      <div class="pk">Highest seas <b id="cpk"></b></div>
+    </div>
+    <div class="legend">
+      <div><svg width="34" height="10"><path d="M2 5h30" stroke="#1E2E36" stroke-width="2.4" opacity=".75"/></svg>Sea-level pressure, every 4 hPa</div>
+      <div><svg width="34" height="14"><path d="M8 2q9 5 0 10M18 2q9 5 0 10" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/></svg>Wave crests, moving the way waves travel</div>
+    </div>
+  </div>
+  <div class="scale pad">
+    <div class="k">Significant wave height<span>Metres</span></div>
+    <div class="rampw"><div class="ramp" id="ramp"></div><div class="ticks" id="ticks"></div></div>
+  </div>
+  <div class="foot pad">
+    <img src="logo.png" alt="Sheerr Weather">
+    <div class="src">Waves: NOAA GFS-Wave (WAVEWATCH III)<br>Pressure: NOAA GFS · <span id="run"></span></div>
+    <div class="sponsor"><div class="k">Presented by</div><div class="slot"></div></div>
+  </div>
+</div>
+</div></div>
+<script src="waves.js"></script>
+<script>
+  if (new URLSearchParams(location.search).has("export")) document.body.classList.add("export");
+  (function(){ var s=document.getElementById("scaler"), st=s.parentNode;
+    function fit(){ var k=document.body.classList.contains("export")?1:Math.min(1, st.clientWidth/1080); s.style.transform="scale("+k+")"; st.style.height=(1350*k)+"px"; }
+    window.addEventListener("resize", fit); fit(); })();
+</script>
+<script type="module" src="scene.js"></script>
+</body>
+</html>

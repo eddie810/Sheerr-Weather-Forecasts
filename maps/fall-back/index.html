@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clocks Fall Back</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* Sunrise/sunset before and after clocks fall back, NL towns. Social 4:5 (1080x1350). Data: build.py -> data.js */
+:root{
+  --page:#DCE2E2; --paper:#EEF1F0; --panel:#FFFFFF;
+  --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4; --accent:#1C8CC4;
+  --sat:#C9D3D4; --day:#F2B630; --day-2:#F7CF6A; --night:#24384A;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1080px;margin:0 auto}
+.scaler{width:1080px;height:1350px;transform-origin:top left}
+.g{width:1080px;height:1350px;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+.pad{padding-left:56px;padding-right:56px}
+.top{padding-top:34px;padding-bottom:18px;position:relative}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:26px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:800;text-transform:uppercase;font-size:80px;line-height:.94;margin:4px 0 10px}
+.sub{font-size:25px;line-height:1.3;color:var(--ink-2);margin:0;max-width:720px}
+.clock{position:absolute;right:56px;top:34px;width:170px;height:170px}
+.panel{background:var(--panel);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding-top:14px;padding-bottom:6px}
+.hdr{display:grid;grid-template-columns:200px 1fr;gap:16px;align-items:end;padding-bottom:8px;border-bottom:1px solid var(--rule)}
+.axis{position:relative;height:26px}
+.axis span{position:absolute;bottom:0;transform:translateX(-50%);font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:18px;color:var(--ink-3)}
+.lg{display:flex;gap:20px;font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:19px;color:var(--ink-2)}
+.lg i{display:inline-block;width:30px;height:12px;border-radius:6px;margin-right:7px;vertical-align:1px}
+.row{display:grid;grid-template-columns:200px 1fr;gap:16px;align-items:center;padding:9px 0;border-bottom:1px solid #E4E9E9}
+.row:last-child{border-bottom:0}
+.nm b{display:block;font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:29px;text-transform:uppercase;line-height:1}
+.nm span{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:16px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.track{position:relative;height:84px}
+.track .grid{position:absolute;top:0;bottom:0;border-left:1px dashed #E1E6E7}
+.bar{position:absolute;height:22px;border-radius:11px}
+.bar.sat{top:8px;background:var(--sat)}
+.bar.sun{top:44px;background:linear-gradient(90deg,var(--day-2),var(--day) 30%,var(--day) 70%,var(--day-2))}
+.t{position:absolute;font-family:"Barlow Condensed",sans-serif;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.t.sat{top:6px;font-size:19px;color:var(--ink-3)}
+.t.sun{top:40px;font-size:26px;color:var(--ink)}
+.t.l{transform:translateX(calc(-100% - 10px))}
+.t.r{transform:translateX(10px)}
+.tag{position:absolute;top:8px;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);transform:translateX(-50%)}
+.notes{display:grid;grid-template-columns:1fr 1fr;gap:28px;padding-top:18px}
+.note b{display:block;font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:24px;text-transform:uppercase}
+.note{font-size:19px;line-height:1.3;color:var(--ink-2)}
+.foot{margin-top:auto;padding-top:10px;padding-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+.foot img{height:62px;display:block}
+.src{font-size:15px;color:var(--ink-3);text-align:right;line-height:1.35}
+</style>
+</head>
+<body>
+<div class="stage"><div class="scaler" id="scaler"><div class="g" id="graphic">
+  <div class="top pad">
+    <div class="eyebrow">Sunday, Nov. 1 · 2 AM</div>
+    <h1>Clocks fall back</h1>
+    <p class="sub">Turn your clocks back one hour Saturday night. Sunrise and sunset both come about an hour earlier on the clock.</p>
+    <svg class="clock" id="clock" viewBox="-100 -100 200 200"></svg>
+  </div>
+  <div class="panel pad">
+    <div class="hdr"><div class="lg"><span><i style="background:var(--sat)"></i>Sat (daylight time)</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:end">
+        <div class="lg"><span><i style="background:var(--day)"></i>Sun (standard time)</span></div></div></div>
+    <div class="axis" id="axis" style="margin-left:216px"></div>
+    <div id="rows"></div>
+  </div>
+  <div class="notes pad">
+    <div class="note"><b>Brighter mornings</b>Sunrise in St. John's jumps from 7:43 to 6:45 AM, and from 8:07 to 7:09 AM in Corner Brook.</div>
+    <div class="note"><b>Darker by suppertime</b>The sun sets before 5 PM almost everywhere starting Sunday: 4:43 PM in St. John's, 4:23 PM in Nain.</div>
+  </div>
+  <div class="foot pad"><img src="logo.png" alt="Sheerr Weather">
+    <div class="src">Sunrise and sunset calculated for each community · Island on Newfoundland time (NDT → NST)<br>Labrador communities shown on Atlantic time (ADT → AST)</div></div>
+</div></div></div>
+<script src="data.js"></script>
+<script>
+(function(){
+  var D = window.FB, H0 = 6, H1 = 18.5;                     // timeline 6 AM - 6:30 PM
+  if (new URLSearchParams(location.search).has("export")) document.body.classList.add("export");
+  function fmt(h){ var hh = Math.floor(h), m = Math.round((h - hh) * 60); if (m === 60) { hh++; m = 0; } return ((hh + 11) % 12 + 1) + ":" + String(m).padStart(2, "0"); }
+  function pct(h){ return ((h - H0) / (H1 - H0) * 100) + "%"; }
+  var ax = document.getElementById("axis");
+  [6, 8, 10, 12, 14, 16, 18].forEach(function(h){ var s = document.createElement("span"); s.style.left = pct(h); s.textContent = h === 12 ? "Noon" : ((h + 11) % 12 + 1) + (h < 12 ? " AM" : " PM"); ax.appendChild(s); });
+  var rows = document.getElementById("rows");
+  D.forEach(function(r){
+    var d = document.createElement("div"); d.className = "row";
+    var grid = [6, 8, 10, 12, 14, 16, 18].map(function(h){ return '<div class="grid" style="left:' + pct(h) + '"></div>'; }).join("");
+    d.innerHTML = '<div class="nm"><b>' + r.name + '</b><span>' + (r.zone === "NT" ? "Newfoundland time" : "Atlantic time") + '</span></div>' +
+      '<div class="track">' + grid +
+      '<div class="bar sat" style="left:' + pct(r.sat[0]) + ';width:calc(' + pct(r.sat[1]) + ' - ' + pct(r.sat[0]) + ')"></div>' +
+      '<div class="bar sun" style="left:' + pct(r.sun[0]) + ';width:calc(' + pct(r.sun[1]) + ' - ' + pct(r.sun[0]) + ')"></div>' +
+      '<div class="t sat l" style="left:' + pct(r.sat[0]) + '">' + fmt(r.sat[0]) + '</div><div class="t sat r" style="left:' + pct(r.sat[1]) + '">' + fmt(r.sat[1]) + '</div>' +
+      '<div class="t sun l" style="left:' + pct(r.sun[0]) + '">' + fmt(r.sun[0]) + '</div><div class="t sun r" style="left:' + pct(r.sun[1]) + '">' + fmt(r.sun[1]) + '</div>' +
+      '</div>';
+    rows.appendChild(d); });
+  // clock face with a "back one hour" arrow
+  var NS = "http://www.w3.org/2000/svg", c = document.getElementById("clock");
+  function el(p, tag, a){ var n = document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); p.appendChild(n); return n; }
+  el(c, "circle", {r:88, fill:"#fff", stroke:"#10222B", "stroke-width":6});
+  for (var i = 0; i < 12; i++) { var a = i * Math.PI / 6; el(c, "line", {x1:Math.sin(a) * 70, y1:-Math.cos(a) * 70, x2:Math.sin(a) * 80, y2:-Math.cos(a) * 80, stroke:"#10222B", "stroke-width":i % 3 ? 3 : 6, "stroke-linecap":"round"}); }
+  el(c, "line", {x1:0, y1:0, x2:Math.sin(Math.PI / 6) * 42, y2:-Math.cos(Math.PI / 6) * 42, stroke:"#10222B", "stroke-width":8, "stroke-linecap":"round"});   // 1:00
+  el(c, "line", {x1:0, y1:0, x2:0, y2:-62, stroke:"#10222B", "stroke-width":5, "stroke-linecap":"round"});
+  el(c, "circle", {r:7, fill:"#1C8CC4"});
+  var ar = el(c, "path", {d:"M 52 -73 A 90 90 0 0 0 -8 -95", fill:"none", stroke:"#1C8CC4", "stroke-width":9, "stroke-linecap":"round"});
+  el(c, "path", {d:"M -24 -97 L -4 -110 L -2 -84 Z", fill:"#1C8CC4"});
+  el(c, "text", {x:0, y:44, "text-anchor":"middle", "font-family":"Barlow Condensed", "font-weight":800, "font-size":30, fill:"#1C8CC4"}, "").textContent = "−1 HR";
+  var s = document.getElementById("scaler"), st = s.parentNode;
+  function fit(){ var k = document.body.classList.contains("export") ? 1 : Math.min(1, st.clientWidth / 1080); s.style.transform = "scale(" + k + ")"; st.style.height = (1350 * k) + "px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

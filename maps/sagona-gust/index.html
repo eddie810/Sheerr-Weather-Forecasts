@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sagona Island Gust</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* Sagona Island peak gust hero map. ?fmt=tv (1920x1080) or ?fmt=social (1080x1350). Satellite from build.py */
+:root{
+  --page:#DCE2E2; --paper:#EEF1F0; --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4; --accent:#1C8CC4;
+  --hot:#B8303F; --hot-2:#8C2452;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{margin:0 auto}
+.scaler{transform-origin:top left}
+.g{background:var(--paper);color:var(--ink);position:relative;overflow:hidden}
+.map{position:absolute;overflow:hidden;background:#0B1824}
+.map img{position:absolute;inset:0;filter:saturate(.75) brightness(.62) contrast(1.08)}
+.map .tint{position:absolute;inset:0;background:radial-gradient(circle at var(--sx) var(--sy),rgba(184,48,63,.28),rgba(11,24,36,.35) 32%,rgba(11,24,36,.55) 70%)}
+.map canvas,.map svg{position:absolute;inset:0}
+.town{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.04em;fill:#E8EFF1;
+  paint-order:stroke;stroke:rgba(8,18,26,.85);stroke-width:5px;stroke-linejoin:round}
+.pill{font-family:"Barlow Condensed",sans-serif}
+.card{position:absolute;background:rgba(255,255,255,.97);border-radius:14px;box-shadow:0 14px 40px -16px rgba(0,0,0,.8)}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.lab{font-family:"Barlow Condensed",sans-serif;font-weight:800;text-transform:uppercase;line-height:.95}
+.big{font-family:"Barlow Condensed",sans-serif;font-weight:900;line-height:.8;color:var(--hot);letter-spacing:-.01em}
+.big small{font-weight:800;color:var(--ink)}
+.where{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;color:var(--ink);letter-spacing:.03em}
+.where span{color:var(--ink-3);font-weight:600}
+.climb{border-top:1px solid var(--rule)}
+.climb .q{font-family:"Barlow Condensed",sans-serif;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.steps{display:flex;align-items:flex-end}
+.step{display:flex;flex-direction:column;align-items:center}
+.step i{display:block;border-radius:4px 4px 0 0}
+.step b{font-family:"Barlow Condensed",sans-serif;font-weight:800;line-height:1}
+.step span{font-family:"Barlow Condensed",sans-serif;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+.note{color:var(--ink-2);line-height:1.3}
+.logo{position:absolute;background:rgba(255,255,255,.96);border-radius:12px;box-shadow:0 8px 24px -10px rgba(0,0,0,.7)}
+.logo img{display:block}
+.src{position:absolute;color:rgba(232,239,241,.75);text-align:right;line-height:1.35}
+
+/* ---------- 16:9 ---------- */
+.tv{width:1920px;height:1080px}
+.tv .map{inset:0}
+.tv .card{left:48px;top:48px;width:620px;padding:30px 34px 28px}
+.tv .eyebrow{font-size:24px}
+.tv .lab{font-size:58px;margin:6px 0 18px}
+.tv .big{font-size:230px}.tv .big small{font-size:64px;margin-left:6px}
+.tv .where{font-size:34px;margin-top:16px}.tv .where span{font-size:26px;display:block;margin-top:2px}
+.tv .climb{margin-top:22px;padding-top:16px}
+.tv .climb .q{font-size:20px;margin-bottom:56px}
+.tv .steps{gap:26px;height:180px}
+.tv .step i{width:96px}.tv .step b{font-size:40px;margin-bottom:6px}.tv .step span{font-size:19px;margin-top:8px}
+.tv .note{font-size:19px;margin-top:16px}
+.tv .logo{left:48px;bottom:44px;padding:10px 18px}.tv .logo img{height:56px}
+.tv .src{right:48px;bottom:40px;font-size:15px}
+
+/* ---------- 4:5 ---------- */
+.social{width:1080px;height:1350px}
+.social .head{position:absolute;left:0;right:0;top:0;height:250px;padding:34px 56px 0}
+.social .head .eyebrow{font-size:25px}
+.social .head h1{font-family:"Barlow Condensed",sans-serif;font-weight:800;text-transform:uppercase;font-size:78px;line-height:.92;margin:6px 0 0}
+.social .head h1 em{font-style:normal;color:var(--hot)}
+.social .map{left:0;right:0;top:250px;height:960px;border-top:1px solid var(--rule)}
+.social .card{right:32px;top:282px;width:400px;padding:22px 26px 20px}
+.social .big{font-size:150px}.social .big small{font-size:44px;margin-left:4px}
+.social .where{font-size:27px;margin-top:10px}.social .where span{font-size:21px;display:block;margin-top:2px}
+.social .climb{margin-top:16px;padding-top:12px}
+.social .climb .q{font-size:17px;margin-bottom:44px}
+.social .steps{gap:18px;height:130px}
+.social .step i{width:70px}.social .step b{font-size:30px;margin-bottom:4px}.social .step span{font-size:16px;margin-top:6px}
+.social .foot{position:absolute;left:0;right:0;bottom:0;height:140px;padding:0 56px;display:flex;justify-content:space-between;align-items:center}
+.social .foot img{height:64px}
+.social .foot .s{font-size:16px;color:var(--ink-3);text-align:right;line-height:1.35}
+</style>
+</head>
+<body>
+<div class="stage" id="stage"><div class="scaler" id="scaler"><div class="g" id="graphic"></div></div></div>
+<script src="data.js"></script>
+<script>
+(function(){
+  var q = new URLSearchParams(location.search), fmt = q.get("fmt") === "social" ? "social" : "tv";
+  var W = fmt === "tv" ? 1920 : 1080, H = fmt === "tv" ? 1080 : 1350, MW = W, MH = fmt === "tv" ? 1080 : 960, F = window.SG[fmt];
+  if (q.has("export")) document.body.classList.add("export");
+  var g = document.getElementById("graphic"); g.classList.add(fmt);
+  document.getElementById("stage").style.maxWidth = W + "px";
+
+  var PEAK = 129, STEPS = [["2:30 PM", 109], ["3:20 PM", 115], ["4:22 PM", 129]];   // hourly peaks and their times (ECCC SWOB); 129.3 at 4:22 PM NDT, from 30°
+  var HOT = ["#DC4A33", "#B8303F", "#8C2452"];
+  var maxH = fmt === "tv" ? 130 : 92;
+  var steps = STEPS.map(function(s, i){ var h = Math.round((s[1] - 80) / (PEAK - 80) * maxH);
+    return '<div class="step"><b style="color:' + HOT[i] + '">' + s[1] + '</b><i style="height:' + h + 'px;background:' + HOT[i] + '"></i><span>' + s[0] + '</span></div>'; }).join("");
+  var card = '<div class="card">' + (fmt === "tv" ? '<div class="eyebrow">Friday, Oct. 23 · Fortune Bay</div><div class="lab">Peak wind gust</div>' : '') +
+    '<div class="big">' + PEAK + '<small>km/h</small></div>' +
+    '<div class="where">Sagona Island · 4:22 PM<span>NNE gust · Environment Canada station</span></div>' +
+    '<div class="climb"><div class="q">Building through the afternoon</div><div class="steps">' + steps + '</div></div>' +
+    (fmt === "tv" ? '<div class="note">Peak gust at 4:22 PM NDT from the north-northeast. Gusts eased to 117 km/h in the next hour.</div>' : '') + '</div>';
+  var map = '<div class="map" style="--sx:' + F.station[0] + 'px;--sy:' + F.station[1] + 'px"><img src="map-' + fmt + '.jpg" style="width:' + MW + 'px;height:' + MH + 'px">' +
+    '<div class="tint"></div><canvas id="fx" width="' + MW + '" height="' + MH + '"></canvas><svg id="ov" viewBox="0 0 ' + MW + ' ' + MH + '" width="' + MW + '" height="' + MH + '"></svg></div>';
+  var src = 'Environment Canada station observations, Oct. 23<br>Imagery © Mapbox © Maxar';
+  if (fmt === "tv") {
+    g.innerHTML = map + card + '<div class="logo"><img src="logo.png" alt="Sheerr Weather"></div><div class="src">' + src + '</div>';
+  } else {
+    g.innerHTML = '<div class="head"><div class="eyebrow">Friday, Oct. 23 · Fortune Bay</div><h1>Sagona Island<br>gusts to <em>129 km/h</em></h1></div>' +
+      map + card + '<div class="foot"><img src="logo.png" alt="Sheerr Weather"><div class="s">' + src.replace("Imagery", "Satellite imagery") + '</div></div>';
+  }
+
+  // wind streaks: NNE wind, blowing toward the SSW (deterministic, denser near the station)
+  var cx = document.getElementById("fx").getContext("2d"), seed = 7;
+  function rnd(){ seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+  var ang = (22.5 + 180) * Math.PI / 180, dx = Math.sin(ang), dy = -Math.cos(ang);
+  for (var i = 0; i < (fmt === "tv" ? 900 : 600); i++) {
+    var x = rnd() * MW, y = rnd() * MH, d = Math.hypot(x - F.station[0], y - F.station[1]);
+    var near = Math.max(0, 1 - d / (fmt === "tv" ? 650 : 450));
+    if (rnd() > .35 + near * .65) continue;
+    var L = 30 + rnd() * 70 + near * 90, a = .10 + near * .45 + rnd() * .1;
+    var gr = cx.createLinearGradient(x, y, x + dx * L, y + dy * L);
+    gr.addColorStop(0, "rgba(255,255,255,0)"); gr.addColorStop(1, "rgba(255,255,255," + a.toFixed(2) + ")");
+    cx.strokeStyle = gr; cx.lineWidth = 1.2 + near * 1.6; cx.lineCap = "round";
+    cx.beginPath(); cx.moveTo(x, y); cx.lineTo(x + dx * L, y + dy * L); cx.stroke();
+  }
+
+  // station rings + towns
+  var NS = "http://www.w3.org/2000/svg", svg = document.getElementById("ov");
+  function el(p, tag, a, t){ var n = document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); if (t != null) n.textContent = t; p.appendChild(n); return n; }
+  var k = fmt === "tv" ? 1 : .8, sx = F.station[0], sy = F.station[1];
+  var POS = {"Harbour Breton":[14,-10,"start"], "St. Alban's":[14,9,"start"], "Grand Bank":[14,9,"start"], "Fortune":[-14,9,"end"],
+             "Marystown":[14,9,"start"], "Burgeo":[14,9,"start"], "Saint-Pierre":[14,9,"start"]};
+  Object.keys(F.towns).forEach(function(n){ var p = F.towns[n], o = POS[n];
+    if (p[0] < 30 || p[0] > MW - 30 || p[1] < 30 || p[1] > MH - 30) return;
+    if (fmt === "tv" && p[0] < 700 && p[1] < 1000) return;                     // under the card
+    if (fmt === "social" && p[0] > MW - 450 && p[1] < 470) return;
+    el(svg, "circle", {cx:p[0], cy:p[1], r:6 * k, fill:"#E8EFF1", stroke:"#0B1824", "stroke-width":2.5});
+    el(svg, "text", {class:"town", x:p[0] + o[0] * k, y:p[1] + o[1] * k, "font-size":26 * k, "text-anchor":o[2]}, n);
+  });
+  [260, 190, 125, 70].forEach(function(r, i){
+    el(svg, "circle", {cx:sx, cy:sy, r:r * k, fill:i === 3 ? "rgba(184,48,63,.30)" : "none", stroke:i === 3 ? "#DC4A33" : "rgba(220,74,51," + (.25 + i * .18) + ")",
+      "stroke-width":i === 3 ? 3 : 2, "stroke-dasharray":i === 0 ? "4 8" : "none"});
+  });
+  el(svg, "circle", {cx:sx, cy:sy, r:13 * k, fill:"#fff", stroke:"#B8303F", "stroke-width":6 * k});
+  // callout pill
+  var left = fmt === "social", px = left ? sx - 92 * k - 300 * k : sx + 92 * k, py = sy - 70 * k, gp = el(svg, "g", {});
+  el(gp, "line", {x1:sx + (left ? -12 : 12) * k, y1:sy - 10 * k, x2:left ? px + 300 * k : px, y2:py + 22 * k, stroke:"#fff", "stroke-width":3});
+  el(gp, "rect", {x:px, y:py - 26 * k, width:300 * k, height:76 * k, rx:10, fill:"#B8303F", stroke:"#fff", "stroke-width":3});
+  el(gp, "text", {class:"pill", x:px + 18 * k, y:py + 4 * k, "font-size":22 * k, "font-weight":700, fill:"#FFE3E0", "letter-spacing":"2"}, "SAGONA ISLAND");
+  el(gp, "text", {class:"pill", x:px + 18 * k, y:py + 40 * k, "font-size":40 * k, "font-weight":900, fill:"#fff"}, "129 KM/H GUST");
+
+  var s = document.getElementById("scaler"), st = s.parentNode;
+  s.style.width = W + "px"; s.style.height = H + "px"; g.style.width = W + "px"; g.style.height = H + "px";
+  function fit(){ var r = document.body.classList.contains("export") ? 1 : Math.min(1, st.clientWidth / W); s.style.transform = "scale(" + r + ")"; st.style.height = (H * r) + "px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

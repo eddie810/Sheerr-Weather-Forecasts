@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Avalon Rain Thumbnail</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&display=swap">
+<style>
+/* YouTube thumbnail 1280x720: "More rain for the Avalon Saturday?" over the Saturday noon futurecast frame (bg.jpg) */
+:root{ --page:#DCE2E2; --ink:#10222B; --accent:#1C8CC4; --warn:#F2C230; }
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px}
+body.export{padding:0}
+.g{width:1280px;height:720px;position:relative;overflow:hidden;background:#0B1824 url(bg.jpg) center/cover;font-family:"Barlow Condensed",sans-serif}
+.shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(9,22,30,.94) 0%,rgba(9,22,30,.86) 38%,rgba(9,22,30,.25) 62%,rgba(9,22,30,0) 75%)}
+.vig{position:absolute;inset:0;box-shadow:inset 0 0 140px rgba(0,0,0,.55)}
+.ring{position:absolute;left:782px;top:118px;width:200px;height:170px;border:6px solid var(--warn);border-radius:50%;
+  box-shadow:0 0 0 3px rgba(0,0,0,.35),0 0 30px rgba(242,194,48,.55)}
+.ring b{position:absolute;right:-28px;top:-44px;background:var(--warn);color:var(--ink);font-weight:900;font-size:34px;line-height:1;
+  padding:6px 12px 7px;border-radius:6px;text-transform:uppercase;box-shadow:0 6px 16px -6px rgba(0,0,0,.7)}
+.txt{position:absolute;left:52px;top:62px;width:660px}
+.tag{display:inline-block;background:var(--accent);color:#fff;font-weight:800;font-size:34px;letter-spacing:.08em;text-transform:uppercase;
+  padding:6px 16px 7px;border-radius:6px}
+h1{margin:16px 0 0;color:#fff;font-weight:900;text-transform:uppercase;font-size:118px;line-height:.86;letter-spacing:-.005em;
+  text-shadow:0 6px 24px rgba(0,0,0,.6)}
+h1 em{font-style:normal;color:var(--warn)}
+.logo{position:absolute;left:52px;bottom:40px;background:rgba(255,255,255,.96);border-radius:12px;padding:10px 18px;box-shadow:0 8px 24px -10px rgba(0,0,0,.7)}
+.logo img{height:58px;display:block}
+</style>
+</head>
+<body>
+<div class="g" id="graphic">
+  <div class="shade"></div><div class="vig"></div>
+  <div class="ring"></div>
+  <div class="txt">
+    <div class="tag">Saturday forecast</div>
+    <h1>More rain<br>for the <em>Avalon</em><br>Saturday?</h1>
+  </div>
+  <div class="logo"><img src="logo.png" alt="Sheerr Weather"></div>
+</div>
+<script>if (new URLSearchParams(location.search).has("export")) document.body.classList.add("export");</script>
+</body>
+</html>

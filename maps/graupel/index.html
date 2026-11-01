@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Graupel Explained</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Graupel explainer: 16:9 (1920x1080) or ?fmt=story 9:16 (1080x1920). ?anim + window.setT(t) for the video (render.js) */
+:root{
+  --page:#DCE2E2; --paper:#EEF1F0; --panel:#FFFFFF;
+  --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4; --accent:#1C8CC4;
+  --graupel:#1C8CC4; --pellet:#5B6B9A; --hail:#7A4FA0;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1920px;margin:0 auto}
+.scaler{width:1920px;height:1080px;transform-origin:top left}
+.g{width:1920px;height:1080px;background:var(--paper);color:var(--ink);position:relative;overflow:hidden}
+.bc{font-family:"Barlow Condensed",sans-serif}
+.top{position:absolute;left:72px;right:72px;top:40px;display:flex;align-items:flex-end;gap:56px}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:26px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:800;text-transform:uppercase;font-size:96px;line-height:.92;margin:6px 0 0}
+.sub{font-size:27px;line-height:1.3;color:var(--ink-2);margin:0 0 6px auto;max-width:860px}
+/* left: how it forms */
+.how{position:absolute;left:72px;top:212px;width:700px;height:740px;background:var(--panel);border:1px solid var(--rule);border-top:8px solid var(--graupel);border-radius:4px}
+.how .hd{position:absolute;left:30px;top:20px}
+.how .hd b{display:block;font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:40px;text-transform:uppercase;line-height:1}
+.how .hd span{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:19px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.how svg{position:absolute;left:0;top:0}
+.step{position:absolute;left:330px;width:345px}
+.step .k{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:var(--graupel);color:#fff;
+  font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:24px;margin-right:10px;vertical-align:middle}
+.step b{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:30px;text-transform:uppercase;vertical-align:middle}
+.step p{margin:6px 0 0 48px;font-size:20px;line-height:1.3;color:var(--ink-2)}
+/* right: comparison */
+.cmp{position:absolute;left:812px;right:72px;top:212px;height:740px;display:grid;grid-template-columns:150px 1fr 1fr 1fr;grid-template-rows:auto repeat(5,1fr);
+  background:var(--panel);border:1px solid var(--rule);border-radius:4px}
+.cmp > div{border-top:1px solid var(--rule);border-left:1px solid var(--rule);padding:12px 18px}
+.cmp > div.l{border-left:0;display:flex;align-items:center;font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:19px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.cmp > div.h{border-top:8px solid var(--c);padding:14px 18px 12px}
+.cmp > div.h0{border-top:0;border-left:0}
+.cmp .h svg{width:64px;height:64px;float:right;margin:-4px -4px 0 6px}
+.cmp .h b{display:block;white-space:nowrap;font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:42px;text-transform:uppercase;line-height:1;color:var(--c)}
+.cmp .h span{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:18px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.cmp .a{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:28px;line-height:1.05}
+.cmp .n{font-size:18px;line-height:1.28;color:var(--ink-2);margin-top:3px}
+.cmp .me{background:rgba(28,140,196,.07)}
+.foot{position:absolute;left:72px;right:72px;bottom:22px;display:flex;justify-content:space-between;align-items:center}
+.foot img{height:56px}
+.note{font-size:20px;color:var(--ink-2);margin-left:28px;flex:1}
+.note b{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:23px;text-transform:uppercase;color:var(--ink);margin-right:6px}
+.src{font-size:15px;color:var(--ink-3);text-align:right;line-height:1.35}
+
+/* ---------- ?fmt=story: 9:16 1080x1920, stacked ---------- */
+.story .stage{max-width:1080px}
+.g.story{width:1080px;height:1920px}
+.g.story .top{left:56px;right:56px;top:70px;display:block}
+.g.story h1{font-size:104px}
+.g.story .sub{font-size:31px;margin:18px 0 0;max-width:none}
+.g.story .how{left:40px;right:40px;width:auto;top:380px;height:1250px}
+.g.story .how svg{left:0;top:70px;width:1000px;height:1096px}
+.g.story .step{left:540px;width:420px}
+.g.story .step b{font-size:38px}.g.story .step p{font-size:26px}
+.g.story .step .k{width:46px;height:46px;font-size:28px}
+.g.story .cmp{left:40px;right:40px;top:380px;height:1250px;grid-template-columns:130px 1fr 1fr 1fr}
+.g.story .cmp > div{padding:14px 16px}
+.g.story .cmp > div.h{padding:16px 16px 12px}
+.g.story .cmp .h svg{width:58px;height:58px;float:none;display:block;margin:0 0 8px}
+.g.story .cmp .h b{font-size:40px}.g.story .cmp .h span{font-size:17px}
+.g.story .cmp .a{font-size:31px}.g.story .cmp .n{font-size:21px}
+.g.story .cmp > div.l{font-size:18px;letter-spacing:.06em}
+.g.story .foot{bottom:36px;flex-wrap:wrap;left:56px;right:56px}
+.g.story .note{order:-1;flex:0 0 100%;margin:0 0 20px;font-size:23px}
+.g.story .foot img{height:62px}
+/* animation (?anim): everything starts hidden and setT(t) reveals it */
+.anim .reveal{opacity:0}
+</style>
+</head>
+<body>
+<div class="stage"><div class="scaler" id="scaler"><div class="g" id="graphic">
+  <div class="top">
+    <div><div class="eyebrow">Weather 101</div><h1>What is graupel?</h1></div>
+    <p class="sub">Those soft white pellets that bounce off the deck and crumble in your hand. It's not snow, not hail and not ice pellets: it's a snowflake that got coated in frozen cloud droplets.</p>
+  </div>
+
+  <div class="how">
+    <div class="hd"><b>How it forms</b><span>Inside a cold shower cloud</span></div>
+    <svg id="dia" width="700" height="740" viewBox="0 0 700 740"></svg>
+    <div class="step" style="top:150px"><span class="k">1</span><b>Snowflake</b><p>Ice crystals grow into a snowflake high in the cloud, where it's well below freezing.</p></div>
+    <div class="step" style="top:330px"><span class="k">2</span><b>Riming</b><p>The flake falls through <em style="font-style:normal;font-weight:700;color:var(--ink)">supercooled</em> droplets: liquid water below 0°C. They freeze on contact and coat it in rime.</p></div>
+    <div class="step" style="top:530px"><span class="k">3</span><b>Graupel</b><p>Coated until the flake's shape disappears: a soft, white, opaque pellet, about 2 to 5 mm across.</p></div>
+  </div>
+
+  <div class="cmp" id="cmp"></div>
+
+  <div class="foot"><img src="logo.png" alt="Sheerr Weather">
+    <div class="note"><b>In NL:</b>common in fall and spring snow showers and squalls. Environment Canada reports call it "snow pellets".</div>
+    <div class="src">Sources: AMS Glossary of Meteorology,<br>Environment Canada</div></div>
+</div></div></div>
+<script>
+(function(){
+  var Q = new URLSearchParams(location.search), STORY = Q.get("fmt") === "story", ANIM = Q.has("anim");
+  var W = STORY ? 1080 : 1920, H = STORY ? 1920 : 1080;
+  if (Q.has("export")) document.body.classList.add("export");
+  var G = document.getElementById("graphic");
+  if (STORY) { document.body.classList.add("story"); G.classList.add("story"); }
+  if (ANIM) G.classList.add("anim");
+  var NS = "http://www.w3.org/2000/svg";
+  function el(p, tag, a, t){ var n = document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); if (t != null) n.textContent = t; p.appendChild(n); return n; }
+  var seed = 9; function rnd(){ seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+
+  // ---- shapes ----
+  function flake(p, x, y, r, sw){ var g = el(p, "g", {transform:"translate(" + x + "," + y + ")", stroke:"#2F7FB8", "stroke-width":sw || 3, "stroke-linecap":"round", fill:"none"});
+    for (var a = 0; a < 6; a++) { var t = a * Math.PI / 3, cx = Math.cos(t), sy = Math.sin(t);
+      el(g, "line", {x1:0, y1:0, x2:cx * r, y2:sy * r});
+      [.5, .75].forEach(function(f){ var bx = cx * r * f, by = sy * r * f, bl = r * (f === .5 ? .28 : .2);
+        [-1, 1].forEach(function(s){ var u = t + s * .7; el(g, "line", {x1:bx, y1:by, x2:bx + Math.cos(u) * bl, y2:by + Math.sin(u) * bl}); }); }); }
+    return g; }
+  function rimed(p, x, y, r){ var g = flake(p, x, y, r, 3.4);
+    for (var i = 0; i < 46; i++) { var a = Math.floor(rnd() * 6) * Math.PI / 3, d = rnd() * r, j = (rnd() - .5) * 6;
+      el(g, "circle", {cx:Math.cos(a) * d - Math.sin(a) * j, cy:Math.sin(a) * d + Math.cos(a) * j, r:2.2 + rnd() * 2.2, fill:"#fff", stroke:"#9DB8C8", "stroke-width":1}); } }
+  function graupel(p, x, y, r){ var g = el(p, "g", {transform:"translate(" + x + "," + y + ")"});
+    el(g, "circle", {cx:0, cy:0, r:r, fill:"#F4F8FA", stroke:"#9DB8C8", "stroke-width":2});
+    for (var i = 0; i < 34; i++) { var a = rnd() * Math.PI * 2, d = rnd() * r * .85;
+      el(g, "circle", {cx:Math.cos(a) * d, cy:Math.sin(a) * d, r:r * (.14 + rnd() * .12), fill:"#fff", stroke:"#C2D3DD", "stroke-width":1}); }
+    for (var i = 0; i < 14; i++) { var a = rnd() * Math.PI * 2; el(g, "circle", {cx:Math.cos(a) * r * .95, cy:Math.sin(a) * r * .95, r:r * .2, fill:"#fff", stroke:"#9DB8C8", "stroke-width":1.2}); }
+    return g; }
+  function pellet(p, x, y, r){ var g = el(p, "g", {transform:"translate(" + x + "," + y + ")"});
+    el(g, "circle", {cx:0, cy:0, r:r, fill:"#D7E9F3", stroke:"#6E8FB0", "stroke-width":2});
+    el(g, "ellipse", {cx:-r * .3, cy:-r * .35, rx:r * .32, ry:r * .2, fill:"#fff", opacity:.9}); }
+  function hail(p, x, y, r){ var g = el(p, "g", {transform:"translate(" + x + "," + y + ")"});
+    [1, .78, .56, .34].forEach(function(f, i){ el(g, "circle", {cx:0, cy:0, r:r * f, fill:i % 2 ? "#E6EEF4" : "#F7FAFC", stroke:"#8E9FB8", "stroke-width":1.4}); }); }
+
+  // ---- diagram ----
+  var s = document.getElementById("dia"), d = el(s, "defs", {});
+  if (STORY) {                                    // 9:16: zoom the diagram (cloud column) to fill the tall panel
+    s.setAttribute("viewBox", "20 60 620 680"); s.setAttribute("width", 1000); s.setAttribute("height", 1096);
+    [215, 505, 827].forEach(function(y, i){ document.querySelectorAll(".step")[i].style.top = y + "px"; }); }
+  var cg = el(d, "linearGradient", {id:"cloud", x1:0, y1:0, x2:0, y2:1}); el(cg, "stop", {offset:0, "stop-color":"#E9EEF1"}); el(cg, "stop", {offset:1, "stop-color":"#C5D0D6"});
+  // cloud body
+  el(s, "path", {d:"M40 600 V170 C40 130 80 110 110 120 C120 80 170 70 195 100 C215 70 270 72 285 110 C320 100 330 140 315 170 V600Z", fill:"url(#cloud)", stroke:"#AEBCC4", "stroke-width":2});
+  el(s, "text", {x:178, y:640, "text-anchor":"middle", "font-family":"Barlow Condensed", "font-weight":700, "font-size":19, fill:"#6E838C", "letter-spacing":"1.5"}, "CLOUD BASE");
+  // freezing level note + supercooled droplets in the lower cloud
+  el(s, "text", {x:52, y:162, "font-family":"Barlow Condensed", "font-weight":700, "font-size":19, fill:"#4E656F"}, "-15°C");
+  el(s, "text", {x:52, y:585, "font-family":"Barlow Condensed", "font-weight":700, "font-size":19, fill:"#4E656F"}, "-2°C");
+  var DROPS = [];
+  for (var i = 0; i < 70; i++) { var x = 60 + rnd() * 240, y = 250 + rnd() * 320;
+    if (!ANIM && Math.abs(x - 178) < 46 && ((y > 300 && y < 410) || (y > 500))) continue;
+    DROPS.push({x:x, y:y, el:el(s, "circle", {cx:x, cy:y, r:3 + rnd() * 2.5, fill:"#5AAEE3", opacity:.85})}); }
+  // path of the particle
+  el(s, "path", {d:"M178 205 V665", stroke:"#1C8CC4", "stroke-width":2.5, "stroke-dasharray":"6 7", fill:"none"});
+  [[178, 285], [178, 470], [178, 655]].forEach(function(a){ el(s, "path", {d:"M" + (a[0] - 9) + " " + (a[1] - 12) + " L" + a[0] + " " + a[1] + " L" + (a[0] + 9) + " " + (a[1] - 12), stroke:"#1C8CC4", "stroke-width":3, fill:"none", "stroke-linecap":"round"}); });
+  if (!ANIM) { flake(s, 178, 200, 40); rimed(s, 178, 370, 40); graupel(s, 178, 560, 34); }
+  // ground + bounce
+  el(s, "path", {d:"M30 700 H330", stroke:"#4E656F", "stroke-width":3});
+  if (!ANIM) { el(s, "path", {d:"M178 690 q30 -50 60 0 q18 -28 36 0", stroke:"#6E838C", "stroke-width":2, "stroke-dasharray":"4 5", fill:"none"});
+    graupel(s, 274, 690, 8); graupel(s, 150, 693, 7); graupel(s, 120, 694, 6); }
+  var BOUNCE_TXT = el(s, "text", {x:620, y:700, "text-anchor":"end", "font-family":"Barlow Condensed", "font-weight":700, "font-size":20, fill:"#4E656F", "letter-spacing":"1"}, "BOUNCES, THEN CRUMBLES");
+  // drop legend
+  el(s, "circle", {cx:345, cy:118, r:5, fill:"#5AAEE3"});
+  el(s, "text", {x:358, y:125, "font-family":"Barlow Condensed", "font-weight":700, "font-size":19, fill:"#4E656F"}, "SUPERCOOLED DROPLETS");
+
+  // ---- comparison table ----
+  var COLS = [
+    {k:"graupel", name:"Graupel", eg:"aka snow pellets", icon:graupel, me:true},
+    {k:"pellet", name:"Ice pellets", eg:"aka sleet", icon:pellet},
+    {k:"hail", name:"Hail", eg:"thunderstorm ice", icon:hail}];
+  var ROWS = [
+    ["Starts as", [["A snowflake", "Coated in frozen cloud droplets"], ["A raindrop", "Refreezes falling through a cold layer near the ground"], ["Ice in a storm", "Grows layer by layer in strong updrafts"]]],
+    ["Looks like", [["White & opaque", "Like tiny foam beads"], ["Clear or glassy", "Small, hard, see-through"], ["Clear & white layers", "Rings inside when cut open"]]],
+    ["Feels like", [["Soft", "Squishes and crumbles"], ["Hard", "Bounces, doesn't crumble"], ["Hard", "Can dent and damage"]]],
+    ["Size", [["2–5 mm", "Pea-sized at most"], ["Under 5 mm", ""], ["5 mm and up", "Can reach golf-ball size or bigger"]]],
+    ["When", [["Cold showers", "Fall and spring snow showers and squalls"], ["Winter storms", "With freezing rain and snow"], ["Thunderstorms", "Mostly warm-season storms"]]]];
+  var c = document.getElementById("cmp"), html = '<div class="h0 r0"></div>';
+  COLS.forEach(function(o){ html += '<div class="r0 h' + (o.me ? ' me' : '') + '" style="--c:var(--' + o.k + ')"><svg id="ic-' + o.k + '" viewBox="-40 -40 80 80"></svg><b>' + o.name + '</b><span>' + o.eg + '</span></div>'; });
+  ROWS.forEach(function(r, ri){ html += '<div class="l r' + (ri + 1) + '">' + r[0] + '</div>';
+    r[1].forEach(function(v, i){ html += '<div class="r' + (ri + 1) + (COLS[i].me ? ' me' : '') + '"><div class="a">' + v[0] + '</div>' + (v[1] ? '<div class="n">' + v[1] + '</div>' : '') + '</div>'; }); });
+  c.innerHTML = html;
+  COLS.forEach(function(o){ o.icon(document.getElementById("ic-" + o.k), 0, 0, o.k === "hail" ? 30 : o.k === "pellet" ? 16 : 26); });
+
+  if (ANIM) setupAnim();
+
+  // ---- animation: window.setT(t) draws the frame at t seconds (deterministic) ----
+  function setupAnim(){
+    var clamp = function(x){ return Math.max(0, Math.min(1, x)); }, ease = function(x){ x = clamp(x); return x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; };
+    var lerp = function(a, b, f){ return a + (b - a) * f; };
+    var top = document.querySelector(".top"), how = document.querySelector(".how"), steps = document.querySelectorAll(".step"),
+        foot = document.querySelector(".foot");
+    var rows = [0, 1, 2, 3, 4, 5].map(function(r){ return c.querySelectorAll(".r" + r); });
+    // the falling particle: flake, rime dots, graupel ball (all in one group we move)
+    var P = el(s, "g", {}), F = flake(P, 0, 0, 40, 3.2), RIME = [], GR = graupel(P, 0, 0, 34);
+    for (var i = 0; i < 60; i++) { var a = Math.floor(rnd() * 6) * Math.PI / 3, dd = rnd() * 40, j = (rnd() - .5) * 7;
+      RIME.push(el(P, "circle", {cx:Math.cos(a) * dd - Math.sin(a) * j, cy:Math.sin(a) * dd + Math.cos(a) * j, r:2.2 + rnd() * 2.4, fill:"#fff", stroke:"#9DB8C8", "stroke-width":1, opacity:0})); }
+    var bits = []; for (var i = 0; i < 9; i++) bits.push({a:-Math.PI * (.1 + rnd() * .8), v:30 + rnd() * 50, el:graupel(s, 0, 0, 4 + rnd() * 3)});
+    BOUNCE_TXT.setAttribute("opacity", 0);
+    // timeline (s)
+    var T_IN = .2, FALL0 = 2.2, RIM0 = 5.0, RIM1 = 10.2, GR1 = 11.4, BASE = 12.6, HIT = 13.4, TAB0 = 15.6, END = 22;
+    window.ANIM_LEN = END;
+    function yAt(t){                                   // particle height in the diagram
+      if (t < FALL0) return 200;
+      if (t < RIM0) return lerp(200, 300, ease((t - FALL0) / (RIM0 - FALL0)) * .9 + (t - FALL0) / (RIM0 - FALL0) * .1);
+      if (t < RIM1) return lerp(300, 470, (t - RIM0) / (RIM1 - RIM0));
+      if (t < BASE) return lerp(470, 600, (t - RIM1) / (BASE - RIM1));
+      if (t < HIT) { var f = (t - BASE) / (HIT - BASE); return lerp(600, 690, f * f); }
+      return 690; }
+    // droplets captured as the particle passes them during riming
+    DROPS.forEach(function(dp){ dp.cap = (Math.abs(dp.x - 178) < 70 && dp.y > 290 && dp.y < 480) ? RIM0 + (dp.y - 300) / 170 * (RIM1 - RIM0) - .35 : null; });
+    window.setT = function(t){
+      top.style.opacity = ease((t - T_IN) / .8); top.style.transform = "translateY(" + (1 - ease((t - T_IN) / .8)) * -20 + "px)";
+      how.style.opacity = ease((t - .7) / .8);
+      foot.style.opacity = ease((t - .9) / .8);
+      var act = t < RIM0 ? 0 : t < RIM1 ? 1 : 2;
+      steps.forEach(function(st, i){ var on = (t >= FALL0 - .4 && i === act) || t >= HIT + 1.5;
+        st.style.opacity = t < FALL0 - .6 ? ease((t - .9) / .8) * .35 : on ? 1 : .3;
+        st.querySelector(".k").style.transform = "scale(" + (i === act && t < HIT + 1.5 ? 1 + .12 * Math.max(0, Math.sin((t - FALL0) * 4)) : 1) + ")"; });
+      // particle position, sway, spin and bounce
+      var y = yAt(t), x = 178 + (t < BASE ? Math.sin(t * 1.6) * 10 * clamp((BASE - t) / 3) : 0), rot = t < GR1 ? t * 22 : GR1 * 22 + (t - GR1) * 90;
+      var bx = 0, by = 0;
+      if (t >= HIT) { var tb = t - HIT;                // two hops to the right, then rest
+        if (tb < .7) { bx = 60 * tb / .7; by = -4 * 50 * (tb / .7) * (1 - tb / .7); }
+        else if (tb < 1.15) { var u = (tb - .7) / .45; bx = 60 + 36 * u; by = -4 * 26 * u * (1 - u); }
+        else bx = 96; }
+      var crumble = clamp((t - (HIT + 1.3)) / .5);
+      P.setAttribute("transform", "translate(" + (x + bx) + "," + (y + by) + ") rotate(" + rot + ") scale(" + (1 - crumble) + ")");
+      P.setAttribute("opacity", t < FALL0 - .6 ? ease((t - 1) / .6) : 1 - crumble * .3);
+      var morph = ease((t - (RIM1 - .6)) / (GR1 - RIM1 + .6));      // flake + rime -> graupel ball
+      F.setAttribute("opacity", 1 - morph); GR.setAttribute("opacity", morph); GR.setAttribute("transform", "scale(" + (.7 + .3 * morph) + ")");
+      var nr = Math.round(clamp((t - RIM0) / (RIM1 - RIM0)) * RIME.length);
+      RIME.forEach(function(r, i){ r.setAttribute("opacity", i < nr ? 1 - morph : 0); });
+      DROPS.forEach(function(dp){ var k = dp.cap == null ? -1 : (t - dp.cap) / .35;   // fly in, then gone (frozen on)
+        if (k < 0) { dp.el.setAttribute("cx", dp.x); dp.el.setAttribute("cy", dp.y); dp.el.setAttribute("opacity", .85); }
+        else if (k < 1) { dp.el.setAttribute("cx", lerp(dp.x, x, k)); dp.el.setAttribute("cy", lerp(dp.y, y, k)); dp.el.setAttribute("opacity", .85 * (1 - k * .6)); }
+        else dp.el.setAttribute("opacity", 0); });
+      bits.forEach(function(b){ var tt = t - (HIT + 1.3);
+        if (tt < 0) { b.el.setAttribute("opacity", 0); return; }
+        var px = 178 + 96 + Math.cos(b.a) * b.v * Math.min(tt, .6), py = 690 + Math.sin(b.a) * b.v * Math.min(tt, .6) + 220 * Math.min(tt, .6) * Math.min(tt, .6);
+        b.el.setAttribute("transform", "translate(" + px + "," + Math.min(py, 694) + ")"); b.el.setAttribute("opacity", 1); });
+      BOUNCE_TXT.setAttribute("opacity", ease((t - HIT - .2) / .6));
+      // comparison table, row by row
+      rows.forEach(function(cells, r){ var k = ease((t - TAB0 - r * .55) / .5);
+        cells.forEach(function(cl){ cl.style.opacity = k; cl.style.transform = "translateY(" + (1 - k) * 14 + "px)"; }); });
+      c.style.opacity = ease((t - TAB0 + .4) / .5);
+      if (STORY) { var k2 = ease((t - TAB0 + .9) / .6); how.style.opacity = Math.min(how.style.opacity, 1 - k2); how.style.transform = "translateY(" + (-30 * k2) + "px)"; }
+    };
+    window.setT(0); window.READY = true;
+  }
+
+  var sc = document.getElementById("scaler"), st = sc.parentNode;
+  sc.style.width = W + "px"; sc.style.height = H + "px";
+  function fit(){ var k = document.body.classList.contains("export") ? 1 : Math.min(1, st.clientWidth / W); sc.style.transform = "scale(" + k + ")"; st.style.height = (H * k) + "px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

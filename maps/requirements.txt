@@ -1,0 +1,7 @@
+# Python packages for the Sheerr Weather graphics (build/fetch scripts)
+numpy
+scipy
+matplotlib
+pillow
+pyshp
+# pygrib reads GRIB model files (Euro wind, waves, RRFS). Optional: the setup scripts try it and carry on if it fails.

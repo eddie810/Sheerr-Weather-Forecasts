@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Subtropical Storm Josephine</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* NHC cone, track and tropical-storm-force wind reach. ?fmt=social (1080x1350, default) or ?fmt=tv (1920x1080); ?export */
+:root{
+  --page:#DCE2E2; --paper:#EEF1F0; --panel:#FFFFFF;
+  --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4; --accent:#1C8CC4;
+  --storm:#C8312F; --wind:#F79A3E;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1080px;margin:0 auto}
+.scaler{width:1080px;height:1350px;transform-origin:top left}
+.g{width:1080px;height:1350px;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;overflow:hidden;position:relative}
+.pad{padding-left:64px;padding-right:64px}
+.top{padding-top:24px;padding-bottom:16px}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:25px;letter-spacing:.1em;text-transform:uppercase;color:var(--storm)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:800;text-transform:uppercase;font-size:74px;line-height:.94;margin:4px 0 8px}
+.sub{font-size:25px;line-height:1.3;color:var(--ink-2);margin:0}
+.map{position:relative;height:900px;flex:none;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);overflow:hidden}
+.map > img,.map > svg{position:absolute;left:0;top:0}
+.bc{font-family:"Barlow Condensed",sans-serif}
+.town{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:21px;text-transform:uppercase;letter-spacing:.02em;
+  paint-order:stroke;stroke:#fff;stroke-width:6px;stroke-linejoin:round;fill:var(--ink)}
+.pt{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:19px;paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round;fill:var(--ink)}
+.pt tspan.k{fill:var(--ink-2);font-weight:600}
+.key{position:absolute;background:rgba(255,255,255,.95);border:1px solid var(--rule);padding:10px 14px;box-shadow:0 4px 18px -8px rgba(16,34,43,.4);
+  font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:19px;color:var(--ink-2);line-height:1.5}
+.key div{display:flex;align-items:center;gap:10px}
+.key i{display:inline-block;width:34px;height:16px;flex:none}
+.facts{display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--panel);border-bottom:1px solid var(--rule)}
+.fact{padding:12px 0 14px 24px;border-left:1px solid var(--rule)}
+.fact:first-child{padding-left:0;border-left:0}
+.fact .q{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:20px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.fact .a{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:48px;line-height:1;margin-top:2px}
+.fact .a small{font-size:25px;font-weight:700}
+.fact .n{font-size:18px;line-height:1.3;color:var(--ink-2);margin-top:4px}
+.foot{margin-top:auto;padding-top:8px;padding-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.foot img{height:58px;display:block}
+.src{font-size:15px;color:var(--ink-3);text-align:right;line-height:1.35}
+/* 16:9 */
+.scaler.tv{width:1920px;height:1080px}
+.g.tv{width:1920px;height:1080px;display:block}
+.tv .map{position:absolute;inset:0;height:1080px;border:0}
+.tv .side{position:absolute;right:56px;top:56px;bottom:56px;width:600px;background:var(--panel);border:1px solid var(--rule);
+  box-shadow:0 10px 40px -18px rgba(16,34,43,.55);display:flex;flex-direction:column}
+.tv .side .pad{padding-left:40px;padding-right:40px}
+.tv .top{padding-top:34px;padding-bottom:22px;border-bottom:1px solid var(--rule)}
+.tv h1{font-size:68px}
+.tv .facts{display:block;border:0}
+.tv .fact{padding:16px 0;border-left:0;border-bottom:1px solid var(--rule)}
+</style>
+</head>
+<body>
+<div class="stage"><div class="scaler" id="scaler">
+<div class="g" id="graphic">
+  <div class="top pad">
+    <div class="eyebrow" id="eyebrow"></div>
+    <h1>Subtropical Storm Josephine</h1>
+    <p class="sub" id="sub"></p>
+  </div>
+  <div class="map" id="map"><img id="base" alt=""><svg id="ov"></svg>
+    <div class="key" id="key">
+      <div><i style="background:rgba(16,34,43,.13);border:2px dashed #4E656F"></i>Forecast cone (track uncertainty)</div>
+      <div><i style="background:rgba(247,154,62,.55)"></i>Winds 63+ km/h now</div>
+      <div><i style="background:rgba(220,74,51,.6)"></i>Winds 93+ km/h now</div>
+      <div><svg width="34" height="20"><circle cx="17" cy="10" r="9" fill="#fff" stroke="#C8312F" stroke-width="3"/><text x="17" y="15" text-anchor="middle" font-family="Barlow Condensed" font-weight="800" font-size="14" fill="#C8312F">S</text></svg>Subtropical · <b style="color:#7A1F00">P</b>&nbsp;Post-tropical</div>
+    </div>
+  </div>
+  <div class="facts pad" id="facts"></div>
+  <div class="foot pad"><img src="logo.png" alt="Sheerr Weather"><div class="src" id="src"></div></div>
+</div>
+</div></div>
+<script src="data.js"></script>
+<script>
+(function(){
+  var D = window.STORM, q = new URLSearchParams(location.search), TV = q.get("fmt") === "tv", F = D.frames[TV ? "tv" : "social"];
+  var W = F.w, H = F.h, NS = "http://www.w3.org/2000/svg", svg = document.getElementById("ov"), g = document.getElementById("graphic");
+  function el(p, tag, a, t){ var n = document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); if (t != null) n.textContent = t; p.appendChild(n); return n; }
+  if (q.has("export")) document.body.classList.add("export");
+  var base = document.getElementById("base"); base.src = "map-" + (TV ? "tv" : "social") + ".png"; base.style.width = W + "px"; base.style.height = H + "px";
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H); svg.setAttribute("width", W); svg.setAttribute("height", H);
+  var key = document.getElementById("key");
+  if (TV){
+    g.classList.add("tv"); document.getElementById("scaler").classList.add("tv"); document.querySelector(".stage").style.maxWidth = "1920px";
+    var side = document.createElement("div"); side.className = "side";
+    [".top", ".facts", ".foot"].forEach(function(s){ side.appendChild(document.querySelector(s)); });
+    g.appendChild(side); key.style.left = "56px"; key.style.bottom = "56px";
+  } else { key.style.left = "22px"; key.style.bottom = "20px"; }
+
+  document.getElementById("eyebrow").textContent = "NHC advisory " + D.adv + " · " + D.issued + " NDT";
+  document.getElementById("sub").textContent = "Forecast to pass well south of Nova Scotia and Newfoundland Friday into Saturday, sending large swells to Atlantic Canada.";
+  document.getElementById("src").innerHTML = "National Hurricane Center (NOAA) advisory " + D.adv + " · times NDT<br>© Mapbox © OpenStreetMap";
+
+  // current wind field (NHC initial radii): tropical-storm-force (34 kt) orange, storm-force (50 kt) red
+  // cone
+  el(svg, "path", {d:F.cone, fill:"rgba(16,34,43,.13)", stroke:"#4E656F", "stroke-width":2.2, "stroke-dasharray":"9 6", "stroke-linejoin":"round"});
+  if (F.wind_now["34"]) el(svg, "path", {d:F.wind_now["34"], fill:"rgba(247,154,62,.45)", stroke:"#E07B22", "stroke-width":1.5});
+  if (F.wind_now["50"]) el(svg, "path", {d:F.wind_now["50"], fill:"rgba(220,74,51,.55)", stroke:"#B8303F", "stroke-width":1.5});
+  // towns
+  var taken = [];
+  Object.keys(F.towns).forEach(function(n){
+    var p = F.towns[n]; if (p[0] < 10 || p[0] > W - (TV ? 720 : 10) || p[1] < 10 || p[1] > H - 10) return;
+    el(svg, "circle", {cx:p[0], cy:p[1], r:5, fill:"#10222B", stroke:"#fff", "stroke-width":2.5});
+    var left = n === "Halifax" || n === "Boston" || n === "Sydney";
+    el(svg, "text", {class:"town", x:p[0] + (left ? -10 : 10), y:p[1] + (n === "Cape Race" ? 20 : 7), "text-anchor":left ? "end" : "start"}, n);
+  });
+  // track line + points
+  var tr = F.track, d = "M" + tr.map(function(p){ return p.join(","); }).join("L");
+  el(svg, "path", {d:d, fill:"none", stroke:"#fff", "stroke-width":7, "stroke-linejoin":"round", "stroke-linecap":"round"});
+  el(svg, "path", {d:d, fill:"none", stroke:"#10222B", "stroke-width":3, "stroke-linejoin":"round", "stroke-linecap":"round"});
+  D.points.forEach(function(p, i){
+    var xy = tr[i], now = i === 0, post = p.label === "P", r = now ? 17 : 13;
+    if (now) el(svg, "circle", {cx:xy[0], cy:xy[1], r:28, fill:"rgba(200,49,47,.18)"});
+    el(svg, "circle", {cx:xy[0], cy:xy[1], r:r, fill:post ? "#7A1F00" : now ? "#C8312F" : "#fff", stroke:post || now ? "#fff" : "#C8312F", "stroke-width":3});
+    el(svg, "text", {x:xy[0], y:xy[1] + (now ? 7 : 6), "text-anchor":"middle", "font-family":"Barlow Condensed", "font-weight":800,
+      "font-size":now ? 21 : 17, fill:post || now ? "#fff" : "#C8312F"}, p.label);
+    if (xy[0] < 30 || xy[0] > W - (TV ? 700 : 30) || xy[1] < 30 || xy[1] > H - 30) return;   // off-frame / under the panel
+    // label: alternate above/below the line; the first two points sit close together, so put them left/right
+    var up = i % 2 === 0, ax = i === 0 ? "end" : i === 1 ? "start" : "middle", dx = i === 0 ? -r - 8 : i === 1 ? r + 8 : 0;
+    var y = i < 2 ? xy[1] + (i === 0 ? -2 : 6) : xy[1] + (up ? -r - 30 : r + 24);
+    var t = el(svg, "text", {class:"pt", x:xy[0] + dx, y:y, "text-anchor":ax});
+    el(t, "tspan", {}, (now ? "Now · " : "") + p.when.replace(" p.m.", " pm").replace(" a.m.", " am"));
+    el(t, "tspan", {class:"k", x:xy[0] + dx, dy:20}, p.kmh + " km/h");
+  });
+  // facts
+  var pk = D.peak, F3 = [
+    ["Now", D.now.kmh + ' <small>km/h</small>', D.now.mph + " mph winds · " + D.now.mslp + " mb · moving north at " + D.now.spd_kmh + " km/h"],
+    ["Peak", pk.kmh + ' <small>km/h</small>', "Post-tropical with hurricane-force winds, " + pk.when.replace(/ \d.*/, "") + " south of Nova Scotia"],
+    ["Closest", "~" + D.closest.km + ' <small>km</small>', "South of " + D.closest.to + " around " + D.closest.when + ", then out to sea"]];
+  document.getElementById("facts").innerHTML = F3.map(function(f){ return '<div class="fact"><div class="q">' + f[0] + '</div><div class="a">' + f[1] + '</div><div class="n">' + f[2] + '</div></div>'; }).join("");
+  var s = document.getElementById("scaler"), st = s.parentNode, PW = TV ? 1920 : 1080, PH = TV ? 1080 : 1350;
+  function fit(){ var k = document.body.classList.contains("export") ? 1 : Math.min(1, st.clientWidth / PW); s.style.transform = "scale(" + k + ")"; st.style.height = (PH * k) + "px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

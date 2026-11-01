@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>YYT Overnight Planner</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+:root{
+  --page:#DCE2E2;
+  --paper:#EEF1F0; --panel:#FFFFFF; --panel-2:#E4E9E9;
+  --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4; --grid:#E1E7E8;
+  --accent:#1C8CC4; --temp:#D9622B; --feels:#1C8CC4; --break:#E8F4FB;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1080px;margin:0 auto}
+.scaler{width:1080px;height:1350px;transform-origin:top left}
+.g{width:1080px;height:1350px;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+.pad{padding-left:64px;padding-right:64px}
+.top{padding-top:30px;padding-bottom:16px}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:26px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:800;text-transform:uppercase;font-size:80px;line-height:.92;margin:4px 0 8px}
+.sub{font-size:26px;line-height:1.3;color:var(--ink-2);margin:0}
+.panel{background:var(--panel);border-top:1px solid var(--rule)}
+svg.chart{display:block}
+.lbl{font-family:"Barlow Condensed",sans-serif;font-weight:600;fill:var(--ink-2)}
+.val{font-family:"Barlow Condensed",sans-serif;font-weight:700;fill:var(--ink)}
+.ttl{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.05em;fill:var(--ink)}
+.take{display:grid;grid-template-columns:repeat(3,1fr);background:var(--panel-2);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.tk{padding:14px 0 16px 24px;border-left:1px solid var(--rule)}
+.tk:first-child{padding-left:0;border-left:0}
+.tk .q{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:21px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.tk .a{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:40px;line-height:1.05}
+.tk .n{font-size:19px;color:var(--ink-2);line-height:1.25}
+.foot{margin-top:auto;padding-top:10px;padding-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:24px}
+.foot img{height:64px;width:auto;display:block}
+.src{font-size:17px;color:var(--ink-3);text-align:right;line-height:1.35}
+</style>
+</head>
+<body>
+<!-- Sheerr icon set, picked by TWC iconCode in build.py -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="i-sunshape"><circle cx="0" cy="0" r="9" fill="#F2B630"/>
+      <g stroke="#F2B630" stroke-width="3" stroke-linecap="round">
+        <path d="M0-14v-5M0 14v5M-14 0h-5M14 0h5M-10-10l-3.5-3.5M10 10l3.5 3.5M-10 10l-3.5 3.5M10-10l3.5-3.5"/></g></g>
+    <path id="i-cloudshape" d="M-17 8a9 9 0 0 1 1-17.9A12 12 0 0 1 7-11a9.5 9.5 0 0 1 10 19z"/>
+    <symbol id="sun" viewBox="-30 -30 60 60"><use href="#i-sunshape" transform="scale(1.2)"/></symbol>
+    <symbol id="partly" viewBox="-30 -30 60 60"><use href="#i-sunshape" transform="translate(-6,-7)"/>
+      <use href="#i-cloudshape" transform="translate(5,9)" fill="#fff" stroke="#6E838C" stroke-width="2.4"/></symbol>
+    <symbol id="mostly" viewBox="-30 -30 60 60"><use href="#i-sunshape" transform="translate(-10,-11) scale(.8)"/>
+      <use href="#i-cloudshape" transform="translate(2,5) scale(1.2)" fill="#E4E9E9" stroke="#6E838C" stroke-width="2"/></symbol>
+    <symbol id="cloud" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,3) scale(1.3)" fill="#C9D3D4" stroke="#4E656F" stroke-width="1.8"/></symbol>
+    <symbol id="rain" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-5) scale(1.2)" fill="#C9D3D4" stroke="#4E656F" stroke-width="2"/>
+      <g stroke="#1C8CC4" stroke-width="3" stroke-linecap="round"><path d="M-12 12l-3 8M-2 12l-3 8M8 12l-3 8"/></g></symbol>
+    <symbol id="showers" viewBox="-30 -30 60 60"><use href="#i-sunshape" transform="translate(-8,-10) scale(.8)"/>
+      <use href="#i-cloudshape" transform="translate(4,0) scale(1.05)" fill="#fff" stroke="#6E838C" stroke-width="2.2"/>
+      <g stroke="#1C8CC4" stroke-width="3" stroke-linecap="round"><path d="M-4 15l-2.5 7M6 15l-2.5 7"/></g></symbol>
+    <symbol id="snow" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-5) scale(1.2)" fill="#C9D3D4" stroke="#4E656F" stroke-width="2"/>
+      <g fill="#5AAEE3"><circle cx="-11" cy="16" r="3"/><circle cx="0" cy="20" r="3"/><circle cx="11" cy="16" r="3"/></g></symbol>
+    <symbol id="mix" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-5) scale(1.2)" fill="#C9D3D4" stroke="#4E656F" stroke-width="2"/>
+      <path d="M-10 12l-3 8M6 12l-3 8" stroke="#1C8CC4" stroke-width="3" stroke-linecap="round"/><circle cx="0" cy="17" r="3" fill="#5AAEE3"/></symbol>
+    <symbol id="thunder" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-6) scale(1.2)" fill="#A6AEB1" stroke="#4E656F" stroke-width="2"/>
+      <path d="M2 8l-8 11h6l-4 9 10-13h-6l4-7z" fill="#F2B630"/></symbol>
+    <symbol id="fog" viewBox="-30 -30 60 60"><g stroke="#6E838C" stroke-width="3.5" stroke-linecap="round"><path d="M-20-10h40M-24 0h40M-18 10h40M-22 20h30"/></g></symbol>
+    <symbol id="wind" viewBox="-30 -30 60 60"><g fill="none" stroke="#4E656F" stroke-width="3.5" stroke-linecap="round">
+      <path d="M-22-8h28a6 6 0 1 0-6-6M-22 2h36a6 6 0 1 1-6 6M-22 12h20"/></g></symbol>
+    <path id="i-moonshape" d="M4-12a12 12 0 1 0 9 19A10 10 0 0 1 4-12z" fill="#9FB4D0"/>
+    <symbol id="moon" viewBox="-30 -30 60 60"><use href="#i-moonshape" transform="scale(1.3)"/></symbol>
+    <symbol id="partly-night" viewBox="-30 -30 60 60"><use href="#i-moonshape" transform="translate(-6,-8)"/>
+      <use href="#i-cloudshape" transform="translate(5,9)" fill="#fff" stroke="#6E838C" stroke-width="2.4"/></symbol>
+    <symbol id="mostly-night" viewBox="-30 -30 60 60"><use href="#i-moonshape" transform="translate(-10,-11) scale(.8)"/>
+      <use href="#i-cloudshape" transform="translate(2,5) scale(1.2)" fill="#E4E9E9" stroke="#6E838C" stroke-width="2"/></symbol>
+  </defs>
+</svg>
+<div class="stage"><div class="scaler" id="scaler">
+<div class="g" id="graphic">
+  <div class="top pad">
+    <div class="eyebrow" id="eyebrow"></div>
+    <h1>Overnight planner</h1>
+    <p class="sub" id="sub"></p>
+  </div>
+  <div class="panel"><svg class="chart" id="chart" width="1080" height="880" viewBox="0 0 1080 880" role="img"></svg></div>
+  <div class="take pad" id="take"></div>
+  <div class="foot pad">
+    <img src="logo.png" alt="Sheerr Weather">
+    <div class="src">Hourly forecast: The Weather Company<br>St. John's International Airport (YYT)</div>
+  </div>
+</div>
+</div></div>
+<script src="data.js"></script>
+<script>
+(function(){
+  var H = window.HOURS, NS = "http://www.w3.org/2000/svg", svg = document.getElementById("chart");
+  function el(p, tag, a, text){ var n=document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); if (text != null) n.textContent=text; p.appendChild(n); return n; }
+  var n = H.length, X0 = 120, X1 = 1016, step = (X1 - X0) / n;
+  var cx = function(i){ return X0 + step * (i + .5); };
+  var hr = function(t){ var h = +t.slice(11,13), m = t.slice(14,16); return (h % 12 || 12) + (m !== "00" ? ":" + m : "") + (h < 12 ? " AM" : " PM"); };
+  var ICON = function(c, dn){
+    if ([11,12,40,9].indexOf(c) >= 0) return "rain"; if ([39,45].indexOf(c) >= 0) return "showers";
+    if ([26].indexOf(c) >= 0) return "cloud"; if (c === 27 || (c === 28 && dn === "N")) return "mostly-night";
+    if (c === 28) return "mostly"; if (c === 29 || (c === 30 && dn === "N")) return "partly-night"; if (c === 30) return "partly";
+    if (c === 31 || c === 33) return "moon"; if (c === 32 || c === 34) return "sun"; if ([23,24].indexOf(c) >= 0) return "wind";
+    if ([19,20,21,22].indexOf(c) >= 0) return "fog"; if ([13,14,15,16,41,42,43,46].indexOf(c) >= 0) return "snow"; return "cloud"; };
+
+  var first = H[0].validTimeLocal, last = H[n-1].validTimeLocal;
+  var d0 = new Date(first.slice(0,19)), d1 = new Date(last.slice(0,19));
+  var fmt = function(d, o){ return d.toLocaleDateString("en-CA", o); };
+  document.getElementById("eyebrow").textContent = "St. John's (YYT) · " + fmt(d0, {weekday:"short"}) + " night into " + fmt(d1, {weekday:"long", month:"short", day:"numeric"});
+
+  // where cloud first opens up (< 60%) and where rain chance drops
+  var breakI = H.findIndex(function(h){ return h.cloudCover < 60; });
+  var rainEnd = H.findIndex(function(h){ return h.precipChance < 30; });
+  var feels = H.map(function(h){ return h.temperatureFeelsLike; }), temps = H.map(function(h){ return h.temperature; });
+  var tmin = Math.min.apply(null, temps), tmax = Math.max.apply(null, temps), fmin = Math.min.apply(null, feels), fmax = Math.max.apply(null, feels);
+  document.getElementById("sub").textContent =
+    (rainEnd > 0 ? "Rain ends around " + hr(H[rainEnd].validTimeLocal) + ". " : "") +
+    (breakI >= 0 ? "Thick cloud until about " + hr(H[breakI].validTimeLocal) + ", then breaks." : "Cloudy all night.") +
+    " Steady " + tmin + "–" + tmax + "°.";
+
+  // ---- hour columns: time, icon, rain chance, wind ----
+  var y = 34;
+  el(svg, "text", {class:"ttl", x:64, y:y + 46, "font-size":22}, "Sky");
+  H.forEach(function(h, i){
+    var night = h.dayOrNight === "N";
+    if (i === 0 || h.validTimeLocal.slice(11,13) === "00") {}
+    var parts = hr(h.validTimeLocal).split(" ");
+    el(svg, "text", {class:"val", x:cx(i), y:y - 4, "font-size":21, "text-anchor":"middle"}, parts[0]);
+    el(svg, "text", {class:"lbl", x:cx(i), y:y + 14, "font-size":15, "text-anchor":"middle"}, parts[1]);
+    el(svg, "use", {href:"#" + ICON(h.iconCode, h.dayOrNight), x:cx(i) - 26, y:y + 20, width:52, height:52});
+    el(svg, "text", {class:"val", x:cx(i), y:y + 92, "font-size":20, "text-anchor":"middle", fill: h.precipChance >= 30 ? "#1C8CC4" : "#6E838C"},
+       h.precipChance + "%");
+  });
+  el(svg, "text", {class:"lbl", x:64, y:y + 92, "font-size":18}, "Rain");
+
+  // ---- shared shading where the sky breaks ----
+  if (breakI >= 0){
+    var bx = X0 + step * breakI;
+    el(svg, "rect", {x:bx, y:150, width:X1 - bx, height:715, fill:"var(--break)"});
+    el(svg, "text", {class:"val", x:X1 - 12, y:550, "font-size":22, "text-anchor":"end", fill:"#156E9C"}, "Breaks in the cloud");
+  }
+
+  // ---- chart 1: temperature and feels-like (one axis, °C) ----
+  var T0 = 190, T1 = 470, lo = Math.floor(Math.min(fmin, tmin) - 1), hi = Math.ceil(Math.max(fmax, tmax) + 1);
+  var ty = function(v){ return T1 - (v - lo) / (hi - lo) * (T1 - T0); };
+  el(svg, "text", {class:"ttl", x:64, y:T0 - 14 + 0, "font-size":22}, "Temperature °C");
+  for (var v = lo; v <= hi; v += 1){
+    if ((v - lo) % 2) continue;
+    el(svg, "line", {x1:X0, x2:X1, y1:ty(v), y2:ty(v), stroke:"var(--grid)", "stroke-width":1});
+    el(svg, "text", {class:"lbl", x:X0 - 12, y:ty(v) + 6, "font-size":19, "text-anchor":"end"}, v + "°");
+  }
+  function line(vals, col, dash){
+    var d = vals.map(function(v, i){ return (i ? "L" : "M") + cx(i) + "," + ty(v); }).join("");
+    el(svg, "path", {d:d, fill:"none", stroke:col, "stroke-width":3, "stroke-linejoin":"round", "stroke-dasharray":dash || ""});
+    vals.forEach(function(v, i){ el(svg, "circle", {cx:cx(i), cy:ty(v), r:5, fill:col, stroke:"#fff", "stroke-width":2}); });
+  }
+  line(feels, "var(--feels)", "8 6");
+  line(temps, "var(--temp)");
+  // direct labels at the right end + values every other hour
+  // key beside the chart title (identity is also carried by solid vs dashed)
+  var kx = 330, ky = T0 - 20;
+  el(svg, "line", {x1:kx, x2:kx + 34, y1:ky - 6, y2:ky - 6, stroke:"var(--temp)", "stroke-width":3});
+  el(svg, "text", {class:"val", x:kx + 42, y:ky, "font-size":20}, "Temperature");
+  el(svg, "line", {x1:kx + 180, x2:kx + 214, y1:ky - 6, y2:ky - 6, stroke:"var(--feels)", "stroke-width":3, "stroke-dasharray":"8 6"});
+  el(svg, "text", {class:"val", x:kx + 222, y:ky, "font-size":20}, "Feels like");
+  temps.forEach(function(v, i){ if (i % 2 === 0) el(svg, "text", {class:"val", x:cx(i), y:ty(v) - 12, "font-size":20, "text-anchor":"middle"}, v + "°"); });
+  feels.forEach(function(v, i){ if (i % 2 === 0) el(svg, "text", {class:"lbl", x:cx(i), y:ty(v) + 26, "font-size":19, "text-anchor":"middle"}, v + "°"); });
+
+  // ---- chart 2: cloud cover % (bars, one hue, darker = more cloud) ----
+  var C0 = 590, C1 = 800;
+  var cy = function(v){ return C1 - v / 100 * (C1 - C0); };
+  el(svg, "text", {class:"ttl", x:64, y:C0 - 40, "font-size":22}, "Cloud cover %");
+  [0, 50, 100].forEach(function(v){
+    el(svg, "line", {x1:X0, x2:X1, y1:cy(v), y2:cy(v), stroke:"var(--grid)", "stroke-width":1});
+    el(svg, "text", {class:"lbl", x:X0 - 12, y:cy(v) + 6, "font-size":19, "text-anchor":"end"}, v + "%");
+  });
+  H.forEach(function(h, i){
+    var c = h.cloudCover, shade = c >= 85 ? "#5F737C" : c >= 60 ? "#8EA1A9" : "#BCCAD0";
+    var w = step - 10, x = cx(i) - w / 2, top = cy(c);
+    el(svg, "path", {d:"M" + x + "," + C1 + "V" + (top + 4) + "q0,-4 4,-4h" + (w - 8) + "q4,0 4,4V" + C1 + "Z", fill:shade});
+    el(svg, "text", {class:"val", x:cx(i), y:top - 8, "font-size":19, "text-anchor":"middle"}, c);
+  });
+  el(svg, "line", {x1:X0, x2:X1, y1:C1, y2:C1, stroke:"var(--rule)", "stroke-width":1.5});
+  H.forEach(function(h, i){
+    el(svg, "text", {class:"lbl", x:cx(i), y:C1 + 28, "font-size":19, "text-anchor":"middle"}, h.windDirectionCardinal);
+    el(svg, "text", {class:"lbl", x:cx(i), y:C1 + 50, "font-size":17, "text-anchor":"middle"}, h.windSpeed);
+  });
+  el(svg, "text", {class:"lbl", x:64, y:C1 + 28, "font-size":18}, "Wind");
+  el(svg, "text", {class:"lbl", x:64, y:C1 + 50, "font-size":16}, "km/h");
+
+  // ---- takeaways ----
+  var lowCloud = H.reduce(function(a, h, i){ return h.cloudCover < H[a].cloudCover ? i : a; }, 0);
+  var tk = [
+    ["Rain", rainEnd > 0 ? "Ends ~" + hr(H[rainEnd].validTimeLocal) : (H[0].precipChance < 30 ? "Mostly dry" : "On and off"), "Then dry overnight"],
+    ["Clearest sky", H[lowCloud].cloudCover + "% at " + hr(H[lowCloud].validTimeLocal), breakI >= 0 ? "Breaks from about " + hr(H[breakI].validTimeLocal) : "Little change"],
+    ["Feels like", fmin + "° to " + fmax + "°", "Jacket weather, breezy " + H[0].windDirectionCardinal + " wind"]
+  ];
+  document.getElementById("take").innerHTML = tk.map(function(t){
+    return '<div class="tk"><div class="q">' + t[0] + '</div><div class="a">' + t[1] + '</div><div class="n">' + t[2] + '</div></div>'; }).join("");
+
+  var s=document.getElementById("scaler"), st=s.parentNode;
+  if (new URLSearchParams(location.search).has("export")) document.body.classList.add("export");
+  function fit(){ var k=document.body.classList.contains("export")?1:Math.min(1, st.clientWidth/1080); s.style.transform="scale("+k+")"; st.style.height=(1350*k)+"px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

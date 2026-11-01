@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Late-Week Low</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* RDPS sea-level pressure at the end of the run, with the low's track. Social 4:5 (1080x1350). ?export for capture */
+:root{
+  --page:#DCE2E2; --paper:#EEF1F0; --panel:#FFFFFF;
+  --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4; --accent:#1C8CC4;
+  --low:#C8312F; --high:#1F5FA8;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1080px;margin:0 auto}
+.scaler{width:1080px;height:1350px;transform-origin:top left}
+.g{width:1080px;height:1350px;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+.pad{padding-left:64px;padding-right:64px}
+.top{padding-top:30px;padding-bottom:20px}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:26px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:800;text-transform:uppercase;font-size:80px;line-height:.94;margin:4px 0 8px}
+.sub{font-size:27px;line-height:1.3;color:var(--ink-2);margin:0}
+.map{position:relative;height:900px;flex:none;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);overflow:hidden}
+.map svg{position:absolute;inset:0}
+.bc{font-family:"Barlow Condensed",sans-serif}
+.iso{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:19px;fill:#2B3A42}
+.town{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:22px;text-transform:uppercase;letter-spacing:.02em;
+  paint-order:stroke;stroke:#fff;stroke-width:6px;stroke-linejoin:round;fill:var(--ink)}
+.tt{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:19px;paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round;fill:var(--ink-2)}
+.key{position:absolute;left:24px;top:22px;background:rgba(255,255,255,.95);border:1px solid var(--rule);padding:10px 14px 8px;
+  box-shadow:0 4px 18px -8px rgba(16,34,43,.4)}
+.key .k{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:21px;text-transform:uppercase;letter-spacing:.05em}
+.key .r{display:flex;margin-top:6px}
+.key .r div{width:30px}
+.key .r i{display:block;height:14px}
+.key .r b{display:block;font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:15px;color:var(--ink-2);margin-top:2px;transform:translateX(-50%);width:max-content}
+.key .r div:first-child b{transform:none}
+.key .n{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:16px;color:var(--ink-3);margin-top:4px}
+.facts{display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--panel);border-bottom:1px solid var(--rule)}
+.fact{padding:14px 0 16px 26px;border-left:1px solid var(--rule)}
+.fact:first-child{padding-left:0;border-left:0}
+.fact .q{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:21px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.fact .a{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:52px;line-height:1;margin-top:2px}
+.fact .a small{font-size:27px;font-weight:700}
+.fact .n{font-size:19px;line-height:1.3;color:var(--ink-2);margin-top:4px}
+.foot{margin-top:auto;padding-top:10px;padding-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.foot img{height:62px;display:block}
+.src{font-size:16px;color:var(--ink-3);text-align:right;line-height:1.35}
+
+/* ---------- broadcast 16:9 (?fmt=tv): full-bleed map, info panel on the right ---------- */
+.scaler.tv{width:1920px;height:1080px}
+.g.tv{width:1920px;height:1080px;position:relative;display:block}
+.tv .map{position:absolute;inset:0;height:1080px;border:0}
+.tv .key{left:56px;top:56px}
+.tv .side{position:absolute;right:56px;top:56px;bottom:56px;width:600px;background:var(--panel);border:1px solid var(--rule);
+  box-shadow:0 10px 40px -18px rgba(16,34,43,.55);display:flex;flex-direction:column}
+.tv .side .pad{padding-left:40px;padding-right:40px}
+.tv .top{padding-top:36px;padding-bottom:24px;border-bottom:1px solid var(--rule)}
+.tv h1{font-size:76px}
+.tv .sub{font-size:25px}
+.tv .facts{display:block;border:0}
+.tv .fact{padding:18px 0 18px;border-left:0;border-bottom:1px solid var(--rule)}
+.tv .fact .a{font-size:50px}
+.tv .foot{border-top:0}
+</style>
+</head>
+<body>
+<div class="stage"><div class="scaler" id="scaler">
+<div class="g" id="graphic">
+  <div class="top pad">
+    <div class="eyebrow" id="eyebrow"></div>
+    <h1>A low to watch</h1>
+    <p class="sub">Watching the track of a low toward the end of this week.</p>
+  </div>
+  <div class="map"><svg id="ov" viewBox="0 0 1080 900" width="1080" height="900"></svg>
+    <div class="key"><div class="k">Sea-level pressure · hPa</div><div class="r" id="ramp"></div><div class="n">Lines every 4 hPa</div></div>
+  </div>
+  <div class="facts pad" id="facts"></div>
+  <div class="foot pad"><img src="logo.png" alt="Sheerr Weather"><div class="src" id="src"></div></div>
+</div>
+</div></div>
+<script>
+  window.FMT = new URLSearchParams(location.search).get("fmt") === "tv" ? "tv" : "social";
+  document.write('<script src="data' + (FMT === "tv" ? "-tv" : "") + '.js"><\/script>');
+</script>
+<script>
+(function(){
+  var D = window.LOW, NS = "http://www.w3.org/2000/svg", svg = document.getElementById("ov"), W = D.w || 1080, H = D.h || 900;
+  var TV = window.FMT === "tv", sfx = TV ? "-tv" : "", g = document.getElementById("graphic"), mapEl = document.querySelector(".map");
+  mapEl.style.background = "url(shade" + sfx + ".png) 0 0/" + W + "px " + H + "px no-repeat, url(map" + sfx + ".png) 0 0/" + W + "px " + H + "px no-repeat";
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H); svg.setAttribute("width", W); svg.setAttribute("height", H);
+  if (TV){                                          // move header, facts and footer into the side panel
+    g.classList.add("tv"); document.getElementById("scaler").classList.add("tv");
+    document.querySelector(".stage").style.maxWidth = "1920px";
+    var side = document.createElement("div"); side.className = "side";
+    [".top", ".facts", ".foot"].forEach(function(q){ side.appendChild(document.querySelector(q)); });
+    g.appendChild(side);
+  }
+  function el(p, tag, a, t){ var n = document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); if (t != null) n.textContent = t; p.appendChild(n); return n; }
+  if (new URLSearchParams(location.search).has("export")) document.body.classList.add("export");
+  document.getElementById("eyebrow").textContent = "Late this week · " + D.date;
+  var run = new Date(D.run);
+  document.getElementById("src").innerHTML = "RDPS 10 km (ECCC) · " + String(run.getUTCHours()).padStart(2, "0") + "Z run, " + D.hours + " h<br>© Mapbox © OpenStreetMap";
+
+  // land outlines first, so isobars sit on top
+  el(svg, "path", {d:D.borders, fill:"none", stroke:"#fff", "stroke-width":3, opacity:.6, "stroke-linejoin":"round"});
+  el(svg, "path", {d:D.borders, fill:"none", stroke:"#5C6B72", "stroke-width":1.3, "stroke-linejoin":"round"});
+  // isobars
+  D.isobars.forEach(function(b){
+    el(svg, "path", {d:b.d, fill:"none", stroke:"#fff", "stroke-width":3.6, opacity:.55, "stroke-linejoin":"round"});
+    el(svg, "path", {d:b.d, fill:"none", stroke:"#2B3A42", "stroke-width":b.p % 20 === 0 ? 2.2 : 1.5, opacity:.8, "stroke-linejoin":"round"});
+  });
+  // keep-out boxes: key, centres, towns, track
+  var taken = TV ? [[0, 0, 540, 200], [W - 700, 0, W, H]] : [[0, 0, 470, 120]];
+  D.centres.forEach(function(c){ taken.push([c.xy[0] - 60, c.xy[1] - 60, c.xy[0] + 60, c.xy[1] + 70]); });
+  Object.keys(D.towns).forEach(function(n){ var p = D.towns[n]; taken.push([p[0] - 10, p[1] - 10, p[0] + n.length * 12 + 20, p[1] + 16]); });
+  D.track.forEach(function(t){ taken.push([t.xy[0] - 16, t.xy[1] - 16, t.xy[0] + 16, t.xy[1] + 16]); });
+  function free(b){ return b[0] > 8 && b[2] < W - 8 && b[1] > 8 && b[3] < H - 8 && taken.every(function(t){ return b[2] < t[0] || b[0] > t[2] || b[3] < t[1] || b[1] > t[3]; }); }
+  // one label per isobar, nearest the middle of its visible stretch that is clear
+  D.isobars.forEach(function(b){
+    var pts = b.pts, m = Math.floor(pts.length / 2), order = pts.map(function(p, i){ return i; }).sort(function(a, c){ return Math.abs(a - m) - Math.abs(c - m); });
+    for (var q = 0; q < order.length; q++){
+      var p = pts[order[q]], bx = [p[0] - 24, p[1] - 13, p[0] + 24, p[1] + 13];
+      if (!free(bx)) continue;
+      taken.push([bx[0] - 30, bx[1] - 30, bx[2] + 30, bx[3] + 30]);
+      el(svg, "rect", {x:bx[0], y:bx[1], width:48, height:26, rx:5, fill:"#fff", opacity:.92});
+      el(svg, "text", {class:"iso", x:p[0], y:p[1] + 7, "text-anchor":"middle"}, b.p);
+      break;
+    }
+  });
+  // towns
+  Object.keys(D.towns).forEach(function(n){
+    var p = D.towns[n];
+    if (p[0] < 10 || p[0] > (TV ? W - 700 : W - 10) || p[1] < 10 || p[1] > H - 10) return;
+    el(svg, "circle", {cx:p[0], cy:p[1], r:5.5, fill:"#10222B", stroke:"#fff", "stroke-width":2.5});
+    var left = p[0] > (TV ? W - 860 : W - 200);
+    el(svg, "text", {class:"town", x:p[0] + (left ? -11 : 11), y:p[1] + 7, "text-anchor":left ? "end" : "start"}, n);
+  });
+  // track: dashed line through the 6-hourly centres, dots with times, arrow into the final position
+  var tr = D.track, d = "M" + tr.map(function(t){ return t.xy.join(","); }).join("L");
+  el(svg, "path", {d:d, fill:"none", stroke:"#fff", "stroke-width":7, "stroke-linecap":"round", "stroke-linejoin":"round", opacity:.85});
+  el(svg, "path", {d:d, fill:"none", stroke:"var(--low)", "stroke-width":3.5, "stroke-dasharray":"2 9", "stroke-linecap":"round", "stroke-linejoin":"round"});
+  tr.slice(0, -1).forEach(function(t, i){
+    if (t.xy[1] > H - 12) return;
+    el(svg, "circle", {cx:t.xy[0], cy:t.xy[1], r:7, fill:"#fff", stroke:"var(--low)", "stroke-width":3});
+    if ((i % 2 === 0 || i === tr.length - 2) && t.xy[1] < H - 40) el(svg, "text", {class:"tt", x:t.xy[0] + 4, y:t.xy[1] + 30, "text-anchor":"middle"}, t.t);
+  });
+  // centres: the main low gets a halo and its central pressure
+  D.centres.forEach(function(c){
+    var main = Math.hypot(c.xy[0] - D.low.xy[0], c.xy[1] - D.low.xy[1]) < 5, col = c.k === "L" ? "var(--low)" : "var(--high)";
+    if (main) el(svg, "circle", {cx:c.xy[0], cy:c.xy[1], r:44, fill:"#fff", opacity:.85, stroke:col, "stroke-width":3});
+    el(svg, "text", {class:"bc", x:c.xy[0], y:c.xy[1] + 18, "text-anchor":"middle", "font-weight":800, "font-size":main ? 58 : 50, fill:col,
+      "paint-order":"stroke", stroke:"#fff", "stroke-width":main ? 0 : 6}, c.k);
+    el(svg, "text", {class:"bc", x:c.xy[0], y:c.xy[1] + (main ? 74 : 44), "text-anchor":"middle", "font-weight":800, "font-size":main ? 30 : 22,
+      fill:"var(--ink)", "paint-order":"stroke", stroke:"#fff", "stroke-width":6}, c.p + (main ? " hPa" : ""));
+  });
+  // key: the bands that appear near the map's range
+  document.getElementById("ramp").innerHTML = D.bands.filter(function(b){ return b[0] >= 976 && b[0] <= 1028; })
+    .map(function(b){ return '<div><i style="background:' + b[1] + ';opacity:.8"></i><b>' + (b[0] % 8 === 0 ? b[0] : "&nbsp;") + '</b></div>'; }).join("");
+  // facts
+  var F = [["Low", D.low.p + ' <small>hPa</small>', "Central pressure, " + D.valid + "."],
+           ["Where", "~350 <small>km</small>", "South of Cape Race, moving northeast toward Newfoundland."],
+           ["Model", "RDPS", "Final frame of the run; track and strength will change."]];
+  document.getElementById("facts").innerHTML = F.map(function(f){ return '<div class="fact"><div class="q">' + f[0] + '</div><div class="a">' + f[1] + '</div><div class="n">' + f[2] + '</div></div>'; }).join("");
+  var s = document.getElementById("scaler"), st = s.parentNode;
+  var PW = TV ? 1920 : 1080, PH = TV ? 1080 : 1350;
+  function fit(){ var k = document.body.classList.contains("export") ? 1 : Math.min(1, st.clientWidth / PW); s.style.transform = "scale(" + k + ")"; st.style.height = (PH * k) + "px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

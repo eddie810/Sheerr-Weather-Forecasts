@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Atlantic Futurecast</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+:root{
+  --page:#DCE2E2;
+  --paper:#EEF1F0; --panel:#FFFFFF;
+  --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4;
+  --accent:#1C8CC4;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1920px;margin:0 auto}
+.scaler{width:1920px;height:1080px;transform-origin:top left}
+
+.g{width:1920px;height:1080px;background:var(--paper);color:var(--ink);display:flex;overflow:hidden}
+.side{width:480px;flex:none;display:flex;flex-direction:column;padding:36px 40px 26px;border-right:1px solid var(--rule)}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:26px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;font-size:64px;line-height:.94;margin:2px 0 6px}
+.sub{font-size:21px;line-height:1.3;color:var(--ink-2);margin:0}
+
+.clock{margin-top:20px;background:var(--panel);border:1px solid var(--rule);border-radius:12px;padding:14px 20px 12px}
+.clock .row{display:flex;align-items:baseline;gap:14px}
+.clock .d{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:24px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+.clock .t{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:56px;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.clock .t span{font-size:26px;font-weight:600;color:var(--ink-3);margin-left:6px}
+.clock .a{font-size:18px;color:var(--ink-3);white-space:nowrap}
+.prog{position:relative;height:7px;border-radius:4px;background:var(--rule);margin:12px 0 0}
+.prog i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--accent)}
+.ticks{position:relative;height:26px;margin-top:6px}
+.ticks b{position:absolute;transform:translateX(-50%);font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:17px;color:var(--ink-3);white-space:nowrap;text-transform:uppercase}
+.ticks b:first-child{transform:none}
+.ticks b:last-child{transform:translateX(-100%)}
+
+/* temperature over the period for a few towns; the marker moves with the map */
+.temps{margin-top:18px}
+.temps .h{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:21px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.temps .h span{font-weight:600;color:var(--ink-3)}
+.temps svg{display:block;overflow:visible}
+.tax{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:15px;fill:#6E838C}
+.tkey{display:grid;grid-template-columns:1fr 1fr;gap:4px 18px;margin-top:8px}
+.tkey div{display:flex;align-items:center;gap:8px;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:19px;text-transform:uppercase;white-space:nowrap}
+.tkey i{width:18px;height:4px;border-radius:2px;flex:none}
+.tkey b{margin-left:auto;font-size:28px;font-variant-numeric:tabular-nums}
+
+.legend{margin-top:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px 16px}
+.legend .k{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:17px;text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px;white-space:nowrap}
+.legend .ramp{display:flex;gap:2px}
+.legend .ramp i{flex:1;height:14px}
+.legend .ends{display:flex;justify-content:space-between;font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:14px;color:var(--ink-3);margin-top:2px;text-transform:uppercase}
+
+.foot{margin-top:auto}
+.foot img{height:56px;width:auto;display:block;margin-bottom:8px}
+.src{font-size:14px;color:var(--ink-3);line-height:1.35}
+
+/* dark map so white clouds and the radar colours both stand out */
+.map{position:relative;width:1440px;height:1080px;flex:none;background:#1C2A32;overflow:hidden}
+.map > svg{position:absolute;inset:0}
+/* the map plane (2000x1700, see build.py) is tilted back in 3D: the Island up front, Labrador receding */
+.plane{position:absolute;left:0;top:0;width:2000px;height:1700px;transform-origin:0 0}
+.plane canvas,.plane svg{position:absolute;left:0;top:0;width:2000px;height:1700px}
+.sky{position:absolute;left:0;right:0;top:0;height:230px;background:linear-gradient(#1C2A32 15%,rgba(28,42,50,0))}
+.region{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:24px;letter-spacing:.3em;fill:#9DB0B8;opacity:.45;text-transform:uppercase}
+.isol{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:17px;fill:#E9EFF1;paint-order:stroke;stroke:#1C2A32;stroke-width:7px}
+.hl{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:46px;paint-order:stroke;stroke:#10222B;stroke-width:5px}
+.hlv{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:19px;fill:#fff;paint-order:stroke;stroke:#10222B;stroke-width:4px}
+.town{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:23px;fill:#fff;paint-order:stroke;stroke:#10222B;stroke-width:5px;stroke-linejoin:round}
+.ttag{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:21px;fill:#10222B}
+
+/* 9:16 story (?fmt=story, 1080x1920): the side panel's parts stack above and below a portrait map */
+.story .stage{max-width:1080px}
+.story .scaler{width:1080px;height:1920px}
+.story .g{width:1080px;height:1920px;flex-direction:column}
+.story .side{display:contents}
+.story .eyebrow{order:1;margin:42px 48px 0;font-size:28px}
+.story h1{order:2;margin:2px 48px 4px;font-size:76px}
+.story .sub{order:3;margin:0 48px;font-size:24px}
+.story .clock{order:4;margin:18px 48px 20px}
+.story .map{order:5;width:1080px;height:1030px}
+.story .temps{order:6;margin:20px 48px 0}
+.story .tkey{grid-template-columns:repeat(4,1fr)}
+.story .legend{order:7;margin:16px 48px 0;grid-template-columns:repeat(5,1fr)}
+.story .foot{order:8;margin:auto 48px 26px;display:flex;align-items:center;gap:24px}
+.story .foot img{margin:0}
+</style>
+</head>
+<body>
+<div class="stage"><div class="scaler" id="scaler">
+<div class="g" id="graphic">
+  <div class="side">
+    <div class="eyebrow">Newfoundland and Labrador</div>
+    <h1>Futurecast</h1>
+    <p class="sub" id="date"></p>
+    <div class="clock">
+      <div class="d" id="day"></div>
+      <div class="row"><div class="t" id="time"></div><div class="a" id="adt"></div></div>
+      <div class="prog"><i id="prog"></i></div>
+      <div class="ticks" id="ticks"></div>
+    </div>
+    <div class="temps" id="temps"><div class="h">Temperature <span>°C</span></div></div>
+    <div class="legend" id="legend"></div>
+    <div class="foot">
+      <img src="logo.png" alt="Sheerr Weather">
+      <div class="src">Model forecast: <span id="run"></span> (ECCC MSC GeoMet), motion-interpolated. Isobars every 4 hPa. · Map: Natural Earth</div>
+    </div>
+  </div>
+  <div class="map">
+    <div class="plane" id="plane">
+    <svg id="base" viewBox="0 0 2000 1700" aria-hidden="true"></svg>
+    <canvas id="radar" width="2000" height="1700"></canvas>
+    <!-- isobars fade out toward the edge of the model grid, like the radar under them (an SVG mask: Chrome won't
+         apply a CSS mask-image from a local file) -->
+    <svg id="lines" viewBox="0 0 2000 1700" aria-hidden="true"><mask id="edge"><image href="mask.png" width="2000" height="1700"/></mask>
+      <g id="iso" mask="url(#edge)"></g></svg>
+    </div>
+    <div class="sky"></div>
+    <svg id="ov" viewBox="0 0 1440 1080" aria-hidden="true"></svg>
+  </div>
+</div>
+</div></div>
+<script src="frames.js"></script>
+<script>
+(function(){
+  var D = window.LOOP, NS = "http://www.w3.org/2000/svg", ov = document.getElementById("ov");
+  // ?fmt=story: 9:16 layout (1080x1920) with a 1080x1030 map; default 16:9 (1920x1080, 1440x1080 map)
+  var STORY = new URLSearchParams(location.search).get("fmt") === "story", VW = STORY ? 1080 : 1440, VH = STORY ? 1030 : 1080;
+  if (STORY) document.body.classList.add("story");
+  ov.setAttribute("viewBox", "0 0 " + VW + " " + VH);
+  function el(p, tag, a, text){ var n = document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); if (text) n.textContent = text; p.appendChild(n); return n; }
+  document.getElementById("date").textContent = D.date;
+  document.getElementById("run").textContent = D.run;
+
+  // legend: same Sheerr radar colours as the other future radar loops
+  var P = {rain:["#9FD58E","#4CAA52","#1F7333"], mix:["#E6CDEB","#B57BCB","#7E3E9E"], snow:["#C6E6F8","#5AAEE3","#2160B0"], fz:["#F4A3B5","#D7263D"]};
+  [["Rain", P.rain], ["Snow", P.snow], ["Mix / pellets", P.mix], ["Freezing rain", P.fz], ["Cloud cover", ["#5C6C74", "#9AA6AB", "#D9DEE0"]]].forEach(function(g){
+    var d = document.createElement("div");
+    d.innerHTML = '<div class="k">' + g[0] + '</div><div class="ramp">' + g[1].map(function(c){ return '<i style="background:' + c + '"></i>'; }).join("") +
+      '</div><div class="ends">' + (g[0] === "Cloud cover" ? '<span>Thin</span><span>Overcast</span>' : '<span>Light</span><span>Heavy</span>') + '</div>';
+    document.getElementById("legend").appendChild(d);
+  });
+
+  // basemap under the radar: land, lakes, region names; province lines and towns over it
+  var base = document.getElementById("base");
+  el(base, "path", {d:D.land, fill:"#34454E", "fill-rule":"evenodd"});
+  el(base, "path", {d:D.lakes, fill:"#1C2A32"});
+  D.regions.forEach(function(r){ el(base, "text", {class:"region", x:r[1], y:r[2], "text-anchor":"middle"}, r[0]); });
+  // tilt: plane bottom-centre on the screen's bottom edge, leaned back TILT degrees, viewed from PERSP px with the
+  // eye EYE px above the bottom. scr() puts plane points on screen, so labels stay upright but sit on their places.
+  var PW = D.size[0], PH = D.size[1], TILT = 28, PERSP = 2200, EYE = 900;
+  var M = new DOMMatrix().translate(VW / 2, VH - EYE).multiply(new DOMMatrix([1,0,0,0, 0,1,0,0, 0,0,1,-1 / PERSP, 0,0,0,1]))
+    .translate(0, EYE).rotate(TILT, 0, 0).translate(-PW / 2, -PH);
+  document.getElementById("plane").style.transform = M.toString();
+  function scr(x, y){ var q = M.transformPoint(new DOMPoint(x, y, 0, 1)); return [q.x / q.w, q.y / q.w]; }
+  var lines = document.getElementById("lines");
+  lines.insertBefore(el(lines, "path", {d:D.land, fill:"none", stroke:"#0E1A20", "stroke-width":2.6, opacity:.5, "stroke-linejoin":"round"}), document.getElementById("iso"));
+  lines.insertBefore(el(lines, "path", {d:D.land, fill:"none", stroke:"#A9BBC2", "stroke-width":1.1, opacity:.75, "stroke-linejoin":"round"}), document.getElementById("iso"));
+  // towns: name plus a temperature tag. Labels are placed automatically: for each town (in TOWNS order) the first
+  // spot (right, left, above, below, diagonals) that clears every dot and every label already placed, sized for the
+  // widest temperature, so names and numbers never stack on each other.
+  var townT = {}, placed = [], dots = Object.keys(D.towns).map(function(n){ return scr(D.towns[n][0], D.towns[n][1]); });
+  dots.forEach(function(p){ el(ov, "circle", {cx:p[0], cy:p[1], r:5, fill:"#fff", stroke:"#10222B", "stroke-width":2.2}); });
+  var TAGW = 46, CANDS = [[12, 0, 0], [-12, 0, 1], [0, -22, .5], [0, 22, .5], [10, -18, 0], [10, 18, 0], [-10, -18, 1], [-10, 18, 1]];
+  function hits(b){
+    if (b[0] < 8 || b[2] > VW - 8 || b[1] < 8 || b[3] > VH - 8) return true;
+    return placed.some(function(q){ return b[0] < q[2] && b[2] > q[0] && b[1] < q[3] && b[3] > q[1]; }) ||
+      dots.some(function(p){ return b[0] < p[0] + 7 && b[2] > p[0] - 7 && b[1] < p[1] + 7 && b[3] > p[1] - 7; });
+  }
+  function layoutTowns(){                          // after the web font loads, so label widths are measured right
+  Object.keys(D.towns).forEach(function(n, k){
+    var p = dots[k], g = el(ov, "g", {});
+    var t = el(g, "text", {class:"town", x:0, y:8}, n), w = t.getComputedTextLength() + 8 + TAGW;
+    var tag = el(g, "rect", {x:w - TAGW, y:-12, width:TAGW, height:24, rx:6});
+    var tt = el(g, "text", {class:"ttag", x:w - TAGW / 2, y:7, "text-anchor":"middle"}, "");
+    var pick = CANDS.map(function(c){
+      var x = p[0] + c[0] - c[2] * w, y = p[1] + c[1];
+      return [x, y, [x - 3, y - 15, x + w + 3, y + 15]];
+    }).filter(function(c){ return !hits(c[2]); })[0] || [p[0] + 12, p[1], [0, 0, 0, 0]];
+    g.setAttribute("transform", "translate(" + pick[0].toFixed(1) + "," + pick[1].toFixed(1) + ")");
+    placed.push(pick[2]);
+    townT[n] = {tag:tag, tt:tt};
+  });
+  }
+  function tempAt(n, h){ var s = D.temps[n], i = Math.min(s.length - 2, Math.floor(h)), f = h - i; return s[i] + (s[i + 1] - s[i]) * f; }
+  function tcol(v){ return v <= 0 ? "#9AD8FF" : "#FFD27A"; }
+
+  // side-panel chart: the four CHARTS towns on one shared scale, 2° gridlines with a firmer 0° line, 12-hour markers,
+  // a "now" line that moves with the map; each line is solid up to now and faint after. Current values in the key.
+  var TCOL = ["#1C8CC4", "#E8772E", "#8B5CF6", "#10A37F"], CW = STORY ? 984 : 400, CH = STORY ? 220 : 196, L = 28, B = 20;
+  var all = [].concat.apply([], D.charts.map(function(n){ return D.temps[n]; }));
+  var tlo = Math.floor(Math.min.apply(null, all) / 2) * 2, thi = Math.ceil(Math.max.apply(null, all) / 2) * 2, NH = D.temps[D.charts[0]].length - 1;
+  var cs = el(document.getElementById("temps"), "svg", {width:CW, height:CH, viewBox:"0 0 " + CW + " " + CH});
+  var X = function(h){ return L + h / NH * (CW - L - 6); }, Y = function(v){ return 6 + (thi - v) / (thi - tlo) * (CH - B - 6); };
+  for (var v = tlo; v <= thi; v += 2){
+    el(cs, "line", {x1:L, x2:CW - 6, y1:Y(v), y2:Y(v), stroke:v === 0 ? "#1C8CC4" : "#DCE2E3", "stroke-width":v === 0 ? 1.6 : 1, "stroke-dasharray":v === 0 ? "5 4" : ""});
+    if (v % 4 === 0) el(cs, "text", {class:"tax", x:L - 6, y:Y(v) + 5, "text-anchor":"end"}, v + "°");
+  }
+  D.ticks.filter(function(k){ return (k.i / D.sub) % 12 === 0; }).forEach(function(k){
+    var x = X(k.i / D.sub);
+    el(cs, "line", {x1:x, x2:x, y1:6, y2:CH - B, stroke:"#C9D3D4", "stroke-width":1});
+    el(cs, "text", {class:"tax", x:x, y:CH - 3, "text-anchor":x < L + 20 ? "start" : "middle"}, k.lab.toUpperCase());
+  });
+  var now = el(cs, "line", {y1:6, y2:CH - B, stroke:"#10222B", "stroke-width":1.4});
+  var key = document.createElement("div"); key.className = "tkey"; document.getElementById("temps").appendChild(key);
+  var charts = D.charts.map(function(n, j){
+    var s = D.temps[n], line = function(a, b){ var o = []; for (var k = a; k <= b; k++) o.push(X(k).toFixed(1) + "," + Y(s[k]).toFixed(1)); return o; };
+    el(cs, "path", {d:"M" + line(0, NH).join("L"), fill:"none", stroke:TCOL[j], "stroke-width":2, opacity:.3, "stroke-linejoin":"round"});
+    var past = el(cs, "path", {d:"", fill:"none", stroke:TCOL[j], "stroke-width":3.2, "stroke-linejoin":"round", "stroke-linecap":"round"});
+    var dot = el(cs, "circle", {r:4.5, fill:TCOL[j], stroke:"#fff", "stroke-width":2});
+    var row = document.createElement("div"); row.innerHTML = '<i style="background:' + TCOL[j] + '"></i>' + n + '<b></b>'; key.appendChild(row);
+    return {n:n, past:past, dot:dot, v:row.querySelector("b"), line:line};
+  });
+  var ticks = document.getElementById("ticks"), last = D.times.length - 1;
+  // a tick every 12 h (6 h labels run together on this bar)
+  D.ticks.filter(function(k){ return (k.i / D.sub) % 12 === 0; }).forEach(function(k){ var b = document.createElement("b"); b.style.left = (k.i / last * 100) + "%"; b.textContent = k.lab; ticks.appendChild(b); });
+
+  // window.setT(t): frame at t seconds (render.js steps it). Model steps are 5 minutes apart; the video plays
+  // HOUR seconds per model hour and blends neighbouring 5-minute steps, so motion stays continuous. The blend is
+  // exact ((1-f)*A + f*B, added on a canvas): stacking two semi-transparent images instead leaves part of the
+  // old step showing, which pops at every hand-over.
+  var INTRO = 1.0, HOUR = 0.7, OUTRO = 2.6, n = D.times.length;
+  window.ANIM_LEN = INTRO + (n - 1) / D.sub * HOUR + OUTRO;
+  // isobars (ISO hPa, from build.py, one set per 5-minute step) and H/L centres, which glide and fade in/out
+  // isobars (ISO hPa, from build.py, one set per 5-minute step) and H/L centres, which glide and fade in/out.
+  // Each step's lines cross-fade into the next step's, so they move as smoothly as the radar under them.
+  var isoSvg = document.getElementById("iso"), hlSvg = el(ov, "g", {}), layers = {};
+  ov.insertBefore(hlSvg, ov.firstChild);
+  function layer(k){
+    if (layers[k]) return layers[k];
+    var gi = el(isoSvg, "g", {}), gh = el(hlSvg, "g", {});
+    D.iso[k].forEach(function(l){
+      el(gi, "path", {d:l[0], fill:"none", stroke:"#E9EFF1", "stroke-width":1.5, opacity:.55, "stroke-linejoin":"round"});
+      if (l[2]) el(gi, "text", {class:"isol", x:l[2][0], y:l[2][1] + 6, "text-anchor":"middle"}, l[1]);
+    });
+    D.hl[k].forEach(function(c){
+      var g = el(gh, "g", {opacity:c[4]});
+      var s = scr(c[1], c[2]);
+      el(g, "text", {class:"hl", x:s[0], y:s[1] + 14, "text-anchor":"middle", fill:c[0] === "L" ? "#F0676B" : "#5DB2F0"}, c[0]);
+      el(g, "text", {class:"hlv", x:s[0], y:s[1] + 36, "text-anchor":"middle"}, c[3]);
+    });
+    return (layers[k] = [gi, gh]);
+  }
+  function drawPressure(p){
+    var i = Math.min(n - 2, Math.floor(p)), f = p - i;
+    Object.keys(layers).forEach(function(k){
+      if (k != i && k != i + 1){ layers[k][0].remove(); layers[k][1].remove(); delete layers[k]; }
+    });
+    var A = layer(i), B = layer(i + 1);
+    A[0].setAttribute("opacity", 1 - f); A[1].setAttribute("opacity", 1 - f);
+    B[0].setAttribute("opacity", f); B[1].setAttribute("opacity", f);
+  }
+  var ctx = document.getElementById("radar").getContext("2d"), cache = {};
+  function load(i){                                  // keeps only the images in use
+    if (!cache[i]){ var im = new Image(); im.src = "frames/" + String(i).padStart(3, "0") + ".png"; cache[i] = im.decode().then(function(){ return im; }); }
+    return cache[i];
+  }
+  window.setT = function(t){
+    var p = Math.min(n - 1, Math.max(0, (t - INTRO) / HOUR * D.sub)), i = Math.min(n - 2, Math.floor(p)), f = p - i;
+    var hr = Math.round(p) - Math.round(p) % D.sub, T = D.times[hr];
+    document.getElementById("day").textContent = T.day;
+    document.getElementById("time").innerHTML = T.ndt.replace(/ (AM|PM)/, " $1") + "<span>NDT</span>";
+    document.getElementById("adt").textContent = T.adt + " ADT";
+    document.getElementById("prog").style.width = (p / last * 100) + "%";
+    drawPressure(p);
+    var h = p / D.sub;
+    Object.keys(townT).forEach(function(n){ var v = tempAt(n, h); townT[n].tt.textContent = Math.round(v) + "°"; townT[n].tag.setAttribute("fill", tcol(v)); });
+    now.setAttribute("x1", X(h)); now.setAttribute("x2", X(h));
+    charts.forEach(function(c){
+      var v = tempAt(c.n, h), seg = c.line(0, Math.floor(h));
+      seg.push(X(h).toFixed(1) + "," + Y(v).toFixed(1));
+      c.past.setAttribute("d", "M" + seg.join("L"));
+      c.dot.setAttribute("cx", X(h)); c.dot.setAttribute("cy", Y(v));
+      c.v.textContent = Math.round(v) + "°";
+    });
+    Object.keys(cache).forEach(function(k){ if (k < i || k > i + 1) delete cache[k]; });
+    return Promise.all([load(i), load(i + 1)]).then(function(im){
+      ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1; ctx.clearRect(0, 0, PW, PH);
+      ctx.globalAlpha = 1 - f; ctx.drawImage(im[0], 0, 0);
+      ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = f; ctx.drawImage(im[1], 0, 0);
+    });
+  };
+
+  var q = new URLSearchParams(location.search), sc = document.getElementById("scaler"), st = sc.parentNode;
+  if (q.has("export")) document.body.classList.add("export");
+  var GW = STORY ? 1080 : 1920, GH = STORY ? 1920 : 1080;
+  function fit(){ var k = document.body.classList.contains("export") ? 1 : Math.min(1, st.clientWidth / GW); sc.style.transform = "scale(" + k + ")"; st.style.height = (GH * k) + "px"; }
+  window.addEventListener("resize", fit); fit();
+  if (q.has("export")) document.fonts.ready.then(layoutTowns).then(function(){ return window.setT(+(q.get("t") || 0)); }).then(function(){ window.READY = true; });
+  else { layoutTowns(); var t0 = performance.now(); (function tick(){ window.setT(((performance.now() - t0) / 1000) % window.ANIM_LEN).then(function(){ requestAnimationFrame(tick); }); })(); window.READY = true; }
+})();
+</script>
+</body>
+</html>

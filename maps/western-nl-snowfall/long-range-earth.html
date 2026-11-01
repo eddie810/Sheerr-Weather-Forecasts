@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Long Range Snow Earth View</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+:root{
+  --page:#DCE2E2;
+  --paper:#EEF1F0; --panel:#FFFFFF;
+  --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4;
+  --s1:#D4ECF8; --s2:#93CDEE; --s3:#4AA3DD; --s4:#2367B3; --s5:#5B3FA6;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1080px;margin:0 auto}
+.scaler{width:1080px;height:1350px;transform-origin:top left}
+.g{width:1080px;height:1350px;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+.pad{padding-left:64px;padding-right:64px}
+.top{padding-top:30px;padding-bottom:20px;position:relative;z-index:2}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:26px;letter-spacing:.1em;text-transform:uppercase;color:var(--s4)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:800;text-transform:uppercase;font-size:84px;line-height:.92;margin:4px 0 8px}
+.sub{font-size:27px;line-height:1.3;color:var(--ink-2);margin:0}
+/* the 3D render is 1080x860 CSS px with empty sky above the block; scale it up and lift it so the block fills the frame */
+/* full-bleed earth view: sky gradient behind the transparent render, bottom edge cropped */
+.scene{position:relative;height:745px;flex:none;overflow:hidden;
+  background:linear-gradient(180deg,#5E93C4 0%,#8DB7DC 45%,#C9DCEA 62%,#DDE7EE 100%);border-top:1px solid var(--rule)}
+.world{position:absolute;left:0;top:0;width:1080px;height:900px;transform-origin:50% 0;transform:translate(-10px,-110px) scale(1.12)}
+.world img,.world svg{position:absolute;left:0;top:0;width:1080px;height:900px;overflow:visible}
+/* Google Earth-style labels: white text, dark halo */
+.lab{font-family:"Source Sans 3",sans-serif;font-weight:600;paint-order:stroke;stroke:rgba(0,0,0,.75);stroke-width:5px;stroke-linejoin:round;fill:#fff}
+.peak{font-family:"Source Sans 3",sans-serif;font-weight:600;font-style:italic;paint-order:stroke;stroke:rgba(0,0,0,.75);stroke-width:5px;fill:#FFE9A8}
+.callout{position:absolute;right:64px;top:24px;z-index:3;background:var(--panel);border:1px solid var(--rule);border-left:5px solid var(--s5);
+  padding:12px 18px;box-shadow:0 4px 16px -8px rgba(16,34,43,.4)}
+.callout .q{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:20px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.callout .a{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:56px;line-height:1;color:var(--s5)}
+.callout .a small{font-size:30px}
+.callout .n{font-size:19px;color:var(--ink-2)}
+.legend{display:flex;align-items:center;gap:22px;padding-top:16px;padding-bottom:16px;background:var(--panel);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.legend .t{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:26px;text-transform:uppercase;letter-spacing:.06em;margin-right:6px}
+.legend .row{display:flex;flex-direction:column;gap:4px;flex:1;font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:25px;line-height:1}
+.legend i{width:100%;height:26px;border:1px solid rgba(16,34,43,.2)}
+.spots{display:grid;grid-template-columns:repeat(3,1fr);padding-top:14px;padding-bottom:18px}
+.spot{padding-left:24px;border-left:1px solid var(--rule)}
+.spot:first-child{padding-left:0;border-left:0}
+.spot .q{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:22px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.spot .a{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:54px;line-height:1}
+.spot .a small{font-size:28px;font-weight:700}
+.spot .n{font-size:19px;color:var(--ink-2)}
+.foot{margin-top:auto;padding-top:12px;padding-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:24px}
+.foot img{height:70px;width:auto;display:block}
+.src{font-size:18px;color:var(--ink-3);text-align:right;line-height:1.35}
+</style>
+</head>
+<body>
+<div class="stage"><div class="scaler" id="scaler">
+<div class="g" id="graphic">
+  <div class="top pad">
+    <div class="eyebrow" id="eyebrow"></div>
+    <h1>Snow on the Long Range</h1>
+    <p class="sub">Snow piles up on the high plateau east of Gros Morne. The coast and valleys stay mostly bare.</p>
+  </div>
+  <div class="scene">
+    <div class="world">
+      <img src="long-range-earth-scene.png" alt="">
+      <svg id="ov" viewBox="0 0 1080 900" aria-hidden="true"></svg>
+    </div>
+    <div class="callout"><div class="q">Highest total</div><div class="a" id="max"></div><div class="n">on the plateau</div></div>
+  </div>
+  <div class="spots pad" id="spots"></div>
+  <div class="legend pad">
+    <div class="t">Total snow</div>
+    <div class="row"><i style="background:var(--s1)"></i>2–5 cm</div>
+    <div class="row"><i style="background:var(--s2)"></i>5–10 cm</div>
+    <div class="row"><i style="background:var(--s3)"></i>10–15 cm</div>
+    <div class="row"><i style="background:var(--s4)"></i>15–20 cm</div>
+    <div class="row"><i style="background:var(--s5)"></i>20+ cm</div>
+  </div>
+  <div class="foot pad">
+    <img src="logo.png" alt="Sheerr Weather">
+    <div class="src" id="src"></div>
+  </div>
+</div>
+</div></div>
+<script src="long-range-earth.js"></script>
+<script>
+(function(){
+  var S = window.SCENE, NS = "http://www.w3.org/2000/svg", svg = document.getElementById("ov");
+  function el(p, tag, a, text){ var n=document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); if (text) n.textContent=text; p.appendChild(n); return n; }
+  var NDT = new Date(new Date(S.valid).getTime() - 2.5 * 3600e3);
+  var days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], h = NDT.getUTCHours(), m = NDT.getUTCMinutes();
+  var when = days[NDT.getUTCDay()] + " " + ((h % 12) || 12) + ":" + String(m).padStart(2,"0") + (h < 12 ? " AM" : " PM");
+  document.getElementById("eyebrow").textContent = "Model snowfall · total through " + when;
+  document.getElementById("max").innerHTML = S.max + '<small> cm</small>';
+  var run = new Date(S.run);
+  document.getElementById("src").innerHTML = "HRDPS 2.5 km, " + run.toISOString().slice(11,13) + "Z run · 8:1 ratio · elevation-adjusted · height exaggerated " + S.exag + "×<br>ECCC MSC GeoMet · Imagery & terrain © Mapbox, © Maxar";
+
+  var SP = [["Gros Morne", "Mountain, 806 m"], ["Rocky Harbour", "Coast, below it"], ["Deer Lake", "Humber Valley"]];
+  document.getElementById("spots").innerHTML = SP.map(function(p){
+    var c = S.labels[p[0]].cm, col = c >= 20 ? "var(--s5)" : c >= 10 ? "var(--s4)" : c >= 2 ? "var(--s3)" : "var(--ink)";
+    return '<div class="spot"><div class="q">' + p[0] + '</div><div class="a" style="color:' + col + '">' + (c < 1 ? "0" : c) +
+      '<small> cm</small></div><div class="n">' + p[1] + '</div></div>'; }).join("");
+
+  // pins rise from the ground to a label, so places read against the 3D surface
+  var NUDGE = {"Rocky Harbour":[10,0,"start"], "Cow Head":[10,0,"start"], "Daniel's Harbour":[10,0,"start"], "Port au Choix":[10,0,"start"],
+               "Deer Lake":[10,0,"start"], "Corner Brook":[10,0,"start"], "Hampden":[10,0,"start"], "Gros Morne":[22,-14,"start"]};
+  Object.keys(S.labels).forEach(function(n){
+    var L = S.labels[n], g = L.ground, t = [L.top[0], L.top[1] - 18], o = NUDGE[n] || [10,0,"start"], peak = L.kind === "peak";
+    el(svg, "line", {x1:g[0], y1:g[1], x2:t[0], y2:t[1], stroke:"#fff", "stroke-width":1.6, opacity:.9});
+    if (peak) el(svg, "path", {d:"M" + t[0] + "," + (t[1] - 8) + " l7,12 h-14 Z", fill:"#FFE9A8", stroke:"#000", "stroke-width":1.2});
+    else el(svg, "circle", {cx:t[0], cy:t[1], r:5.5, fill:"#fff", stroke:"#000", "stroke-width":1.5});
+    el(svg, "text", {class:peak ? "peak" : "lab", x:t[0] + o[0], y:t[1] + 7, "font-size":peak ? 22 : 23, "text-anchor":o[2]}, n);
+  });
+
+  var s=document.getElementById("scaler"), st=s.parentNode;
+  if (new URLSearchParams(location.search).has("export")) document.body.classList.add("export");
+  function fit(){ var k=document.body.classList.contains("export")?1:Math.min(1, st.clientWidth/1080); s.style.transform="scale("+k+")"; st.style.height=(1350*k)+"px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

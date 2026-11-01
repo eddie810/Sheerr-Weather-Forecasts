@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Avalon Highs 3D</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+:root{
+  --page:#DCE2E2;
+  --paper:#EEF1F0; --panel:#FFFFFF;
+  --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4;
+  --accent:#1C8CC4;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1080px;margin:0 auto}
+.scaler{width:1080px;height:1350px;transform-origin:top left}
+
+.g{width:1080px;height:1350px;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+.pad{padding-left:64px;padding-right:64px}
+.top{padding-top:34px;padding-bottom:22px}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:26px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;font-size:76px;line-height:.94;margin:4px 0 8px}
+.sub{font-size:27px;line-height:1.3;color:var(--ink-2);margin:0}
+
+.map{position:relative;height:960px;flex:none;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);overflow:hidden}
+.map canvas,.map svg.pins{position:absolute;inset:0;width:1080px;height:960px}
+.card{position:absolute;display:flex;flex-direction:column;align-items:center;transform-origin:50% 100%}
+.card .box{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--rule);border-radius:10px;
+  padding:4px 14px 4px 8px;box-shadow:0 2px 8px -3px rgba(16,34,43,.35)}
+.card .box svg{width:54px;height:54px;flex:none}
+.card .t{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:50px;line-height:1;font-variant-numeric:tabular-nums}
+.card .n{margin-top:4px;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:22px;text-transform:uppercase;
+  letter-spacing:.02em;white-space:nowrap;color:var(--ink);
+  text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 6px #fff,0 0 6px #fff}
+
+/* which part of the Avalon the camera is over */
+.tag{position:absolute;left:28px;top:26px;background:var(--panel);border:1px solid var(--rule);border-radius:12px;
+  padding:14px 22px 16px;box-shadow:0 4px 14px -6px rgba(16,34,43,.4);min-width:300px}
+.tag .k{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:20px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.tag .a{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:44px;line-height:1;text-transform:uppercase;margin:2px 0 6px;white-space:nowrap}
+.tag .r{font-size:22px;color:var(--ink-2)}
+.tag .steps{display:flex;gap:6px;margin-top:12px}
+.tag .steps i{flex:1;height:5px;border-radius:3px;background:var(--rule)}
+.tag .steps i.on{background:var(--accent)}
+
+.scale{background:var(--panel);border-bottom:1px solid var(--rule);padding-top:14px;padding-bottom:16px;display:flex;align-items:center;gap:22px}
+.scale .k{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:24px;text-transform:uppercase;letter-spacing:.06em;line-height:1.1}
+.scale .k span{display:block;font-weight:600;font-size:19px;color:var(--ink-3);letter-spacing:.04em}
+.scale .ramp{flex:1;display:flex}
+.scale .ramp div{flex:1;text-align:left}
+.scale .ramp i{display:block;height:24px}
+.scale .ramp b{display:block;font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:21px;color:var(--ink-2);margin-top:3px;transform:translateX(-50%);width:max-content}
+.scale .ramp div:first-child b{transform:none}
+
+.foot{margin-top:auto;padding-top:12px;padding-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:24px}
+.foot img{height:72px;width:auto;display:block}
+.src{font-size:16px;color:var(--ink-3);text-align:right;line-height:1.35}
+</style>
+</head>
+<body>
+<!-- Sheerr icon set, picked by TWC iconCode in build.py -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="i-sunshape"><circle cx="0" cy="0" r="9" fill="#F2B630"/>
+      <g stroke="#F2B630" stroke-width="3" stroke-linecap="round">
+        <path d="M0-14v-5M0 14v5M-14 0h-5M14 0h5M-10-10l-3.5-3.5M10 10l3.5 3.5M-10 10l-3.5 3.5M10-10l3.5-3.5"/></g></g>
+    <path id="i-cloudshape" d="M-17 8a9 9 0 0 1 1-17.9A12 12 0 0 1 7-11a9.5 9.5 0 0 1 10 19z"/>
+    <path id="i-moonshape" d="M4-12a12 12 0 1 0 10 18a10 10 0 0 1-10-18z" fill="#E9C25A"/>
+    <symbol id="moon" viewBox="-30 -30 60 60"><use href="#i-moonshape" transform="translate(-3,0) scale(1.35)"/></symbol>
+    <symbol id="moonpartly" viewBox="-30 -30 60 60"><use href="#i-moonshape" transform="translate(-8,-8)"/>
+      <use href="#i-cloudshape" transform="translate(5,9)" fill="#fff" stroke="#6E838C" stroke-width="2.4"/></symbol>
+    <symbol id="moonmostly" viewBox="-30 -30 60 60"><use href="#i-moonshape" transform="translate(-11,-11) scale(.8)"/>
+      <use href="#i-cloudshape" transform="translate(2,5) scale(1.2)" fill="#E4E9E9" stroke="#6E838C" stroke-width="2"/></symbol>
+    <symbol id="sun" viewBox="-30 -30 60 60"><use href="#i-sunshape" transform="scale(1.2)"/></symbol>
+    <symbol id="partly" viewBox="-30 -30 60 60"><use href="#i-sunshape" transform="translate(-6,-7)"/>
+      <use href="#i-cloudshape" transform="translate(5,9)" fill="#fff" stroke="#6E838C" stroke-width="2.4"/></symbol>
+    <symbol id="mostly" viewBox="-30 -30 60 60"><use href="#i-sunshape" transform="translate(-10,-11) scale(.8)"/>
+      <use href="#i-cloudshape" transform="translate(2,5) scale(1.2)" fill="#E4E9E9" stroke="#6E838C" stroke-width="2"/></symbol>
+    <symbol id="cloud" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,3) scale(1.3)" fill="#C9D3D4" stroke="#4E656F" stroke-width="1.8"/></symbol>
+    <symbol id="rain" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-5) scale(1.2)" fill="#C9D3D4" stroke="#4E656F" stroke-width="2"/>
+      <g stroke="#1C8CC4" stroke-width="3" stroke-linecap="round"><path d="M-12 12l-3 8M-2 12l-3 8M8 12l-3 8"/></g></symbol>
+    <symbol id="showers" viewBox="-30 -30 60 60"><use href="#i-sunshape" transform="translate(-8,-10) scale(.8)"/>
+      <use href="#i-cloudshape" transform="translate(4,0) scale(1.05)" fill="#fff" stroke="#6E838C" stroke-width="2.2"/>
+      <g stroke="#1C8CC4" stroke-width="3" stroke-linecap="round"><path d="M-4 15l-2.5 7M6 15l-2.5 7"/></g></symbol>
+    <symbol id="snow" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-5) scale(1.2)" fill="#C9D3D4" stroke="#4E656F" stroke-width="2"/>
+      <g fill="#5AAEE3"><circle cx="-11" cy="16" r="3"/><circle cx="0" cy="20" r="3"/><circle cx="11" cy="16" r="3"/></g></symbol>
+    <symbol id="mix" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-5) scale(1.2)" fill="#C9D3D4" stroke="#4E656F" stroke-width="2"/>
+      <path d="M-10 12l-3 8M6 12l-3 8" stroke="#1C8CC4" stroke-width="3" stroke-linecap="round"/><circle cx="0" cy="17" r="3" fill="#5AAEE3"/></symbol>
+    <symbol id="thunder" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-6) scale(1.2)" fill="#A6AEB1" stroke="#4E656F" stroke-width="2"/>
+      <path d="M2 8l-8 11h6l-4 9 10-13h-6l4-7z" fill="#F2B630"/></symbol>
+    <symbol id="fog" viewBox="-30 -30 60 60"><g stroke="#6E838C" stroke-width="3.5" stroke-linecap="round"><path d="M-20-10h40M-24 0h40M-18 10h40M-22 20h30"/></g></symbol>
+    <symbol id="wind" viewBox="-30 -30 60 60"><g fill="none" stroke="#4E656F" stroke-width="3.5" stroke-linecap="round">
+      <path d="M-22-8h28a6 6 0 1 0-6-6M-22 2h36a6 6 0 1 1-6 6M-22 12h20"/></g></symbol>
+  </defs>
+</svg>
+
+<div class="stage"><div class="scaler" id="scaler">
+<div class="g" id="graphic">
+  <div class="top pad">
+    <div class="eyebrow" id="eyebrow"></div>
+    <h1 id="title"></h1>
+    <p class="sub" id="sub"></p>
+  </div>
+
+  <div class="map" id="map">
+    <svg class="pins" id="pins" viewBox="0 0 1080 960" aria-hidden="true"></svg>
+    <div id="cards"></div>
+    <div class="tag" id="tag"><div class="k" id="tagk"></div><div class="a" id="taga"></div><div class="r" id="tagr"></div>
+      <div class="steps" id="steps"></div></div>
+  </div>
+
+  <div class="scale pad">
+    <div class="k">Afternoon high<span>°C</span></div>
+    <div class="ramp" id="ramp"></div>
+  </div>
+
+  <div class="foot pad">
+    <img src="logo.png" alt="Sheerr Weather">
+    <div class="src">Town forecasts: The Weather Company · Shading: HRDPS (ECCC)<br>Terrain and map © Mapbox © OpenStreetMap</div>
+  </div>
+</div>
+</div></div>
+<script src="data.js"></script>
+<script>
+(function(){
+  var D = window.TEMPS, names = Object.keys(D.towns);
+  var highs = names.map(function(n){ return D.towns[n].high; });
+  var lo = Math.min.apply(null, highs), hi = Math.max.apply(null, highs);
+
+  // summary from the town forecasts (same wording rules as the nl-temps maps)
+  var wet = function(i){ return ["rain","showers","mix","snow","thunder"].indexOf(i) >= 0; };
+  var snow = names.filter(function(n){ return ["snow","mix"].indexOf(D.towns[n].icon) >= 0; });
+  var rain = names.filter(function(n){ return ["rain","showers","thunder"].indexOf(D.towns[n].icon) >= 0; });
+  var s = snow.length >= names.length - 2 ? "Snow and flurries for most of the Avalon"
+        : snow.length ? "Flurries or wet snow for " + snow.slice(0, 2).join(" and ") + (snow.length > 2 ? " and more" : "")
+        : rain.length >= names.length / 2 ? "Rain and showers for much of the Avalon"
+        : rain.length ? "Showers for " + rain.slice(0, 3).join(", ") + (rain.length > 3 ? " and more" : "")
+        : "A mostly dry " + D.weekday + " with a mix of sun and cloud";
+  if (snow.length && rain.length && snow.length < names.length - 2) s = "Rain, mixing with wet snow in cooler areas";
+  document.getElementById("eyebrow").textContent = "Avalon Peninsula · " + D.weekday + ", " + D.date.split(", ")[1];
+  document.getElementById("title").textContent = D.weekday + "'s highs";
+  document.getElementById("sub").textContent = s + ". Highs " + (lo === hi ? lo + "°." : lo + " to " + hi + "°.");
+
+  var cards = document.getElementById("cards");
+  names.forEach(function(n){
+    var t = D.towns[n], d = document.createElement("div");
+    d.className = "card";
+    d.innerHTML = '<div class="box"><svg><use href="#' + t.icon + '"/></svg><div class="t">' + t.high + '°</div></div><div class="n">' + n + '</div>';
+    cards.appendChild(d);
+  });
+  var steps = document.getElementById("steps");
+  D.areas.forEach(function(){ steps.appendChild(document.createElement("i")); });
+
+  // colour scale: the bands on the map plus one either side
+  var stp = D.step, ramp = document.getElementById("ramp"), bu = D.bands_used;
+  var from = Math.min(bu[0], Math.floor(lo / stp) * stp) - stp, to = Math.max(bu[bu.length - 1], Math.floor(hi / stp) * stp) + 2 * stp;
+  for (var v = from; v < to; v += stp){
+    var d = document.createElement("div");
+    d.innerHTML = '<i style="background:' + D.colours[v] + '"></i><b>' + v + '°</b>';
+    ramp.appendChild(d);
+  }
+
+  var sc = document.getElementById("scaler"), st = sc.parentNode;
+  if (new URLSearchParams(location.search).has("export")) document.body.classList.add("export");
+  function fit(){ var k = document.body.classList.contains("export") ? 1 : Math.min(1, st.clientWidth / 1080); sc.style.transform = "scale(" + k + ")"; st.style.height = (1350 * k) + "px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+<script src="terrain.js"></script>
+<script type="module" src="scene.js"></script>
+</body>
+</html>

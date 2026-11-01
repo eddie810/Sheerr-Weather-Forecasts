@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>YYT to MCO Flight Forecast</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+:root{
+  --page:#DCE2E2;
+  --paper:#EEF1F0; --panel:#FFFFFF; --panel-2:#E4E9E9;
+  --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4;
+  --accent:#1C8CC4; --good:#2F7D5B; --caution:#B9700F; --poor:#A32B2B;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1080px;margin:0 auto}
+.scaler{width:1080px;height:1350px;transform-origin:top left}
+
+.g{width:1080px;height:1350px;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+.pad{padding-left:64px;padding-right:64px}
+.top{padding-top:30px;padding-bottom:18px}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:26px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:800;text-transform:uppercase;font-size:84px;line-height:.92;margin:4px 0 8px;letter-spacing:.01em}
+h1 .arr{color:var(--accent);margin:0 10px}
+.sub{font-size:26px;line-height:1.3;color:var(--ink-2);margin:0}
+
+.map{position:relative;height:830px;flex:none;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  background:#fdfdfd url(map.png) 0 0/1080px 830px no-repeat;overflow:hidden}
+.map svg.ov{position:absolute;inset:0}
+.apt{font-family:"Barlow Condensed",sans-serif;font-weight:800;paint-order:stroke;stroke:#fff;stroke-width:8px;stroke-linejoin:round;fill:var(--ink)}
+.aptn{font-family:"Barlow Condensed",sans-serif;font-weight:600;paint-order:stroke;stroke:#fff;stroke-width:6px;stroke-linejoin:round;fill:var(--ink-2);text-transform:uppercase;letter-spacing:.04em}
+
+.card{position:absolute;background:var(--panel);border:1px solid var(--rule);border-radius:12px;box-shadow:0 4px 18px -8px rgba(16,34,43,.45);padding:14px 18px 12px}
+.card .h{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:28px;text-transform:uppercase;letter-spacing:.03em;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.card .h span{font-weight:600;font-size:20px;color:var(--ink-3);letter-spacing:.05em}
+.row{display:grid;grid-template-columns:96px 46px 64px 1fr;align-items:center;gap:8px;padding:6px 0;border-top:1px solid #E4E9E9}
+.row:first-of-type{border-top:0}
+.row .l{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:22px;text-transform:uppercase;color:var(--ink-2)}
+.row svg{width:44px;height:44px}
+.row .t{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:34px}
+.row .d{font-size:19px;line-height:1.2;color:var(--ink-2)}
+.row .d b{color:var(--ink);font-weight:600}
+.big{display:flex;align-items:center;gap:12px;margin-top:4px}
+.big svg{width:72px;height:72px}
+.big .t{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:64px;line-height:1}
+.big .d{font-size:20px;color:var(--ink-2);line-height:1.25}
+
+.odds{display:grid;grid-template-columns:150px repeat(3,1fr);gap:0 14px;align-items:stretch;background:var(--panel);padding-top:22px;padding-bottom:24px;border-bottom:1px solid var(--rule)}
+.odds .k{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:24px;text-transform:uppercase;line-height:1.1;align-self:center}
+.odds .k span{display:block;font-weight:600;font-size:17px;color:var(--ink-3);text-transform:none;letter-spacing:.02em}
+.odd{border-left:4px solid var(--good);padding-left:12px}
+.odd .w{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:21px;text-transform:uppercase;color:var(--ink-2)}
+.odd .p{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:44px;line-height:1}
+.odd .p small{font-size:22px;font-weight:600;color:var(--ink-2)}
+.odd .n{font-size:18px;color:var(--ink-2);line-height:1.2;margin-top:2px}
+
+.foot{margin-top:auto;padding-top:10px;padding-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:24px}
+.foot img{height:64px;width:auto;display:block}
+.src{font-size:17px;color:var(--ink-3);text-align:right;line-height:1.35}
+</style>
+</head>
+<body>
+<!-- Sheerr icon set, picked by TWC iconCode in build.py -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="i-sunshape"><circle cx="0" cy="0" r="9" fill="#F2B630"/>
+      <g stroke="#F2B630" stroke-width="3" stroke-linecap="round">
+        <path d="M0-14v-5M0 14v5M-14 0h-5M14 0h5M-10-10l-3.5-3.5M10 10l3.5 3.5M-10 10l-3.5 3.5M10-10l3.5-3.5"/></g></g>
+    <path id="i-cloudshape" d="M-17 8a9 9 0 0 1 1-17.9A12 12 0 0 1 7-11a9.5 9.5 0 0 1 10 19z"/>
+    <symbol id="sun" viewBox="-30 -30 60 60"><use href="#i-sunshape" transform="scale(1.2)"/></symbol>
+    <symbol id="partly" viewBox="-30 -30 60 60"><use href="#i-sunshape" transform="translate(-6,-7)"/>
+      <use href="#i-cloudshape" transform="translate(5,9)" fill="#fff" stroke="#6E838C" stroke-width="2.4"/></symbol>
+    <symbol id="mostly" viewBox="-30 -30 60 60"><use href="#i-sunshape" transform="translate(-10,-11) scale(.8)"/>
+      <use href="#i-cloudshape" transform="translate(2,5) scale(1.2)" fill="#E4E9E9" stroke="#6E838C" stroke-width="2"/></symbol>
+    <symbol id="cloud" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,3) scale(1.3)" fill="#C9D3D4" stroke="#4E656F" stroke-width="1.8"/></symbol>
+    <symbol id="rain" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-5) scale(1.2)" fill="#C9D3D4" stroke="#4E656F" stroke-width="2"/>
+      <g stroke="#1C8CC4" stroke-width="3" stroke-linecap="round"><path d="M-12 12l-3 8M-2 12l-3 8M8 12l-3 8"/></g></symbol>
+    <symbol id="showers" viewBox="-30 -30 60 60"><use href="#i-sunshape" transform="translate(-8,-10) scale(.8)"/>
+      <use href="#i-cloudshape" transform="translate(4,0) scale(1.05)" fill="#fff" stroke="#6E838C" stroke-width="2.2"/>
+      <g stroke="#1C8CC4" stroke-width="3" stroke-linecap="round"><path d="M-4 15l-2.5 7M6 15l-2.5 7"/></g></symbol>
+    <symbol id="snow" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-5) scale(1.2)" fill="#C9D3D4" stroke="#4E656F" stroke-width="2"/>
+      <g fill="#5AAEE3"><circle cx="-11" cy="16" r="3"/><circle cx="0" cy="20" r="3"/><circle cx="11" cy="16" r="3"/></g></symbol>
+    <symbol id="mix" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-5) scale(1.2)" fill="#C9D3D4" stroke="#4E656F" stroke-width="2"/>
+      <path d="M-10 12l-3 8M6 12l-3 8" stroke="#1C8CC4" stroke-width="3" stroke-linecap="round"/><circle cx="0" cy="17" r="3" fill="#5AAEE3"/></symbol>
+    <symbol id="thunder" viewBox="-30 -30 60 60"><use href="#i-cloudshape" transform="translate(0,-6) scale(1.2)" fill="#A6AEB1" stroke="#4E656F" stroke-width="2"/>
+      <path d="M2 8l-8 11h6l-4 9 10-13h-6l4-7z" fill="#F2B630"/></symbol>
+    <symbol id="fog" viewBox="-30 -30 60 60"><g stroke="#6E838C" stroke-width="3.5" stroke-linecap="round"><path d="M-20-10h40M-24 0h40M-18 10h40M-22 20h30"/></g></symbol>
+    <symbol id="wind" viewBox="-30 -30 60 60"><g fill="none" stroke="#4E656F" stroke-width="3.5" stroke-linecap="round">
+      <path d="M-22-8h28a6 6 0 1 0-6-6M-22 2h36a6 6 0 1 1-6 6M-22 12h20"/></g></symbol>
+  </defs>
+</svg>
+<div class="stage"><div class="scaler" id="scaler">
+<div class="g" id="graphic">
+  <div class="top pad">
+    <div class="eyebrow" id="eyebrow"></div>
+    <h1>YYT<span class="arr">→</span>MCO</h1>
+    <p class="sub" id="sub"></p>
+  </div>
+
+  <div class="map">
+    <svg class="ov" id="ov" viewBox="0 0 1080 830" aria-hidden="true"></svg>
+    <div class="card" id="yyt" style="right:64px;top:330px;width:420px"></div>
+    <div class="card" id="mco" style="left:360px;top:610px;width:330px"></div>
+  </div>
+
+  <div class="odds pad" id="odds"></div>
+
+  <div class="foot pad">
+    <img src="logo.png" alt="Sheerr Weather">
+    <div class="src">Forecast: The Weather Company · Odds: Sheerr Weather estimate,<br>not airline data · © Mapbox © OpenStreetMap</div>
+  </div>
+</div>
+</div></div>
+<script src="data.js"></script>
+<script>
+(function(){
+  var D = window.FLIGHT, NS = "http://www.w3.org/2000/svg", svg = document.getElementById("ov");
+  function el(p, tag, a, text){ var n=document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); if (text) n.textContent=text; p.appendChild(n); return n; }
+  var date = new Date(D.day + "T12:00:00");
+  var dayName = date.toLocaleDateString("en-CA", {weekday:"long"}), dayFull = date.toLocaleDateString("en-CA", {weekday:"long", month:"long", day:"numeric"});
+  var y = D.yyt, m = D.mco, maxGust = Math.max.apply(null, y.map(function(b){ return b.gust; }));
+  document.getElementById("eyebrow").textContent = "Flight forecast · " + dayFull;
+  document.getElementById("sub").textContent = "St. John's to Orlando. Windy and bumpy leaving St. John's, with gusts to " + maxGust +
+    " km/h. " + m.phrase + " and " + m.hi + "° in Orlando.";
+
+  // route: great circle, with a plane at the midpoint pointing along the track
+  var d = "M" + D.route.map(function(p){ return p[0] + "," + p[1]; }).join("L");
+  el(svg, "path", {d:d, fill:"none", stroke:"#fff", "stroke-width":9, "stroke-linecap":"round"});
+  el(svg, "path", {d:d, fill:"none", stroke:"#1C8CC4", "stroke-width":4, "stroke-dasharray":"14 9", "stroke-linecap":"round"});
+  var mid = D.route[Math.floor(D.route.length / 2)], nxt = D.route[Math.floor(D.route.length / 2) + 1];
+  var ang = Math.atan2(nxt[1] - mid[1], nxt[0] - mid[0]) * 180 / Math.PI;
+  var plane = el(svg, "g", {transform:"translate(" + mid[0] + "," + mid[1] + ") rotate(" + ang + ")"});
+  el(plane, "circle", {r:24, fill:"#fff", stroke:"#1C8CC4", "stroke-width":3});
+  el(plane, "path", {d:"M14 0 L-4 -3 L-10 -14 L-14 -14 L-9 -3 L-14 -2 L-17 -7 L-19 -7 L-17 0 L-19 7 L-17 7 L-14 2 L-9 3 L-14 14 L-10 14 L-4 3 Z", fill:"#10222B"});
+  el(svg, "text", {class:"aptn", x:mid[0] - 34, y:mid[1] + 8, "font-size":22, "text-anchor":"end"}, D.km.toLocaleString("en-CA") + " km · about 4 h");
+
+  [["YYT", 18, -20, "end"], ["MCO", -6, 44, "start"]].forEach(function(a){
+    var p = D.airports[a[0]].xy;
+    el(svg, "circle", {cx:p[0], cy:p[1], r:11, fill:"#1C8CC4", stroke:"#fff", "stroke-width":4});
+    el(svg, "text", {class:"apt", x:p[0] + a[1] * (a[3] === "end" ? -1 : 1), y:p[1] + a[2], "font-size":40, "text-anchor":a[3]}, a[0]);
+    el(svg, "text", {class:"aptn", x:p[0] + a[1] * (a[3] === "end" ? -1 : 1), y:p[1] + a[2] + 24, "font-size":22, "text-anchor":a[3]}, D.airports[a[0]].name);
+  });
+
+  function icon(n, cls){ return '<svg' + (cls ? ' class="' + cls + '"' : '') + '><use href="#' + n + '"/></svg>'; }
+  document.getElementById("yyt").innerHTML = '<div class="h">Departing St. John\'s<span>NDT</span></div>' + y.map(function(b){
+    return '<div class="row"><div class="l">' + b.label + '</div>' + icon(b.icon) + '<div class="t">' + b.hi + '°</div>' +
+      '<div class="d">Gusts <b>' + b.gust + ' km/h</b><br>' + (b.pop >= 60 ? 'Rain' + (b.vis < 8 ? ', vis. ' + b.vis + ' km' : '') : b.wind + ' wind') + '</div></div>';
+  }).join("");
+  document.getElementById("mco").innerHTML = '<div class="h">Arriving Orlando<span>EDT</span></div><div class="big">' + icon(m.icon) +
+    '<div class="t">' + m.hi + '°</div><div class="d">' + m.phrase + '<br>' + m.wind + ' wind, light</div></div>';
+
+  // on-time odds by departure window (Sheerr estimate from the departure-end weather)
+  function odds(b){
+    var p = 97;
+    if (b.gust >= 50) p -= 4; if (b.gust >= 65) p -= 5; if (b.pop >= 60) p -= 5; if (b.vis < 5) p -= 3;
+    return p;
+  }
+  var od = document.getElementById("odds");
+  od.innerHTML = '<div class="k">On-time odds<span>by departure time</span></div>';
+  y.forEach(function(b){
+    var p = odds(b), col = p >= 90 ? "var(--good)" : p >= 80 ? "var(--caution)" : "var(--poor)";
+    var why = b.pop >= 60 ? "Rain and wind may slow things down" : b.gust >= 65 ? "Strongest wind, bumpy climb-out" : "Best window";
+    var c = document.createElement("div"); c.className = "odd"; c.style.borderColor = col;
+    c.innerHTML = '<div class="w">' + b.label + '</div><div class="p" style="color:' + col + '">~' + p + '<small>%</small></div><div class="n">' + why + '</div>';
+    od.appendChild(c);
+  });
+
+  var s=document.getElementById("scaler"), st=s.parentNode;
+  if (new URLSearchParams(location.search).has("export")) document.body.classList.add("export");
+  function fit(){ var k=document.body.classList.contains("export")?1:Math.min(1, st.clientWidth/1080); s.style.transform="scale("+k+")"; st.style.height=(1350*k)+"px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

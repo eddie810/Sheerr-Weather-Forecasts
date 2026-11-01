@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Canada Time Zones Fall Back</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* Canada time zones today (daylight) vs tomorrow (standard), 16:9 (1920x1080). Data: build.py -> data.js */
+:root{ --page:#DCE2E2; --paper:#EEF1F0; --panel:#FFFFFF; --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4; --accent:#1C8CC4; --hot:#B98A00; }
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1920px;margin:0 auto}
+.scaler{width:1920px;height:1080px;transform-origin:top left}
+.g{width:1920px;height:1080px;position:relative;overflow:hidden;background:linear-gradient(180deg,#EAF1F5,#DDE8EE);color:var(--ink)}
+#map{position:absolute;inset:0}
+.zl{font-family:"Barlow Condensed",sans-serif;font-weight:800;text-transform:uppercase;paint-order:stroke;stroke:#fff;stroke-width:6px;stroke-linejoin:round;fill:var(--ink)}
+.za{font-family:"Barlow Condensed",sans-serif;font-weight:700;paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round;fill:var(--ink-2)}
+.col{position:absolute;left:64px;top:56px;width:660px}
+.eyebrow{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:26px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:"Barlow Condensed",sans-serif;font-weight:800;text-transform:uppercase;font-size:78px;line-height:.92;margin:6px 0 10px}
+.sub{font-size:23px;line-height:1.3;color:var(--ink-2);margin:0}
+.tbl{margin-top:22px;background:var(--panel);border:1px solid var(--rule);border-radius:12px;box-shadow:0 10px 26px -16px rgba(16,34,43,.5);overflow:hidden}
+.tbl .cap{padding:12px 18px;font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:24px;text-transform:uppercase;letter-spacing:.04em;background:#10222B;color:#fff}
+.tbl .cap span{color:#FFC85A}
+.tr{display:grid;grid-template-columns:1fr 150px 150px;align-items:center;padding:5px 18px;border-top:1px solid #E4E9E9}
+.tr.h{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:17px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);padding-top:9px;padding-bottom:5px}
+.tr .c b{display:block;font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:24px;line-height:1.05;text-transform:uppercase}
+.tr .c small{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:15px;letter-spacing:.06em;color:var(--ink-3);text-transform:uppercase}
+.tr .t{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:28px;font-variant-numeric:tabular-nums}
+.tr .t small{font-size:16px;margin-left:3px;color:var(--ink-3)}
+.tr.chg{background:#FFF6D8}
+.tr.chg .t.new{color:var(--hot)}
+.tr i{display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:8px;vertical-align:1px;border:1px solid rgba(16,34,43,.25)}
+.note{margin-top:14px;font-size:18px;line-height:1.35;color:var(--ink-2)}
+.note b{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:20px;text-transform:uppercase;color:var(--hot)}
+.foot{position:absolute;right:40px;bottom:18px;font-size:14px;color:var(--ink-3);text-align:right}
+.logo{position:absolute;right:40px;top:40px}
+.logo img{height:58px;display:block}
+</style>
+</head>
+<body>
+<div class="stage"><div class="scaler" id="scaler"><div class="g" id="graphic">
+  <svg id="map" width="1920" height="1080" viewBox="0 0 1920 1080"></svg>
+  <div class="col">
+    <div class="eyebrow">Sunday, Nov. 1 · 2 AM local time</div>
+    <h1>Canada falls back</h1>
+    <p class="sub">Most of Canada turns its clocks back one hour overnight. Saskatchewan, Yukon and Quebec's Lower North Shore don't change, so they shift an hour against everyone else.</p>
+    <div class="tbl" id="tbl"><div class="cap">When it's <span>noon in St. John's</span></div>
+      <div class="tr h"><div>City</div><div>Today (Sat)</div><div>Tomorrow (Sun)</div></div></div>
+    <div class="note"><b>Highlighted:</b> places that don't change their clocks. Compared with Newfoundland, they're an hour later tomorrow.</div>
+  </div>
+  <div class="logo"><img src="logo.png" alt="Sheerr Weather"></div>
+  <div class="foot">Zone boundaries simplified · small local exceptions not shown (e.g. northeast B.C., Atikokan, Southampton Island)</div>
+</div></div></div>
+<script src="data.js"></script>
+<script>
+(function(){
+  var D = window.TZ, NS = "http://www.w3.org/2000/svg", m = document.getElementById("map");
+  if (new URLSearchParams(location.search).has("export")) document.body.classList.add("export");
+  function el(p, tag, a, t){ var n = document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); if (t != null) n.textContent = t; p.appendChild(n); return n; }
+  var defs = el(m, "defs", {}), pat = el(defs, "pattern", {id:"hatch", width:10, height:10, patternUnits:"userSpaceOnUse", patternTransform:"rotate(45)"});
+  el(pat, "rect", {width:10, height:10, fill:"#F7DB82"}); el(pat, "rect", {width:4, height:10, fill:"#F2C230"});
+  var Z = D.zones, keys = ["PT", "YT", "MT", "SK", "CT", "ET", "AT", "QA", "NT"];
+  keys.forEach(function(k){ var z = Z[k]; el(m, "path", {d:z.d, fill:z.nochange ? "url(#hatch)" : z.colour, stroke:"#fff", "stroke-width":1.6, "stroke-linejoin":"round"}); });
+  keys.forEach(function(k){ var z = Z[k]; el(m, "path", {d:z.d, fill:"none", stroke:"#10222B", "stroke-width":.7, opacity:.35}); });
+  function off(o){ var s = o < 0 ? "−" : "+", a = Math.abs(o), h = Math.floor(a), mm = Math.round((a - h) * 60); return "UTC" + s + h + (mm ? ":" + String(mm).padStart(2, "0") : ""); }
+  // map labels: zone name, today -> tomorrow abbreviation
+  var LBL = {PT:[0, 0], YT:[0, 0], MT:[0, -6], SK:[0, 30], CT:[10, 0], ET:[0, 0], AT:[-40, 60], QA:[-20, -90], NT:[20, 95]};
+  keys.forEach(function(k){ var z = Z[k], a = z.anchor, o = LBL[k], x = a[0] + o[0], y = a[1] + o[1];
+    if (k === "AT" || k === "QA" || k === "NT") el(m, "line", {x1:a[0], y1:a[1], x2:x, y2:y - 8, stroke:"#10222B", "stroke-width":1.4, opacity:.6});
+    el(m, "text", {class:"zl", x:x, y:y, "text-anchor":"middle", "font-size":k === "QA" ? 18 : 24}, z.label);
+    el(m, "text", {class:"za", x:x, y:y + 22, "text-anchor":"middle", "font-size":18}, z.nochange ? z.today[0] + " · no change" : z.today[0] + " → " + z.tomorrow[0]); });
+  // table: local time when it's noon in St. John's
+  function at(o, nl){ var h = 12 + (o - nl), hh = Math.floor(h + 1e-6), mm = Math.round((h - hh) * 60); return ((hh + 11) % 12 + 1) + ":" + String(mm).padStart(2, "0") + '<small>' + (hh < 12 ? "AM" : "PM") + '</small>'; }
+  var tbl = document.getElementById("tbl"), nl0 = Z.NT.today[1], nl1 = Z.NT.tomorrow[1];
+  ["NT", "AT", "QA", "ET", "CT", "SK", "MT", "YT", "PT"].forEach(function(k){ var z = Z[k], r = document.createElement("div");
+    var t0 = at(z.today[1], nl0), t1 = at(z.tomorrow[1], nl1), chg = t0 !== t1;
+    r.className = "tr" + (chg ? " chg" : "");
+    r.innerHTML = '<div class="c"><b><i style="background:' + (z.nochange ? "repeating-linear-gradient(45deg,#F2C230 0 3px,#F7DB82 3px 7px)" : z.colour) + '"></i>' + z.city + '</b><small>' + z.label + '</small></div>' +
+      '<div class="t">' + t0 + '</div><div class="t' + (chg ? " new" : "") + '">' + t1 + '</div>';
+    tbl.appendChild(r); });
+  var s = document.getElementById("scaler"), st = s.parentNode;
+  function fit(){ var k = document.body.classList.contains("export") ? 1 : Math.min(1, st.clientWidth / 1920); s.style.transform = "scale(" + k + ")"; st.style.height = (1080 * k) + "px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

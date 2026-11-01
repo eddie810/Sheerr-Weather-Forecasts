@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Radar Precipitation Type</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* Radar precip-type loop, 16:9 1920x1080, house style. Data from build.py (git-ignored, private). window.setT(t) for render.js */
+:root{ --page:#DCE2E2; --paper:#EEF1F0; --ink:#10222B; --ink-2:#4E656F; --ink-3:#6E838C; --rule:#C9D3D4; --accent:#1C8CC4; }
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#0C171D; } }
+:root[data-theme="dark"]{ --page:#0C171D; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:16px;font-family:"Source Sans 3",-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+body.export{padding:0}
+.stage{max-width:1920px;margin:0 auto}
+.scaler{width:1920px;height:1080px;transform-origin:top left}
+.g{width:1920px;height:1080px;position:relative;overflow:hidden;background:var(--paper);color:var(--ink)}
+.g > img{position:absolute;left:0;top:0;width:1920px;height:1080px}
+#ov{position:absolute;left:0;top:0}
+.town{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.03em;paint-order:stroke;stroke:#fff;stroke-width:6px;stroke-linejoin:round;fill:var(--ink)}
+.banner{position:absolute;left:0;right:0;top:0;height:118px;background:rgba(255,255,255,.96);border-bottom:1px solid var(--rule);
+  display:flex;align-items:center;padding:0 56px;gap:28px;box-shadow:0 8px 24px -16px rgba(16,34,43,.5)}
+.banner .live{display:flex;align-items:center;gap:10px;background:var(--accent);color:#fff;font-family:"Barlow Condensed",sans-serif;font-weight:800;
+  font-size:26px;letter-spacing:.1em;text-transform:uppercase;padding:8px 16px;border-radius:4px}
+.banner .live i{width:12px;height:12px;border-radius:50%;background:#fff}
+.banner h1{margin:0;font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:62px;text-transform:uppercase;line-height:1}
+.banner .eb{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:22px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);margin-top:2px}
+.banner .clock{margin-left:auto;text-align:right;font-family:"Barlow Condensed",sans-serif}
+.banner .clock b{display:block;font-weight:800;font-size:54px;line-height:1;font-variant-numeric:tabular-nums}
+.banner .clock span{font-weight:600;font-size:20px;letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase}
+.bar{position:absolute;left:56px;right:56px;top:134px;height:8px;border-radius:4px;background:rgba(16,34,43,.12)}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--accent)}
+.legend{position:absolute;right:40px;bottom:40px;background:rgba(255,255,255,.96);border:1px solid var(--rule);border-radius:10px;padding:16px 20px 14px;
+  box-shadow:0 10px 26px -14px rgba(16,34,43,.55);display:grid;grid-template-columns:repeat(3,auto);gap:8px 22px}
+.legend .k{grid-column:1/-1;font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:22px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+.legend span{display:flex;align-items:center;gap:8px;font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:19px;white-space:nowrap}
+.legend span i{width:28px;height:16px;border-radius:3px}
+.foot{position:absolute;left:40px;bottom:40px;display:flex;align-items:flex-end;gap:20px}
+.foot .logo{background:rgba(255,255,255,.96);border-radius:12px;padding:10px 16px;box-shadow:0 10px 26px -14px rgba(16,34,43,.55)}
+.foot .logo img{height:58px;display:block}
+.foot .src{font-size:15px;line-height:1.35;color:var(--ink-2);background:rgba(255,255,255,.85);border-radius:6px;padding:6px 10px}
+</style>
+</head>
+<body>
+<div class="stage"><div class="scaler" id="scaler"><div class="g" id="graphic">
+  <img src="map.png" alt="">
+  <img id="pa" alt=""><img id="pb" alt="">
+  <svg id="ov" width="1920" height="1080"></svg>
+  <div class="banner"><div class="live"><i></i>Radar</div>
+    <div><h1>Precipitation type</h1><div class="eb" id="place"></div></div>
+    <div class="clock"><b id="clk"></b><span id="clk2"></span></div></div>
+  <div class="bar"><i id="prog"></i></div>
+  <div class="legend" id="legend"><div class="k">What's falling</div></div>
+  <div class="foot"><div class="logo"><img src="logo.png" alt="Sheerr Weather"></div>
+    <div class="src">Radar surface precipitation type: Environment and Climate Change Canada · 1 km, every 6 minutes<br>© Mapbox © OpenStreetMap</div></div>
+</div></div></div>
+<script src="data.js"></script>
+<script>
+(function(){
+  var D = window.PT, Q = new URLSearchParams(location.search), N = D.frames.length;
+  if (Q.has("export")) document.body.classList.add("export");
+  document.getElementById("place").textContent = D.place + " · last 2 hours";
+  // legend: only the classes that show up in the loop
+  var seen = {}; D.frames.forEach(function(f){ Object.keys(f.counts).forEach(function(k){ seen[k] = 1; }); });
+  var lg = document.getElementById("legend");
+  D.classes.forEach(function(c){ if (!seen[c[0]]) return; var s = document.createElement("span"); s.innerHTML = '<i style="background:' + c[1] + '"></i>' + c[0]; lg.appendChild(s); });
+  var NS = "http://www.w3.org/2000/svg", ov = document.getElementById("ov");
+  function el(p, tag, a, t){ var n = document.createElementNS(NS, tag); for (var k in a) n.setAttribute(k, a[k]); if (t != null) n.textContent = t; p.appendChild(n); return n; }
+  Object.keys(D.towns).forEach(function(n){ var p = D.towns[n];
+    el(ov, "circle", {cx:p[0], cy:p[1], r:6, fill:"#10222B", stroke:"#fff", "stroke-width":2.5});
+    el(ov, "text", {class:"town", x:p[0] + 12, y:p[1] + 8, "font-size":24}, n); });
+  // local time label: Eastern (EDT/EST) by default, ?tz=-2.5 for NDT etc.
+  var TZ = +(Q.get("tz") || -4), TZN = Q.get("tzname") || (TZ === -4 ? "EDT" : TZ === -2.5 ? "NDT" : TZ === -3 ? "ADT" : "");
+  function clock(iso){ var d = new Date(Date.parse(iso) + TZ * 3600e3), h = d.getUTCHours(), m = d.getUTCMinutes();
+    return {loc:((h + 11) % 12 + 1) + ":" + String(m).padStart(2, "0") + " " + (h < 12 ? "AM" : "PM") + " " + TZN,
+            z:String(new Date(iso).getUTCHours()).padStart(2, "0") + String(new Date(iso).getUTCMinutes()).padStart(2, "0") + "Z · " +
+              d.toLocaleDateString("en-CA", {weekday:"short", month:"short", day:"numeric", timeZone:"UTC"})}; }
+  var pa = document.getElementById("pa"), pb = document.getElementById("pb"), loaded = -1;
+  function show(fr){
+    fr = Math.max(0, Math.min(N - 1, fr)); var k = Math.min(N - 2, Math.floor(fr)), f = fr - k;
+    if (loaded !== k) { pa.src = D.frames[k].png; pb.src = D.frames[k + 1].png; loaded = k; }
+    pb.style.opacity = f;                                     // crossfade between 6-minute frames
+    var c = clock(D.frames[f < .5 ? k : k + 1].utc);
+    document.getElementById("clk").textContent = c.loc; document.getElementById("clk2").textContent = c.z;
+    document.getElementById("prog").style.width = (fr / (N - 1) * 100) + "%";
+  }
+  // movie: 0.55 s per 6-minute step, hold 2 s on the latest frame
+  var STEP = .55, HOLD = 2.0; window.ANIM_LEN = (N - 1) * STEP + HOLD;
+  window.setT = function(t){ show(Math.min(N - 1, t / STEP)); };
+  show(Q.has("frame") ? +Q.get("frame") : N - 1);
+  Promise.all([].slice.call(document.images).map(function(i){ return i.complete ? 0 : new Promise(function(r){ i.onload = i.onerror = r; }); }))
+    .then(function(){ window.READY = true; });
+  var s = document.getElementById("scaler"), st = s.parentNode;
+  function fit(){ var r = document.body.classList.contains("export") ? 1 : Math.min(1, st.clientWidth / 1920); s.style.transform = "scale(" + r + ")"; st.style.height = (1080 * r) + "px"; }
+  window.addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>
