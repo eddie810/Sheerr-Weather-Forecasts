@@ -75,6 +75,9 @@ def main(ne):
     P = lambda g: make_valid(transform(lambda x, y, z=None: tr.transform(x, y), g))
     pu, pc = P(usa), P(canada)
     border = pc.boundary.intersection(pu.buffer(15000))                 # the shared land border (15 km tolerance)
+    # provincial/territorial borders inside Canada (thin), so e.g. the Ontario part of the Manitoba-time zone reads
+    pv = [P(make_valid(shape(f["geometry"])).intersection(box(-140, 24, -50, 70))) for f in feats if f["properties"].get("admin") == "Canada"]
+    provb = unary_union([a.boundary.intersection(unary_union([b for b in pv if b is not a]).buffer(8000)) for a in pv])
     bb = [g.bounds for g in proj.values()]
     minx, miny, maxx, maxy = min(b[0] for b in bb), min(b[1] for b in bb), max(b[2] for b in bb), max(b[3] for b in bb)
     PW, PH = 860, 620
@@ -101,7 +104,7 @@ def main(ne):
               "Chicago": (41.88, -87.63), "Toronto": (43.65, -79.38), "New York": (40.71, -74.01), "Blanc-Sablon": (51.43, -57.13),
               "Halifax": (44.65, -63.57), "St. John's": (47.56, -52.71)}
     tags = {"YT": (-135.5, 63.0), "BC": (-123.5, 54.5), "PT": (-120.5, 39.0), "AZ": (-111.7, 34.3), "AB": (-115.0, 56.5),
-            "AB2": (-121.0, 64.5), "MT": (-107.5, 42.5), "SK": (-105.8, 54.0), "MB": (-97.5, 55.5), "NUW": (-108.0, 67.0),
+            "AB2": (-121.0, 64.5), "MT": (-107.5, 42.5), "SK": (-105.8, 54.0), "MB": (-97.5, 55.5), "MB2": (-91.6, 51.6), "NUW": (-108.0, 67.0),
             "NUC": (-94.0, 63.5), "CT": (-96.5, 36.5), "ET": (-84.5, 50.5), "ET2": (-80.5, 37.5), "ET3": (-73.0, 53.5),
             "QA": (-59.6, 51.0), "AT": (-62.5, 54.5), "AT2": (-64.0, 46.0), "NT": (-55.8, 48.7)}
     def line(g):
@@ -114,7 +117,7 @@ def main(ne):
                 stack.extend(h.geoms)
         return "".join(out)
     lab = {"CANADA": (-100.0, 59.0), "UNITED STATES": (-99.0, 40.5)}
-    data = {"w": PW, "h": PH, "border": line(border), "countries": {k: [round(v, 1) for v in px(*tr.transform(*ll))] for k, ll in lab.items()}, "tags": {k: [round(v, 1) for v in px(*tr.transform(lo, la))] for k, (lo, la) in tags.items()}, "zones": {k: svg(g) for k, g in proj.items()}, "off": OFF,
+    data = {"w": PW, "h": PH, "border": line(border), "prov": line(provb), "countries": {k: [round(v, 1) for v in px(*tr.transform(*ll))] for k, ll in lab.items()}, "tags": {k: [round(v, 1) for v in px(*tr.transform(lo, la))] for k, (lo, la) in tags.items()}, "zones": {k: svg(g) for k, g in proj.items()}, "off": OFF,
             "cities": {n: [round(v, 1) for v in px(*tr.transform(lo, la))] for n, (la, lo) in cities.items()}}
     open(os.path.join(HERE, "map-data.js"), "w").write("window.TM = " + json.dumps(data) + ";\n")
     print(data["cities"])

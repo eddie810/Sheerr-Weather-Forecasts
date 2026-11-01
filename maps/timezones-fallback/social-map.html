@@ -47,7 +47,7 @@ h1{font-family:"Barlow Condensed",sans-serif;font-weight:900;text-transform:uppe
   <div class="top"><div class="eyebrow">Daylight time ends Sunday, Nov. 1 · 2 AM</div><h1>How the time zones change</h1></div>
   <div class="blk" style="top:166px"><svg id="m0"></svg><div class="dt"><b>Saturday, Oct. 31</b><span>Daylight time</span></div></div>
   <div class="blk b" style="top:680px"><svg id="m1"></svg><div class="dt"><b>Sunday, Nov. 1</b><span>Standard time</span></div></div>
-  <div class="note"><i></i><div><b>New this year:</b> B.C., Alberta, the N.W.T., Manitoba and northwestern Ontario no longer change their clocks (B.C.'s East Kootenay and Golden stay on Alberta's time). Striped areas stay put (also Yukon, Saskatchewan, Arizona and Quebec's Lower North Shore). Same moment on both maps: 12 PM in Toronto and New York on Saturday.</div></div>
+  <div class="note"><i></i><div><b>New this year:</b> B.C., Alberta, the N.W.T., Manitoba and northwestern Ontario (west of 90°W: Kenora, Dryden, Fort Frances, Sioux Lookout, Red Lake) no longer change their clocks (B.C.'s East Kootenay and Golden stay on Alberta's time). Striped areas stay put (also Yukon, Saskatchewan, Arizona and Quebec's Lower North Shore). Same moment on both maps: 12 PM in Toronto and New York on Saturday.</div></div>
   <div class="foot"><img src="logo.png" alt="Sheerr Weather"><span>Zone boundaries simplified · Alaska and Hawaii not shown</span></div>
 </div></div></div>
 <script src="map-data.js"></script>
@@ -60,6 +60,7 @@ h1{font-family:"Barlow Condensed",sans-serif;font-weight:900;text-transform:uppe
   var COL = {"-8":"#2E7FD8", "-7":"#46B6E8", "-6":"#2FC08F", "-5":"#E8366F", "-4":"#F5B800", "-3.5":"#8A5BD6", "-3":"#F07A1A", "-2.5":"#7B3FB8"};
   var NONE = {BC:1, YT:1, AB:1, SK:1, MB:1, AZ:1, QA:1};
   function t(o){ var h = UTC + o, hh = Math.floor(h + 1e-6), mm = Math.round((h - hh) * 60); return ((hh + 11) % 12 + 1) + (mm ? ":" + String(mm).padStart(2, "0") : "") + (hh < 12 ? " AM" : " PM"); }
+  var NAME = {MB2:"NW ONTARIO"};
   var MOVE = {AT:[600, 172], QA:[640, 278], NT:[800, 236], AT2:[700, 342], YT:[163.8, 100], NUW:[330, 70], NUC:[420, 120], AB2:[240, 135]};
   var Q = new URLSearchParams(location.search), TV = Q.get("fmt") === "tv", W = TV ? 1920 : 1080, H = TV ? 1080 : 1350;
   if (TV) { document.body.classList.add("tv"); document.getElementById("graphic").classList.add("tv"); }
@@ -74,6 +75,8 @@ h1{font-family:"Barlow Condensed",sans-serif;font-weight:900;text-transform:uppe
       if (NONE[k]) { var p = el(defs, "pattern", {id:"h" + i + k, width:7, height:7, patternUnits:"userSpaceOnUse", patternTransform:"rotate(45)"});
         el(p, "rect", {width:7, height:7, fill:c}); el(p, "rect", {width:2.2, height:7, fill:"#fff", opacity:.5}); }
       el(svg, "path", {d:D.zones[k], fill:NONE[k] ? "url(#h" + i + k + ")" : c, stroke:"#fff", "stroke-width":1.1, "stroke-linejoin":"round"}); });
+    // provincial borders, thin dashed (shows the part of Ontario on Manitoba's time)
+    el(svg, "path", {d:D.prov, fill:"none", stroke:"#10222B", "stroke-width":1.1, "stroke-dasharray":"4 3", opacity:.55, "stroke-linejoin":"round"});
     // international border, drawn heavy so the two countries read as separate
     el(svg, "path", {d:D.border, fill:"none", stroke:"#fff", "stroke-width":6, "stroke-linejoin":"round", "stroke-linecap":"round"});
     el(svg, "path", {d:D.border, fill:"none", stroke:"#10222B", "stroke-width":2.6, "stroke-linejoin":"round", "stroke-linecap":"round"});
@@ -86,7 +89,8 @@ h1{font-family:"Barlow Condensed",sans-serif;font-weight:900;text-transform:uppe
       if (MOVE[k]) el(svg, "line", {x1:D.tags[k][0], y1:D.tags[k][1], x2:p[0], y2:p[1], stroke:"#10222B", "stroke-width":1.4});
       var g = el(svg, "g", {transform:"translate(" + p[0] + "," + p[1] + ")"});
       el(g, "rect", {x:-w / 2, y:-12, width:w, height:24, rx:3, fill:"#10222B", stroke:"#fff", "stroke-width":1.4});
-      el(g, "text", {class:"tag", x:0, y:6, "text-anchor":"middle", "font-size":17, fill:"#fff"}, txt); });
+      el(g, "text", {class:"tag", x:0, y:6, "text-anchor":"middle", "font-size":17, fill:"#fff"}, txt);
+      if (NAME[k]) el(g, "text", {class:"tag", x:0, y:-18, "text-anchor":"middle", "font-size":16, fill:"#10222B", stroke:"#fff", "stroke-width":4, "paint-order":"stroke"}, NAME[k]); });
   }
   draw(0, "today"); draw(1, "tomorrow");
   var s = document.getElementById("scaler"), st = s.parentNode;
