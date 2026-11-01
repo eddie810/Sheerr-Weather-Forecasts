@@ -69,6 +69,15 @@ from `GET /wp-json/sw-stats/v1/tops?start=&end=`); upload each as an asset and p
 Yesterday / 7 days / 28 days switch (`dash/params` period, default 28).
 A scheduled task refreshes it every morning at 6:47 AM NL time. The snapshot stops (and the dashboard goes stale) if any source errors, e.g. an expired YouTube connection (Settings → General → YouTube Connect).
 
+## Graphics (maps for posts)
+
+All Sheerr Weather maps, charts, alert graphics and videos live in the repo **`eddie810/-sheerr-weather-voice`**
+(Eddie's Mac: `/Users/es/sheerr-graphics`; branch `claude/merge-cloud-maps` merged the cloud MAP MAKER copy on Nov 1, 2026).
+Its `README.md` lists every map type with build/render commands; its `CLAUDE.md` has the house style and rules. When
+writing a Morning Briefing or Evening Forecast, build matching maps from it using the same numbers as the post, upload
+them to WP media and place them in the post. In this cloud environment the Mapbox key is `MAP_BOX_API_KEY`
+(the graphics scripts read `MAPBOX_ACCESS_TOKEN`: `export MAPBOX_ACCESS_TOKEN=$MAP_BOX_API_KEY`); `TWC_API_KEY` is set.
+
 ## Blog posts
 
 Always save as **draft** unless Eddie says publish/schedule. Show him what you wrote and flag guesses.
