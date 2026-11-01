@@ -56,6 +56,9 @@ def main(start, end, out, note=""):
     wk = days_between(start, end)
     pw = days_between(str(date.fromisoformat(start) - timedelta(days=7)), str(date.fromisoformat(end) - timedelta(days=7)))
     fbd, appd, webd, ytd, adsd = d["fb"]["page"]["daily"], d["app"]["daily"], d["web"]["daily"], d["yt"]["daily"], d["ads"]["daily"]
+    if d.get("x", {}).get("error"):
+        sys.exit("X (Buffer) stats error: " + d["x"]["error"])
+    xd, fbpd = d["x"]["daily"], d["fb"]["daily"]  # X: a post's lifetime numbers count on the day it was posted
     # YouTube data runs 2-3 days behind: use the latest 7 days that have it
     yt_last = max(str(r["k"]) for r in ytd if r.get("views") is not None and str(r["k"]) <= end.replace("-", ""))
     ye = date(int(yt_last[:4]), int(yt_last[4:6]), int(yt_last[6:]))
@@ -68,17 +71,20 @@ def main(start, end, out, note=""):
         "yt": (total(ytd, "views", ywk), total(ytd, "views", ypw)),
         "ads": (total(adsd, "imp", wk), total(adsd, "imp", pw)),
         "installs": (total(appd, "installs", wk), total(appd, "installs", pw)),
+        "x": (total(xd, "imp", wk), total(xd, "imp", pw)),
+        "clicks": (total(fbpd, "link", wk) + total(xd, "clicks", wk), total(fbpd, "link", pw) + total(xd, "clicks", pw)),
     }
-    tot = sum(m[k][0] for k in ("fb", "app", "web", "yt"))
-    ptot = sum(m[k][1] for k in ("fb", "app", "web", "yt"))
+    tot = sum(m[k][0] for k in ("fb", "x", "app", "web", "yt"))
+    ptot = sum(m[k][1] for k in ("fb", "x", "app", "web", "yt"))
     ga = api("sw-ga/v1/report?property=498016949", {"dateRanges": [{"startDate": start, "endDate": end}], "metrics": [{"name": "totalUsers"}]})
     app_users = int(ga["rows"][0]["metricValues"][0]["value"])
     busy = max(wk, key=lambda k: sum(total(rows, "views", [k]) for rows in (fbd, appd, webd)))
     s, e = date.fromisoformat(start), date.fromisoformat(end)
     rng = f"{s:%B} {s.day}–{e.day}, {e.year}" if s.month == e.month else f"{s:%B} {s.day} – {e:%B} {e.day}, {e.year}"
     ytsub = "views" + ("" if yt_last == end.replace("-", "") else f" · {date.fromisoformat(str(ye - timedelta(days=6))):%b} {(ye - timedelta(days=6)).day}–{ye:%b} {ye.day}")
-    tiles = [("Facebook", "views", m["fb"]), ("Sheerr Weather app", "screen views", m["app"]), ("Ad impressions", "app + website", m["ads"]),
-             ("YouTube", ytsub, m["yt"]), ("sheerrweather.ca", "page views", m["web"]), ("New app installs", "this week", m["installs"])]
+    tiles = [("Facebook", "views", m["fb"]), ("X", "impressions", m["x"]), ("Sheerr Weather app", "screen views", m["app"]), ("YouTube", ytsub, m["yt"]),
+             ("sheerrweather.ca", "page views", m["web"]), ("Link clicks", "from Facebook + X posts", m["clicks"]), ("Ad impressions", "app + website", m["ads"]),
+             ("New app installs", "this week", m["installs"])]
     tiles_html = "".join(f'<div class="t"><div class="tl">{a}</div><div class="tv">{fmt(v[0])}</div><div class="ts"><span>{b}</span>{chg(*v)}</div></div>' for a, b, v in tiles)
     subs = int(d["yt"]["channel"]["subscriberCount"])
     fol = [(fmt(d["fb"]["followers"]) + "+", "Facebook followers"), (fmt(app_users) + "+", "App users this week"), (fmt(subs) + "+", "YouTube subscribers")]
@@ -98,15 +104,15 @@ h1{{font:800 92px/.92 "Barlow Condensed";text-transform:uppercase;margin:10px 0 
 .big .n{{font:800 116px/1 "Barlow Condensed";color:#0C2236}}
 .big .l{{font:600 30px/1.2 "Source Sans 3";color:#4E656F;max-width:420px}}
 .big .l em{{margin-top:6px;font-size:24px}}
-.grid{{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:22px 56px 0}}
-.t{{background:#fff;border:1px solid #D5DDDE;border-radius:18px;padding:12px 26px}}
-.tl{{font:700 24px "Barlow Condensed";letter-spacing:.06em;text-transform:uppercase;color:#1C8CC4}}
-.tv{{font:800 56px/1 "Barlow Condensed";color:#10222B;margin-top:4px}}
-.ts{{font:600 21px "Source Sans 3";color:#6E838C;margin-top:6px;display:flex;justify-content:space-between;gap:10px}}
+.grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:34px 56px 0}}
+.t{{background:#fff;border:1px solid #D5DDDE;border-radius:18px;padding:24px 20px 22px}}
+.tl{{font:700 21px/1.1 "Barlow Condensed";letter-spacing:.05em;text-transform:uppercase;color:#1C8CC4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+.tv{{font:800 62px/1 "Barlow Condensed";color:#10222B;margin-top:6px}}
+.ts{{font:600 18px/1.25 "Source Sans 3";color:#6E838C;margin-top:8px;display:flex;flex-direction:column;gap:2px;min-height:48px}}
 em{{font-style:normal;font-weight:700;white-space:nowrap}}em.up{{color:#0A7A3D}}
-.fol{{display:grid;grid-template-columns:repeat(3,1fr);margin:16px 56px 0;border-top:2px solid #C9D3D4;padding-top:14px}}
+.fol{{display:grid;grid-template-columns:repeat(3,1fr);margin:30px 56px 0;border-top:2px solid #C9D3D4;padding-top:24px}}
 .fol div{{text-align:center}}.fol b{{display:block;font:800 52px/1 "Barlow Condensed";color:#0C2236}}.fol span{{font:600 20px "Source Sans 3";color:#4E656F;text-transform:uppercase;letter-spacing:.04em}}
-.cta{{margin:18px 56px 0;background:#0C2236;border-radius:18px;padding:20px 30px;display:flex;align-items:center;justify-content:space-between;gap:20px;color:#fff}}
+.cta{{margin:32px 56px 0;background:#0C2236;border-radius:18px;padding:20px 30px;display:flex;align-items:center;justify-content:space-between;gap:20px;color:#fff}}
 .cta b{{display:block;font:800 36px/1.05 "Barlow Condensed";text-transform:uppercase}}.cta span{{display:block;margin-top:6px;font:600 20px "Source Sans 3";color:#B9CCDA}}.cta span b{{display:inline;font:700 20px "Source Sans 3";text-transform:none;color:#fff}}
 .cta i{{font:700 24px "Source Sans 3";font-style:normal;color:#0C2236;background:#2BA6DE;border-radius:999px;padding:12px 22px;white-space:nowrap}}
 .busy{{margin:14px 56px 0;font:400 24px "Source Sans 3";color:#4E656F;text-align:center}}.busy b{{color:#10222B}}
@@ -114,7 +120,7 @@ em{{font-style:normal;font-weight:700;white-space:nowrap}}em.up{{color:#0A7A3D}}
 .ft img{{height:58px}}.ft span{{font:600 20px "Source Sans 3";color:#6E838C;text-align:right;line-height:1.35}}
 </style></head><body><div class="g" id="graphic">
 <div class="hd"><div class="ey">{rng}</div><h1>This week at<br>Sheerr Weather</h1></div>
-<div class="big"><div class="n">{fmt(tot)}+</div><div class="l">views across Facebook, the app, YouTube and sheerrweather.ca{big_chg}</div></div>
+<div class="big"><div class="n">{fmt(tot)}+</div><div class="l">views across Facebook, X, the app, YouTube and sheerrweather.ca{big_chg}</div></div>
 <div class="grid">{tiles_html}</div>
 <div class="fol">{fol_html}</div>
 <div class="cta"><div><b>Put your business in front of this audience</b><span>{busy_line} · Ads on the app, website, Facebook and YouTube</span></div><i>sheerrweather.ca/advertise</i></div>
