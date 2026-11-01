@@ -94,6 +94,7 @@ Make targeted find/replace edits on the current content rather than rewriting th
 ### Morning Briefing (category 3)
 - Title `Tuesday Morning’s Weather Briefing — October 13, 2026`, slug `tuesday-mornings-weather-briefing-october-13-2026`,
   excerpt `A detailed outlook about what to expect today across Newfoundland and Labrador.`
+- Title image: make it with `graphics/briefing-cover/build.py` in the graphics repo (same look as Eddie's Canva covers: blurred photo, white logo, "<DAY> MORNING’S / WEATHER BRIEFING" + date). Upload as `MMDDYY-THUMB.png`, put it first in the post and set it as the featured image.
 - Layout: title image (featured image too) → `Good <Day> Morning!` + 4–6 bullets → separator → discussion →
   (sponsor lines, when there's a sponsor) → regional forecasts → `Looking ahead:` → footer (app / 📍 Regional Forecast pages teaser linking every region page / Map Room / Highway Cams links).
 - **No sponsor lines for now** (RMM's run ended Oct 19, 2026). Without a "sponsored by" line the post gets only the HPSL banner under the title, no 300×250 squares (snippet 7).
