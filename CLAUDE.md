@@ -36,7 +36,7 @@ WordPress site, not the Python code in this repo. Write to Eddie in plain langua
 |----|--------------|
 | 5  | Live alert ticker, 24/7 channel slot fallback |
 | 6  | App-style mobile layout and bottom tab bar |
-| 7  | Google Ad Manager sponsor slots on posts (Morning Briefings: HPSL banner under the title; 300×250 units only when the post has a "sponsored by" line) |
+| 7  | Google Ad Manager sponsor slots on posts (Morning Briefings: banner under the title; when the post has a "sponsored by" line, a middle slot right under that line. `SW_AD_BRIEFING_SQUARE` = false (Nov 3, 2026, CU Financial Management) makes the middle slot a 728x90/320x50 banner and drops the bottom slot; true = RMM-style 300×250 squares in the middle + bottom) |
 | 11 | Homepage feeds: latest post, top stories, briefings, Latest Videos (YouTube playlist RSS, falls back to scraping the playlist page, then the last good list) |
 | 13 | Road Cams page + **511NL** road report; `sw_511_get($resource)` is the only 511NL caller (also used by Storm Centre 18 and Wreckhouse 40: event, windwarnings, winterroads v3, ferryterminals). Key in Settings → General (`sw_511_api_key`). 511NL allows **10 calls / 60 s per key** (they email a warning when exceeded): 15-min cache (Eddie: every 10–20 min is plenty), one-refresh-at-a-time lock (`sw_511_lock_<res>`), site-wide cap of 6 calls per rolling minute (`sw_511_calls`), else the last good copy (`sw_511_last_<res>`) |
 | 16 | Blog page (/blog/) with compact pager |
