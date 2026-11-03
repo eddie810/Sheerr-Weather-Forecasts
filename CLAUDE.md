@@ -24,6 +24,7 @@ WordPress site, not the Python code in this repo. Write to Eddie in plain langua
 - Private keys are stored as WordPress options and never exposed: `sw_twc_api_key` (weather.com / TWC),
   `sw_smg_token` (Streamology), `sw_fb_page_id` + `sw_fb_page_token` (Facebook Page "Meteorologist Eddie Sheerr", set in
   Settings → General; Page token expires Dec 18, 2026 unless Eddie swaps in a never-expiring one).
+- TWC API allowance: **1 million calls** (Eddie, Nov 3, 2026). Idea on hold: a daily forecast-accuracy check (TWC vs HRDPS vs RDPS vs GDPS against ECCC station obs, per variable / place / lead time) to pick the best source per field for Eddie's future app.
 - To read TWC data (Eddie prefers TWC over other sources): add a temporary admin-only, read-only snippet
   that calls `api.weather.com` with `get_option('sw_twc_api_key')`, use it, then **delete it**.
   Useful endpoints: `/v3/wx/forecast/daily/5day`, `/v3/wx/forecast/hourly/2day`,
