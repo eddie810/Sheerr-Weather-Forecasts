@@ -137,7 +137,7 @@ Quote Environment Canada warning details exactly (areas, gusts, timing).
 
 ## YouTube
 Channel @EddieSheerr (`UCx20u4KYgqx3XGLuBm1Uabw`), forecasts playlist "Sheerr Weather"
-(`PLRhEYLjVM6T3zn3xS6MN-1RUuyw2H4-lm`), 24/7 stream "Sheerr Weather 24" (ID in snippet 19).
+(`PLRhEYLjVM6T3zn3xS6MN-1RUuyw2H4-lm`), 24/7 stream "Sheerr Weather 24" (current video ID `wcDpJ7f_uFU` since Nov 8, 2026, set as SW_TV_YOUTUBE_ID in snippet 19, the only place it lives; feeds the homepage, /live/ and Storm Centre).
 
 ## This repo
 Python forecast generator (`sheerr/`, `templates/`, `config/`) — see README.md.
