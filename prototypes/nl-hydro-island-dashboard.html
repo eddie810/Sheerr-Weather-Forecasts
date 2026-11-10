@@ -80,6 +80,53 @@
   .day{border:1px solid var(--line);background:var(--panel2)}
   .bar{height:3px;border-radius:2px}
   #loading{position:fixed;inset:0;background:#090c10ee;display:flex;align-items:center;justify-content:center;z-index:50}
+  /* ---------- full-forecast pop-up ---------- */
+  .fbtn{display:inline-flex;align-items:center;gap:6px;font-family:"JetBrains Mono",Menlo,Consolas,monospace;font-size:10.5px;letter-spacing:.04em;color:var(--teal);border:1px solid #5eead466;background:#5eead40f;padding:4px 9px;border-radius:3px;cursor:pointer}
+  .fbtn:hover{background:#5eead422}
+  #siteModal{position:fixed;inset:0;z-index:45;background:#05070acc;display:none;align-items:stretch;justify-content:center}
+  .sm-panel{background:var(--bg);border:1px solid var(--line2);width:100%;max-width:1480px;margin:16px;display:flex;flex-direction:column;min-height:0;border-radius:4px;box-shadow:0 20px 60px #000c}
+  .sm-tabs{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--line);padding:0 10px;flex:none;scrollbar-width:none}
+  .sm-tab{padding:10px 14px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);border-bottom:2px solid transparent;white-space:nowrap;cursor:pointer;font-weight:600;background:none}
+  .sm-tab.on{color:#e6edf5;border-bottom-color:var(--teal)}
+  .sm-body{flex:1;overflow:auto;padding:16px;min-height:0}
+  .nav{width:34px;height:34px;flex:none;border:1px solid var(--line2);background:var(--panel2);color:#c9d3df;border-radius:3px;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .nav:hover{border-color:var(--teal);color:var(--teal)}
+  .tile{background:var(--panel2);border:1px solid var(--line);border-radius:3px;padding:8px 10px}
+  .tile .k{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:600}
+  .tile .v{font-family:"JetBrains Mono",Menlo,Consolas,monospace;font-size:17px;color:#e6edf5;font-weight:700;margin-top:2px}
+  .tile .s{font-family:"JetBrains Mono",Menlo,Consolas,monospace;font-size:10px;color:var(--dim)}
+  .card{background:var(--panel2);border:1px solid var(--line);border-radius:3px}
+  .readout{position:sticky;top:-16px;z-index:3;background:#0d1218f5;border:1px solid var(--line2);border-radius:3px;padding:7px 10px;font-size:11px;color:#c9d3df;margin-bottom:10px}
+  svg.tc{display:block;width:100%;height:auto;cursor:crosshair}
+  table.big{border-collapse:collapse;width:100%;font-size:11px}
+  table.big th{position:sticky;top:-16px;background:#121821;z-index:2;font-size:9.5px;letter-spacing:.06em;color:var(--dim);font-weight:600;text-transform:uppercase;padding:6px 5px;border-bottom:1px solid var(--line2);text-align:right;white-space:nowrap}
+  table.big td{padding:4px 5px;border-bottom:1px solid #18202a;text-align:right;white-space:nowrap}
+  table.big th:first-child,table.big td:first-child{text-align:left;position:sticky;left:0;background:#0d1218}
+  table.big tr.daybreak td{border-top:1px solid #3a4658}
+  table.big tr:hover td{background:#16202b}
+
+  /* ---------- tablet: list + map, details in the pop-up ---------- */
+  @media (max-width:1279px){
+    #main{grid-template-columns:270px minmax(0,1fr) !important}
+    #main > aside:last-of-type{display:none}
+    header .hdr-sub, #srcChip{display:none}
+  }
+  /* ---------- phone: single column ---------- */
+  @media (max-width:767px){
+    body{overflow:auto;font-size:13px}
+    header{height:auto !important;flex-wrap:wrap;gap:6px;padding:8px 12px !important}
+    header .hdr-sub, #srcChip{display:none}
+    #main{display:block !important}
+    #main > aside:first-of-type{border-right:0}
+    #siteList{overflow:visible}
+    #main > section{height:72vh;border-top:1px solid var(--line)}
+    .site-item{padding:12px 14px}
+    .site-item .chip{font-size:11px}
+    .sm-panel{margin:0;border-radius:0;border:0}
+    .sm-body{padding:12px}
+    .readout{top:-12px}
+    table.big th{top:-12px}
+  }
 </style>
 </head>
 <body class="flex flex-col">
@@ -97,7 +144,7 @@
     </div>
     <div>
       <div class="font-semibold tracking-wide" style="font-size:14px;color:#e6edf5">ISLAND OPS WEATHER DESK <span style="color:var(--dim);font-weight:400">· Site Status &amp; Forecast</span></div>
-      <div class="hdr" style="font-size:9.5px">Newfoundland &amp; Labrador Hydro · Island Interconnected System · Prototype</div>
+      <div class="hdr hdr-sub" style="font-size:9.5px">Newfoundland &amp; Labrador Hydro · Island Interconnected System · Prototype</div>
     </div>
   </div>
   <div class="flex items-center gap-4">
@@ -118,7 +165,7 @@
   <div class="overflow-hidden flex-1"><div class="ticker mono" style="font-size:11px;color:#c9d3df" id="ticker">Loading Environment Canada alerts…</div></div>
 </div>
 
-<main class="flex-1 grid min-h-0" style="grid-template-columns:300px minmax(0,1fr) 480px">
+<main id="main" class="flex-1 grid min-h-0" style="grid-template-columns:300px minmax(0,1fr) 480px">
 
   <!-- LEFT -->
   <aside class="flex flex-col min-h-0 border-r" style="border-color:var(--line);background:var(--panel)">
@@ -183,6 +230,15 @@
     <div id="detail" class="flex-1 overflow-y-auto scroll"></div>
   </aside>
 </main>
+
+<!-- ================= FULL FORECAST POP-UP ================= -->
+<div id="siteModal" role="dialog" aria-modal="true">
+  <div class="sm-panel">
+    <div id="smHead"></div>
+    <div class="sm-tabs" id="smTabs"></div>
+    <div class="sm-body scroll" id="smBody"></div>
+  </div>
+</div>
 
 <script>
 /* =====================================================================
@@ -261,7 +317,7 @@ function derive(s){
   const now = Date.now();
   let i0 = T.findIndex(t => t.getTime() > now - 30*60000);
   s.stale = i0 < 0; if (i0 < 0) i0 = Math.max(0, T.length-48);
-  const n = Math.min(48, T.length - i0);
+  const n = T.length - i0;
   // salt deposit runs from the start of the model run so recent hours count
   let D = 0, ice = 0, snow = 0, rain = 0, pcp = 0, swe = (R.sd[i0]||0)*2.5, melt = 0;
   const seaF = s.sea ? Math.exp(-s.sea.km/8) : 0;
@@ -294,8 +350,11 @@ function derive(s){
     if (t <= 0.5) swe += sn + pl + fz; const m = Math.min(swe, Math.max(0,t)*0.125); swe -= m; melt += m;
     snow += sn; rain += ra + fz; pcp += p;
     hours.push({t:T[i], T:t, feels:windChill(t,ws), dir:wd, sus:Math.round(ws), gst:Math.round(R.wg[i]), rh, pres:R.p[i], rate:p, type,
-      sn, fzl:R.fzl[i], warm:R.warm[i], warmz:R.warmz[i], iceHr, ice, salt, rime, flash, sd:R.sd[i]});
+      sn, ra, fzr:fz, plv:pl, melt:m, fzl:R.fzl[i], warm:R.warm[i], warmz:R.warmz[i], iceHr, ice, salt, rime, flash, sd:R.sd[i]});
   }
+  s.hoursAll = hours.slice(); hours.splice(48);
+  pcp = hours.reduce((a,x)=>a+x.rate,0); rain = hours.reduce((a,x)=>a+x.ra+x.fzr,0);
+  snow = hours.reduce((a,x)=>a+x.sn,0); melt = hours.reduce((a,x)=>a+x.melt,0); ice = hours.length ? hours[hours.length-1].ice : 0;
   const gMax = hours.reduce((a,b)=>b.gst>a.gst?b:a, hours[0]);
   const fz = hours.filter(x=>x.type==='FZRA'), fl = hours.filter(x=>x.flash);
   const sMax = hours.reduce((a,b)=>b.salt>a.salt?b:a, hours[0]);
@@ -374,7 +433,7 @@ function buildDays(s){
   const L = s.lr, byD = {};
   L.t.forEach((t,i)=>{ const k=fKey.format(t); (byD[k]=byD[k]||[]).push(i); });
   const pts = DATA.naefs.points[DATA.sites[s.id].naefs];
-  Object.keys(byD).filter(k=>!days.find(d=>d.key===k)).slice(0, 7-days.length).forEach(k=>{
+  Object.keys(byD).filter(k=>k > (days.length ? days[days.length-1].key : fKey.format(new Date()))).slice(0, 7-days.length).forEach(k=>{
     const ix = byD[k], T = ix.map(i=>L.T.mean[i]);
     const pr = ix.reduce((a,i)=>a+L.A.mean[i],0), mean = T.reduce((a,b)=>a+b,0)/T.length;
     const gust = Math.max(...ix.map(i=>pts.wind.mean[i]))*1.45;
@@ -593,6 +652,7 @@ function drawNodes(){
   layer.querySelectorAll('.node').forEach(n=>{
     const s = SITES.find(x=>x.id===n.dataset.id);
     n.addEventListener('click',()=>select(s.id));
+    n.addEventListener('dblclick',()=>openModal(s.id));
     n.addEventListener('mouseenter',()=>{
       const c=cur(s), m=s.sum;
       tip.innerHTML = `<div style="color:#e6edf5;font-weight:700;margin-bottom:3px">${s.name}</div>
@@ -659,7 +719,7 @@ function gauge({label, value, max, y, r, unit, dec=0, sub, na}){
 }
 
 function lrChart(s){
-  const L = s.lr, n = L.t.length, w = 440, h = 140, pl = 28, pr = 30, pt = 22, pb = 20;
+  const L = s.lr, n = L.t.length, w = 440, h = 150, pl = 28, pr = 30, pt = 32, pb = 20;
   const iw = w-pl-pr, ih = h-pt-pb;
   const t0 = L.t[0].getTime(), t1 = L.t[n-1].getTime(), X = t => pl + (t.getTime()-t0)/(t1-t0)*iw;
   const lo = Math.min(...L.T.p10), hiT = Math.max(...L.T.p90);
@@ -674,7 +734,9 @@ function lrChart(s){
   g += `<polygon points="${band}" fill="#ffb627" fill-opacity=".12" stroke="none"/>`;
   g += `<polyline points="${L.T.mean.map((v,i)=>`${X(L.t[i]).toFixed(1)},${Y(v).toFixed(1)}`).join(' ')}" fill="none" stroke="#ffb627" stroke-width="1.6"/>`;
   g += `<text x="${w-pr+4}" y="${pt+8}" fill="#4ade80" font-size="8.5" class="mono">${pMax}</text><text x="${w-pr+4}" y="${pt+18}" fill="#4ade80" font-size="7.5" class="mono">mm/6h</text>`;
-  const mark = (lv, i, lab) => { if(!lv) return; const col = lv===2?C.r:C.y, x=X(L.t[i]); g+=`<path d="M${x},${pt} l-4,-7 h8z" fill="${col}"/><text x="${x}" y="${pt-10}" fill="${col}" font-size="8" text-anchor="middle" class="mono">${lab}</text>`; };
+  const placed = [];
+  const mark = (lv, i, lab) => { if(!lv) return; const col = lv===2?C.r:C.y, x=X(L.t[i]); const k = placed.filter(px=>Math.abs(px-x)<30).length; placed.push(x);
+    g+=`<path d="M${x},${pt} l-4,-7 h8z" fill="${col}"/><text x="${x}" y="${pt-10-k*9}" fill="${col}" font-size="8" text-anchor="middle" class="mono">${lab}</text>`; };
   mark(L.rain.lvl, L.rain.b24.i, 'RAIN'); mark(L.warm.lvl, L.warm.rise.i, 'WARM'); mark(L.melt.lvl, L.melt.best.i, 'MELT');
   return `<svg viewBox="0 0 ${w} ${h}" class="w-full">${g}</svg>`;
 }
@@ -751,6 +813,34 @@ function waterRows(s){
   return rows.join('');
 }
 
+function gaugeList(s){
+  const m = s.sum;
+  return [
+    gauge({label:'Peak Wind Gust', value:m.gust, max:150, y:s.thr.gustY, r:s.thr.gustR, unit:'km/h', sub:`${m.gustDir} · ${dayLbl(m.gustAt)}`}),
+    gauge({label:'Radial Ice', value:m.ice, max:25, y:THR.iceY, r:THR.iceR, unit:'mm radial', dec:1, sub:m.fzHours?`FZRA ${m.fzHours} h`:'no FZRA forecast'}),
+    gauge({label:'Salt Contam.', value:m.salt, max:100, y:THR.saltY, r:THR.saltR, unit:'index', na:!s.sea, sub:s.sea?(m.flashHours?`wetting ${m.flashHours} h`:`onshore ${card(s.sea.from)}–${card(s.sea.to)}`):'inland site'}),
+    gauge({label:'Rime Ice', value:m.rime, max:100, y:THR.rimeY, r:THR.rimeR, unit:'index', sub:`elev ${s.elev} m`}),
+    gauge({label:'Precip 48 h', value:m.pcp, max:80, y:THR.pcpY, r:THR.pcpR, unit:'mm', dec:1, sub:m.snow>=0.5?`snow ~${Math.round(m.snow)} cm`:`rain ${r1(m.rain)} mm`}),
+    gauge({label:'Rain + Melt', value:m.runoff, max:80, y:THR.runY, r:THR.runR, unit:'mm runoff', dec:1, sub:`melt ${r1(m.melt)} mm`})
+  ];
+}
+
+function daysBlock(s){
+  return `<div class="grid grid-cols-7 gap-1">
+      ${s.days.map((d,i)=>`<div class="day px-1.5 py-2 flex flex-col gap-1" style="border-radius:3px;border-top:2px solid ${C[d.risk]}">
+        <div class="mono" style="font-size:10.5px;font-weight:700;color:#e6edf5">${i===0?'TODAY':fDay.format(d.date).toUpperCase()}</div>
+        <div class="mono" style="font-size:9px;color:var(--dim2)">${fDate.format(d.date)} · ${d.src==='RDPS'?'R':'E'}</div>
+        <span class="chip c-${d.code}" style="text-align:center">${d.code==='NIL'?'DRY':d.code==='MIX'?'FZ?':d.code}</span>
+        <div class="mono" style="font-size:11px;color:#e6edf5;font-weight:600;white-space:nowrap">${Math.round(d.hi)}°<span style="color:var(--dim);font-weight:400">/${Math.round(d.lo)}°</span></div>
+        <div class="mono" style="font-size:9.5px;color:${d.gust>=s.thr.gustR?C.r:d.gust>=s.thr.gustY?C.y:'var(--dim)'}">G${Math.round(d.gust)}</div>
+        <div class="mono" style="font-size:9.5px;color:var(--dim)">${d.pop}% · ${d.pr<0.1?'0':d.pr.toFixed(d.pr<10?1:0)}mm</div>
+        <div class="bar" style="background:${C[d.risk]};opacity:.75"></div>
+        <div class="mono text-center" style="font-size:9px;font-weight:700;color:${d.win==='GO'?C.g:d.win==='LTD'?C.y:C.r}">${d.win}</div>
+        <div style="font-size:9px;color:var(--dim);line-height:1.25;min-height:22px">${d.desc}</div>
+      </div>`).join('')}
+    </div>`;
+}
+
 function renderDetail(){
   const s = SITES.find(x=>x.id===selected), c = cur(s), m = s.sum, st = s.status;
   const stTxt = {g:'NORMAL',y:'CAUTION',r:'CRITICAL'}[st];
@@ -770,6 +860,7 @@ function renderDetail(){
         <div class="hdr flex items-center gap-1" style="font-size:9.5px">${icon(s.icon,12)} ${s.group}</div>
         <div style="font-size:20px;font-weight:700;color:#f1f5f9;margin-top:2px">${s.name}</div>
         <div style="color:var(--dim);font-size:11px">${s.type}</div>
+        <button class="fbtn mt-2" onclick="openModal('${s.id}')">${icon('maximize-2',12)} Full forecast</button>
       </div>
       <div class="text-right">
         <div class="chip bd-${st}" style="font-size:11px;padding:3px 8px;font-weight:700">● ${stTxt}</div>
@@ -804,12 +895,7 @@ function renderDetail(){
   <div class="px-4 pt-4">
     <div class="hdr mb-2 flex items-center justify-between"><span class="flex items-center gap-1">${icon('gauge',12)} Asset Risk Gauges · Next 48 h</span><span class="mono" style="font-size:9.5px;color:var(--dim2)">MSC RDPS ${DATA.rdps.run.slice(11)}</span></div>
     <div class="grid grid-cols-3 gap-2">
-      ${gauge({label:'Peak Wind Gust', value:m.gust, max:150, y:s.thr.gustY, r:s.thr.gustR, unit:'km/h', sub:`${m.gustDir} · ${dayLbl(m.gustAt)}`})}
-      ${gauge({label:'Radial Ice', value:m.ice, max:25, y:THR.iceY, r:THR.iceR, unit:'mm radial', dec:1, sub:m.fzHours?`FZRA ${m.fzHours} h`:'no FZRA forecast'})}
-      ${gauge({label:'Salt Contam.', value:m.salt, max:100, y:THR.saltY, r:THR.saltR, unit:'index', na:!s.sea, sub:s.sea?(m.flashHours?`wetting ${m.flashHours} h`:`onshore ${card(s.sea.from)}–${card(s.sea.to)}`):'inland site'})}
-      ${gauge({label:'Rime Ice', value:m.rime, max:100, y:THR.rimeY, r:THR.rimeR, unit:'index', sub:`elev ${s.elev} m`})}
-      ${gauge({label:'Precip 48 h', value:m.pcp, max:80, y:THR.pcpY, r:THR.pcpR, unit:'mm', dec:1, sub:m.snow>=0.5?`snow ~${Math.round(m.snow)} cm`:`rain ${r1(m.rain)} mm`})}
-      ${gauge({label:'Rain + Melt', value:m.runoff, max:80, y:THR.runY, r:THR.runR, unit:'mm runoff', dec:1, sub:`melt ${r1(m.melt)} mm`})}
+      ${gaugeList(s).join('')}
     </div>
   </div>
 
@@ -866,19 +952,7 @@ function renderDetail(){
 
   <div class="px-4 pt-4 pb-4">
     <div class="hdr mb-2 flex items-center justify-between"><span class="flex items-center gap-1">${icon('calendar-days',12)} 7-Day Planning Outlook</span><span class="mono" style="font-size:9.5px;color:var(--dim2)">R = RDPS · E = NAEFS ENSEMBLE MEAN</span></div>
-    <div class="grid grid-cols-7 gap-1">
-      ${s.days.map((d,i)=>`<div class="day px-1.5 py-2 flex flex-col gap-1" style="border-radius:3px;border-top:2px solid ${C[d.risk]}">
-        <div class="mono" style="font-size:10.5px;font-weight:700;color:#e6edf5">${i===0?'TODAY':fDay.format(d.date).toUpperCase()}</div>
-        <div class="mono" style="font-size:9px;color:var(--dim2)">${fDate.format(d.date)} · ${d.src==='RDPS'?'R':'E'}</div>
-        <span class="chip c-${d.code}" style="text-align:center">${d.code==='NIL'?'DRY':d.code==='MIX'?'FZ?':d.code}</span>
-        <div class="mono" style="font-size:11px;color:#e6edf5;font-weight:600;white-space:nowrap">${Math.round(d.hi)}°<span style="color:var(--dim);font-weight:400">/${Math.round(d.lo)}°</span></div>
-        <div class="mono" style="font-size:9.5px;color:${d.gust>=s.thr.gustR?C.r:d.gust>=s.thr.gustY?C.y:'var(--dim)'}">G${Math.round(d.gust)}</div>
-        <div class="mono" style="font-size:9.5px;color:var(--dim)">${d.pop}% · ${d.pr<0.1?'0':d.pr.toFixed(d.pr<10?1:0)}mm</div>
-        <div class="bar" style="background:${C[d.risk]};opacity:.75"></div>
-        <div class="mono text-center" style="font-size:9px;font-weight:700;color:${d.win==='GO'?C.g:d.win==='LTD'?C.y:C.r}">${d.win}</div>
-        <div style="font-size:9px;color:var(--dim);line-height:1.25;min-height:22px">${d.desc}</div>
-      </div>`).join('')}
-    </div>
+    ${daysBlock(s)}
   </div>
 
   <div class="px-4 pb-4 mono" style="font-size:9.5px;color:var(--dim2);line-height:1.5">
@@ -892,6 +966,10 @@ function renderDetail(){
 }
 
 function select(id){
+  if (isNarrow()) { openModal(id); return; }
+  setSelected(id);
+}
+function setSelected(id){
   selected = id;
   document.querySelectorAll('.site-item').forEach(n=>n.classList.toggle('active', n.dataset.id===id));
   document.querySelectorAll('#map .node').forEach(n=>n.querySelector('.sel').style.display = n.dataset.id===id?'':'none');
@@ -955,6 +1033,7 @@ function refreshRadar(){
 function renderAll(){
   SITES.forEach(s=>s.status = status(s));
   renderHeader(); renderTicker(); renderList(); drawNodes(); drawAlerts(); renderDetail();
+  if (modal.id) showModal(modal.id, modal.tab);
 }
 
 async function boot(){
@@ -971,11 +1050,329 @@ async function boot(){
   drawMap(); refreshRadar(); renderAll();
   document.getElementById('loading').style.display = 'none';
   refreshIcons();
+  { const h = parseHash(); if (h && SITES.find(x=>x.id===h.id)) showModal(h.id, h.tab); }
   setInterval(async()=>{ await loadObs(); renderList(); drawNodes(); renderDetail(); }, 10*60000);
   setInterval(async()=>{ await loadAlerts(); renderAll(); }, 10*60000);
   setInterval(refreshRadar, 5*60000);
   setInterval(async()=>{ try { DATA = await loadData(); SITES.forEach(derive); await loadAlerts(); renderAll(); } catch(e){} }, 30*60000);
 }
+/* =====================================================================
+   FULL FORECAST POP-UP
+   ===================================================================== */
+const isNarrow = () => window.innerWidth < 1280;
+const TABS = [['overview','Overview','layout-dashboard'],['graphs','Hourly graphs','chart-line'],['table','Hourly table','table'],['outlook','16-day outlook','telescope'],['water','Water & stations','waves']];
+const TCOL = {FZRA:'#ff5ad1', PL:'#b18cff', SN:'#dfe8f2', RA:'#4ade80', RASN:'#7dd3c0', NIL:'#3a4757'};
+const fHr = fmt({hour:'numeric', hourCycle:'h23'});
+const fMin = fmt({minute:'numeric'});
+let modal = {id:null, tab:'overview'};
+
+function parseHash(){ const m = location.hash.match(/site=(\w+)/), t = location.hash.match(/tab=(\w+)/); return m ? {id:m[1], tab:t?t[1]:'overview'} : null; }
+function openModal(id, tab='overview'){
+  const h = `#site=${id}&tab=${tab}`;
+  if (modal.id || location.hash === h) { history.replaceState(null, '', h); showModal(id, tab); }
+  else location.hash = h;                       // adds a history entry, so Back closes it
+}
+function closeModal(){ history.replaceState(null, '', location.pathname + location.search); hideModal(); }
+function hideModal(){ modal.id = null; document.getElementById('siteModal').style.display = 'none'; document.body.style.overflow = ''; }
+function stepSite(d){ if (!modal.id) return; const i = SITES.findIndex(s=>s.id===modal.id); openModal(SITES[(i+d+SITES.length)%SITES.length].id, modal.tab); }
+window.addEventListener('hashchange', ()=>{ const h = parseHash(); if (h && DATA && SITES.find(s=>s.id===h.id)) showModal(h.id, h.tab); else hideModal(); });
+document.addEventListener('keydown', e=>{ if (!modal.id) return; if (e.key==='Escape') closeModal(); if (e.key==='ArrowRight') stepSite(1); if (e.key==='ArrowLeft') stepSite(-1); });
+document.getElementById('siteModal').addEventListener('click', e=>{ if (e.target.id==='siteModal') closeModal(); });
+
+function showModal(id, tab){
+  const s = SITES.find(x=>x.id===id); if (!s || !DATA) return;
+  if (!TABS.find(t=>t[0]===tab)) tab = 'overview';
+  modal = {id, tab};
+  if (!isNarrow() && selected !== id) setSelected(id);
+  const st = s.status, el = document.getElementById('siteModal');
+  document.getElementById('smHead').innerHTML = `
+    <div class="flex items-center gap-3 px-4 py-3 border-b" id="smHeadInner" style="border-color:var(--line)">
+      <button class="nav" onclick="stepSite(-1)" title="Previous site">‹</button>
+      <div class="flex-1 min-w-0">
+        <div class="hdr flex items-center gap-1" style="font-size:9.5px">${icon(s.icon,12)} ${s.group} · ${s.region}</div>
+        <div class="flex items-center gap-2 flex-wrap"><span style="font-size:19px;font-weight:700;color:#f1f5f9">${s.name}</span>
+          <span class="chip bd-${st}" style="font-weight:700">● ${{g:'NORMAL',y:'CAUTION',r:'CRITICAL'}[st]}</span>
+          ${(s.alerts||[]).map(a=>`<span class="chip bd-${a.risk==='red'?'r':'y'}">${esc(a.name)}</span>`).join('')}</div>
+        <div class="truncate" style="color:var(--dim);font-size:11px">${s.type} · ${s.cap} · ${s.lat.toFixed(2)}°N ${(-s.lon).toFixed(2)}°W · ${s.elev} m</div>
+      </div>
+      <button class="nav" onclick="stepSite(1)" title="Next site">›</button>
+      <button class="nav" onclick="closeModal()" title="Close (Esc)">✕</button>
+    </div>`;
+  document.getElementById('smTabs').innerHTML = TABS.map(([k,l,ic])=>`<button class="sm-tab ${k===tab?'on':''}" onclick="openModal('${id}','${k}')"><span class="inline-flex items-center gap-1">${icon(ic,12)}${l}</span></button>`).join('');
+  const body = document.getElementById('smBody');
+  body.innerHTML = {overview:tabOverview, graphs:tabGraphs, table:tabTable, outlook:tabOutlook, water:tabWater}[tab](s);
+  body.scrollTop = 0;
+  el.style.display = 'flex'; document.body.style.overflow = 'hidden';
+  refreshIcons();
+  if (tab==='graphs') wireCross(body, t=>{ const x = nearestHour(s, t); document.getElementById('readout').innerHTML = hourReadout(s, x); });
+  if (tab==='outlook') wireCross(body, t=>{ document.getElementById('readout').innerHTML = lrReadout(s, t); });
+  if (tab==='water') { wireCross(body, null); loadObsHist(s); }
+  // swipe between sites on the header (phones)
+  const hd = document.getElementById('smHeadInner'); let x0 = null;
+  hd.addEventListener('touchstart', e=>{ x0 = e.touches[0].clientX; }, {passive:true});
+  hd.addEventListener('touchend', e=>{ if (x0==null) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 60) stepSite(dx<0?1:-1); x0 = null; });
+}
+
+/* ---------- generic time-series chart (SVG, shared x-axis) ---------- */
+const CH = {w:1000, pl:50, pr:16};
+const chartW = () => window.innerWidth < 768 ? 560 : 1000;
+function niceStep(r){ const p = Math.pow(10, Math.floor(Math.log10(r||1))), f = r/p; return (f<1.5?1:f<3?2:f<7?5:10)*p; }
+function tChart(o){
+  CH.w = chartW();
+  const {w,pl,pr} = CH, nar = CH.w<1000, h = Math.round((o.h||150) * (nar ? 1.15 : 1)) + (nar && o.legend ? 16 : 0), pt = nar && o.legend ? 40 : 24, pb = 24, iw = w-pl-pr, ih = h-pt-pb, t0 = o.t0, t1 = o.t1;
+  const X = t => pl + (t-t0)/(t1-t0)*iw;
+  const vals = [];
+  (o.series||[]).forEach(S=>S.v.forEach((v,i)=>{ if (v!=null && S.t[i]>=t0 && S.t[i]<=t1) vals.push(v); }));
+  (o.bands||[]).forEach(B=>{ B.lo.forEach(v=>vals.push(v)); B.hi.forEach(v=>vals.push(v)); });
+  if (o.bars) o.bars.v.forEach(v=>vals.push(v));
+  (o.thr||[]).forEach(x=>vals.push(x.v));
+  if (!vals.length) vals.push(0, 1);
+  let lo = o.yMin ?? Math.min(...vals), hi = o.yMax ?? Math.max(...vals);
+  if (o.zero){ lo = Math.min(lo,0); hi = Math.max(hi,0); }
+  if (hi-lo < 1e-9) hi = lo + (o.minRange||1);
+  if (o.minRange && hi-lo < o.minRange) hi = lo + o.minRange;
+  const st = niceStep((hi-lo)/4);
+  if (o.yMin==null) lo = Math.floor(lo/st)*st; if (o.yMax==null) hi = Math.ceil(hi/st)*st;
+  const Y = v => pt + (hi-v)/(hi-lo)*ih;
+  let g = '';
+  for (let v=lo; v<=hi+1e-9; v+=st) g += `<line x1="${pl}" x2="${w-pr}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="${Math.abs(v)<1e-9 && o.zero?'#3d5163':'#18212c'}"/><text x="${pl-6}" y="${(Y(v)+4).toFixed(1)}" fill="#6b7787" font-size="11" text-anchor="end" class="mono">${+v.toFixed(st<1?1:0)}</text>`;
+  // local-time ticks
+  const m0 = +fMin.format(new Date(t0)); let t = t0 - m0*60000 + (m0 ? 3600000 : 0);
+  for (; t<=t1; t+=3600000){
+    const hr = +fHr.format(new Date(t)) % 24, x = X(t).toFixed(1);
+    if (hr===0){ g += `<line x1="${x}" x2="${x}" y1="${pt}" y2="${pt+ih}" stroke="#2c3746"/><text x="${+x+3}" y="${h-7}" fill="#9aa7b6" font-size="11" class="mono">${o.days?fDate.format(new Date(t)):fDay.format(new Date(t)).toUpperCase()+' '+fDate.format(new Date(t))}</text>`; }
+    else if (!o.days && hr%6===0) g += `<line x1="${x}" x2="${x}" y1="${pt}" y2="${pt+ih}" stroke="#141b24"/><text x="${+x+3}" y="${h-7}" fill="#566170" font-size="10.5" class="mono">${String(hr).padStart(2,'0')}</text>`;
+  }
+  if (o.nowLine){ const x = X(Date.now()); if (x>pl && x<w-pr) g += `<line x1="${x}" x2="${x}" y1="${pt}" y2="${pt+ih}" stroke="#5eead4" stroke-dasharray="3 3" stroke-opacity=".7"/><text x="${x+3}" y="${pt+10}" fill="#5eead4" font-size="10" class="mono">NOW</text>`; }
+  (o.bands||[]).forEach(B=>{ const pts = B.t.map((tt,i)=>`${X(tt).toFixed(1)},${Y(B.hi[i]).toFixed(1)}`).concat(B.t.map((tt,i)=>`${X(tt).toFixed(1)},${Y(B.lo[i]).toFixed(1)}`).reverse()); g += `<polygon points="${pts.join(' ')}" fill="${B.col}" fill-opacity="${B.op||.14}"/>`; });
+  if (o.bars){ const bw = Math.max(2, o.bars.w/(t1-t0)*iw); o.bars.v.forEach((v,i)=>{ if (!v || v<=0) return; const x = X(o.bars.t[i]) - bw/2; g += `<rect x="${x.toFixed(1)}" y="${Y(v).toFixed(1)}" width="${bw.toFixed(1)}" height="${(Y(lo)-Y(v)).toFixed(1)}" fill="${o.bars.cols ? o.bars.cols[i] : o.bars.col}" fill-opacity=".8"/>`; }); }
+  (o.thr||[]).forEach(T=>{ g += `<line x1="${pl}" x2="${w-pr}" y1="${Y(T.v).toFixed(1)}" y2="${Y(T.v).toFixed(1)}" stroke="${T.col}" stroke-dasharray="6 4" stroke-opacity=".8"/><text x="${pl+6}" y="${(Y(T.v)+12).toFixed(1)}" fill="${T.col}" font-size="10" class="mono">${T.lab}</text>`; });
+  (o.marks||[]).forEach(M=>{ const x = X(M.t).toFixed(1); g += `<line x1="${x}" x2="${x}" y1="${pt}" y2="${pt+ih}" stroke="${M.col}" stroke-dasharray="2 3"/><text x="${+x+3}" y="${pt+12}" fill="${M.col}" font-size="10" class="mono">${M.lab}</text>`; });
+  (o.series||[]).forEach(S=>{ let d = '', pen = false; S.v.forEach((v,i)=>{ if (v==null || S.t[i]<t0 || S.t[i]>t1){ pen = false; return; } d += `${pen?'L':'M'}${X(S.t[i]).toFixed(1)},${Y(v).toFixed(1)}`; pen = true; });
+    g += `<path d="${d}" fill="none" stroke="${S.col}" stroke-width="${S.w||2}" ${S.dash?`stroke-dasharray="${S.dash}"`:''} stroke-linejoin="round"/>`;
+    if (S.dots) S.v.forEach((v,i)=>{ if (v!=null && S.t[i]>=t0 && S.t[i]<=t1) g += `<circle cx="${X(S.t[i]).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="2.2" fill="${S.col}"/>`; }); });
+  // title + legend
+  g += `<text x="${pl}" y="14" fill="#c9d3df" font-size="12" font-weight="600">${o.title}</text>`;
+  if (nar){ let lx = pl; (o.legend||[]).forEach(([lab,col,dash])=>{ g += `<line x1="${lx}" x2="${lx+16}" y1="27" y2="27" stroke="${col}" stroke-width="3" ${dash?`stroke-dasharray="${dash}"`:''}/><text x="${lx+20}" y="31" fill="#9aa7b6" font-size="11" class="mono">${lab}</text>`; lx += lab.length*6.6 + 30; }); }
+  else { let lx = w - pr; (o.legend||[]).slice().reverse().forEach(([lab,col,dash])=>{ const tw = lab.length*6.6 + 26; lx -= tw; g += `<line x1="${lx}" x2="${lx+16}" y1="10" y2="10" stroke="${col}" stroke-width="3" ${dash?`stroke-dasharray="${dash}"`:''}/><text x="${lx+20}" y="14" fill="#9aa7b6" font-size="11" class="mono">${lab}</text>`; }); }
+  g += `<line class="xh" x1="-99" x2="-99" y1="${pt}" y2="${pt+ih}" stroke="#e6edf5" stroke-opacity=".55"/>`;
+  return `<div class="card px-2 py-2 mb-3"><svg class="tc" viewBox="0 0 ${w} ${h}" data-t0="${t0}" data-t1="${t1}" style="touch-action:pan-y">${g}</svg></div>`;
+}
+function wireCross(root, onT){
+  const svgs = [...root.querySelectorAll('svg.tc')];
+  const move = e=>{
+    const svg = e.currentTarget, m = svg.getScreenCTM(); if (!m) return;
+    const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; const q = p.matrixTransform(m.inverse());
+    const t0 = +svg.dataset.t0, t1 = +svg.dataset.t1, iw = CH.w-CH.pl-CH.pr, t = t0 + (q.x-CH.pl)/iw*(t1-t0);
+    if (t<t0 || t>t1) return;
+    svgs.forEach(s2=>{ if (+s2.dataset.t0!==t0 || +s2.dataset.t1!==t1) return; const x = CH.pl + (t-t0)/(t1-t0)*iw; s2.querySelectorAll('.xh').forEach(l=>{ l.setAttribute('x1',x); l.setAttribute('x2',x); }); });
+    if (onT) onT(t);
+  };
+  svgs.forEach(s=>{ s.addEventListener('pointermove', move); s.addEventListener('pointerdown', move); });
+}
+const nearestHour = (s, t) => s.hoursAll.reduce((a,b)=>Math.abs(b.t-t)<Math.abs(a.t-t)?b:a);
+function hourReadout(s, x){
+  const amt = x.type==='NIL' ? 'dry' : `<span style="color:${TCOL[x.type]}">${TYPE_DESC[x.type]}</span> ${x.type==='SN'?x.sn.toFixed(1)+' cm':x.rate.toFixed(1)+' mm'}`;
+  return `<b style="color:#e6edf5">${dayLbl(x.t)} ${tzAbbr}</b> · ${sgn(x.T)}° (feels ${Math.round(x.feels)}°) · ${card(x.dir)} ${x.sus}/<span class="${x.gst>=s.thr.gustR?'st-r':x.gst>=s.thr.gustY?'st-y':''}">${x.gst}</span> km/h · ${amt} · FZL ${x.fzl===0?(x.warm>0?'SFC, warm layer +'+r1(x.warm)+'°':'SFC'):x.fzl+' m'} · ice Σ ${r1(x.ice)} mm${s.sea?` · salt ${x.salt}`:''} · RH ${x.rh}% · ${r1(x.pres)} hPa`;
+}
+
+/* ---------- tab: overview ---------- */
+function tabOverview(s){
+  const c = cur(s), h0 = s.hours[0], o = OBS[s.swob], m = s.sum;
+  const tile = (k,v,sub='') => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div>${sub?`<div class="s">${sub}</div>`:''}</div>`;
+  const src = c.src==='obs' ? `ECCC ${esc(o.name)} · ${Math.round(kmBetween(s.lon,s.lat,o.lon,o.lat))} km away · ${hh(new Date(o.t))} ${tzAbbr}` : `RDPS model (no recent ECCC observation)`;
+  return `
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+    <div class="flex flex-col gap-4 min-w-0">
+      <div>
+        <div class="hdr mb-2 flex items-center justify-between gap-2"><span class="flex items-center gap-1">${icon('radio-tower',12)} Right now</span><span class="mono" style="font-size:10px;color:var(--dim2);letter-spacing:0;text-transform:none">${src}</span></div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          ${tile('Temperature', `${sgn(c.T)}°`, `feels ${c.sus!=null?Math.round(windChill(c.T,c.sus)):'—'}°`)}
+          ${tile('Wind', `${card(c.dir)} ${c.sus??'—'}`, `gusts <span class="${c.gst>=s.thr.gustR?'st-r':c.gst>=s.thr.gustY?'st-y':''}">${c.gst??'—'}</span> km/h`)}
+          ${tile('Humidity', c.rh!=null?`${Math.round(c.rh)}%`:'—', c.mslp!=null?`${r1(c.mslp)} hPa${c.ptend!=null?` ${c.ptend>=0?'▲':'▼'}${Math.abs(c.ptend).toFixed(1)}`:''}`:'')}
+          ${tile('Precip 1 h / 24 h', c.src==='obs'?`${c.p1!=null?r1(c.p1):'—'} / ${c.p24!=null?r1(c.p24):'—'}`:'—', 'mm, observed')}
+          ${tile('Now (RDPS)', `<span class="chip c-${h0.type}" style="font-size:12px">${h0.type==='NIL'?'DRY':h0.type}</span>`, TYPE_DESC[h0.type])}
+          ${tile('Freezing level', h0.fzl===0?'SFC':`${h0.fzl} m`, h0.fzl===0&&h0.warm>0?`warm layer +${r1(h0.warm)}° aloft`:'RDPS')}
+          ${tile('Snow on ground', `${r1(h0.sd)} cm`, 'RDPS')}
+          ${tile('Next 48 h', `${r1(m.pcp)} mm`, m.snow>=0.5?`incl. ~${Math.round(m.snow)} cm snow`:`rain ${r1(m.rain)} mm`)}
+        </div>
+      </div>
+      <div>
+        <div class="hdr mb-2 flex items-center gap-1">${icon('shield-alert',12)} Operational risk drivers</div>
+        <div class="card">${opsNotes(s).map(([l,ic,t])=>`<div class="flex gap-2 px-3 py-2 border-b" style="border-color:#1d2632;font-size:12px;line-height:1.5"><span>${icon(ic,14,C[l])}</span><span style="color:#c3cdd9">${t}</span></div>`).join('')}</div>
+      </div>
+    </div>
+    <div class="flex flex-col gap-4 min-w-0">
+      <div>
+        <div class="hdr mb-2 flex items-center justify-between"><span class="flex items-center gap-1">${icon('gauge',12)} Asset risk gauges · next 48 h</span><span class="mono" style="font-size:10px;color:var(--dim2)">MSC RDPS ${DATA.rdps.run.slice(11)}</span></div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">${gaugeList(s).join('')}</div>
+      </div>
+      <div>
+        <div class="hdr mb-2 flex items-center justify-between"><span class="flex items-center gap-1">${icon('calendar-days',12)} 7-day planning outlook</span><span class="mono" style="font-size:10px;color:var(--dim2)">R = RDPS · E = NAEFS</span></div>
+        <div class="overflow-x-auto"><div style="min-width:520px">${daysBlock(s)}</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="mt-4 flex gap-2 flex-wrap">
+    ${TABS.slice(1).map(([k,l,ic])=>`<button class="fbtn" onclick="openModal('${s.id}','${k}')">${icon(ic,12)} ${l}</button>`).join('')}
+  </div>`;
+}
+
+/* ---------- tab: hourly graphs ---------- */
+function tabGraphs(s){
+  const H = s.hoursAll, t = H.map(x=>x.t.getTime()), t0 = t[0]-1800000, t1 = t[t.length-1]+1800000;
+  const ser = (k, col, o={}) => Object.assign({t, v:H.map(x=>x[k]), col}, o);
+  const legendTypes = ['RA','SN','RASN','PL','FZRA'].map(k=>[k, TCOL[k]]);
+  return `
+  <div class="readout mono" id="readout">Move or tap across a graph to read every value for that hour. ${H.length} hours from RDPS run ${DATA.rdps.run}.</div>
+  ${tChart({t0,t1, title:'Temperature (°C)', zero:true, minRange:4, series:[ser('T','#ffb627',{w:2.5}), ser('feels','#ffb627',{w:1.5,dash:'5 4'})], legend:[['temp','#ffb627'],['feels like','#ffb627','5 4']]})}
+  ${tChart({t0,t1, title:'Wind (km/h)', yMin:0, series:[ser('sus','#5eead4',{w:2}), ser('gst','#e6edf5',{w:1.6})], thr:[{v:s.thr.gustY,col:C.y,lab:`caution ${s.thr.gustY}`},{v:s.thr.gustR,col:C.r,lab:`critical ${s.thr.gustR}`}], legend:[['sustained','#5eead4'],['gust','#e6edf5']]})}
+  ${tChart({t0,t1, title:'Precipitation (mm/h · cm/h snow), coloured by type', yMin:0, minRange:2, bars:{t, v:H.map(x=>x.type==='SN'?x.sn:x.rate), cols:H.map(x=>TCOL[x.type]), w:3000000}, legend:legendTypes})}
+  ${tChart({t0,t1, title:'Freezing level (m above sea level, 0 = at the surface)', yMin:0, minRange:500, series:[ser('fzl','#9ec3e6',{w:2})], legend:[['0° level','#9ec3e6']]})}
+  ${tChart({t0,t1, title:'Radial ice on conductors, running total (mm)', yMin:0, series:[ser('ice','#ff5ad1',{w:2.5})], thr:[{v:THR.iceY,col:C.y,lab:`caution ${THR.iceY}`},{v:THR.iceR,col:C.r,lab:`critical ${THR.iceR}`}], legend:[['radial ice','#ff5ad1']]})}
+  ${tChart({t0,t1, title: s.sea ? 'Salt contamination & rime icing (index 0–100)' : 'Rime icing (index 0–100) · inland site, no salt index', yMin:0, yMax:100,
+      series: (s.sea?[ser('salt','#ffb627',{w:2})]:[]).concat([ser('rime','#b18cff',{w:2,dash:'5 3'})]),
+      thr: s.sea?[{v:THR.saltY,col:C.y,lab:`salt caution ${THR.saltY}`},{v:THR.saltR,col:C.r,lab:`salt critical ${THR.saltR}`}]:[],
+      legend:(s.sea?[['salt','#ffb627']]:[]).concat([['rime','#b18cff','5 3']])})}
+  ${tChart({t0,t1, h:130, title:'Relative humidity (%)', yMin:40, yMax:100, series:[ser('rh','#7dd3c0',{w:2})], thr:[{v:92,col:'#566170',lab:'92% (salt wetting)'}]})}
+  ${tChart({t0,t1, h:130, title:'Sea-level pressure (hPa)', minRange:6, series:[ser('pres','#c9d3df',{w:2})]})}`;
+}
+
+/* ---------- tab: hourly table ---------- */
+function tabTable(s){
+  const H = s.hoursAll, z = '<span style="color:#3a4757">—</span>', f1 = v => v>=0.05 ? v.toFixed(1) : z;
+  return `
+  <div class="mono mb-2" style="font-size:10.5px;color:var(--dim)">${H.length} hours · MSC RDPS 10 km run ${DATA.rdps.run} · grid point ${s.grid.km} km from the site · times ${tzAbbr}</div>
+  <div class="card overflow-x-auto">
+  <table class="big mono">
+    <thead><tr><th>Time</th><th>Temp</th><th>Feels</th><th>Dir</th><th>Sus</th><th>Gust</th><th>RH</th><th>MSLP</th><th style="text-align:center">Type</th><th>Rain</th><th>FZRA</th><th>PL</th><th>Snow cm</th><th>FZL m</th><th>Warm aloft</th><th>Ice Σ</th>${s.sea?'<th>Salt</th>':''}<th>Rime</th><th>Snow depth</th></tr></thead>
+    <tbody>${H.map((x,i)=>{
+      const nd = i===0 || fKey.format(x.t)!==fKey.format(H[i-1].t);
+      const gc = x.gst>=s.thr.gustR?'cell-r':x.gst>=s.thr.gustY?'cell-y':'';
+      return `<tr class="${nd&&i?'daybreak':''}">
+        <td><span style="color:${nd?'#c9d3df':'var(--dim2)'}">${nd?fDay.format(x.t).toUpperCase():'···'}</span> <span style="color:#e6edf5">${hh(x.t)}</span></td>
+        <td style="color:${x.T<=0?'#9ec3e6':'#e6edf5'}">${sgn(x.T)}</td><td style="color:var(--dim)">${Math.round(x.feels)}</td>
+        <td style="color:var(--dim)">${card(x.dir)} ${x.dir}°</td><td>${x.sus}</td><td class="${gc}">${x.gst}</td>
+        <td>${x.rh}</td><td style="color:var(--dim)">${r1(x.pres)}</td>
+        <td style="text-align:center"><span class="chip c-${x.type}">${x.type==='NIL'?'—':x.type}</span></td>
+        <td>${f1(x.ra)}</td><td style="color:var(--fzra)">${f1(x.fzr)}</td><td style="color:var(--pl)">${f1(x.plv)}</td><td>${f1(x.sn)}</td>
+        <td>${x.fzl===0?'<span style="color:#8aa0b6">SFC</span>':x.fzl}</td><td>${x.T<=0&&x.warm>0?`<span style="color:var(--fzra)">+${r1(x.warm)}°</span>`:z}</td>
+        <td class="${x.ice>=THR.iceR?'cell-r':x.ice>=THR.iceY?'cell-y':''}">${x.ice<0.05?z:r1(x.ice)}</td>
+        ${s.sea?`<td class="${x.salt>=THR.saltR?'cell-r':x.salt>=THR.saltY?'cell-y':''}">${x.salt||z}${x.flash?'<span style="color:var(--y)">*</span>':''}</td>`:''}
+        <td>${x.rime||z}</td><td style="color:var(--dim)">${r1(x.sd)}</td></tr>`; }).join('')}
+    </tbody>
+  </table></div>
+  <div class="mono mt-2" style="font-size:10px;color:var(--dim2)">Amounts mm per hour (snow in cm) · FZL = height of the 0° level · Warm aloft = warmest layer above a sub-freezing surface (freezing-rain set-up) · Ice Σ = running radial ice (Jones model) · Salt * = wetting favours flashover</div>`;
+}
+
+/* ---------- tab: 16-day outlook ---------- */
+function lrDaily(s){
+  const P = DATA.naefs.points[DATA.sites[s.id].naefs], L = s.lr, by = {};
+  const today = fKey.format(new Date());
+  L.t.forEach((t,i)=>{ const k = fKey.format(t); if (k >= today) (by[k]=by[k]||[]).push(i); });
+  return Object.values(by).map(ix=>{
+    const T = ix.map(i=>P.t.mean[i]), mean = T.reduce((a,b)=>a+b,0)/T.length, pr = ix.reduce((a,i)=>a+P.apcp6.mean[i],0), mx = k => Math.max(...ix.map(i=>P[k][i]));
+    return { date:L.t[ix[0]], hi:Math.max(...T), lo:Math.min(...T), hi90:Math.max(...ix.map(i=>P.t.p90[i])), lo10:Math.min(...ix.map(i=>P.t.p10[i])),
+      pr, pr90:ix.reduce((a,i)=>a+P.apcp6.p90[i],0), c1:mx('p24ge1'), c25:mx('p24ge25'), c50:mx('p24ge50'),
+      wind:Math.max(...ix.map(i=>P.wind.mean[i])), wind90:Math.max(...ix.map(i=>P.wind.p90[i])),
+      phase: pr<1 ? 'Mostly dry' : (mean>-2.5 && mean<1.5 && Math.min(...T)<=0.5) ? 'Near 0° — freezing rain risk' : mean<=-1 ? 'Snow' : mean>=2 ? 'Rain' : 'Rain / snow' };
+  });
+}
+function lrReadout(s, t){
+  const L = s.lr, P = DATA.naefs.points[DATA.sites[s.id].naefs];
+  let i = 0; L.t.forEach((x,j)=>{ if (Math.abs(x-t) < Math.abs(L.t[i]-t)) i = j; });
+  return `<b style="color:#e6edf5">${dayLbl(L.t[i])} ${tzAbbr}</b> · temp ${r1(P.t.mean[i])}° (range ${r1(P.t.p10[i])}° to ${r1(P.t.p90[i])}°) · 6 h precip ${r1(P.apcp6.mean[i])} mm (90%: ${r1(P.apcp6.p90[i])}) · chance of 25 mm in 24 h ${P.p24ge25[i]}%, 50 mm ${P.p24ge50[i]}% · wind ${Math.round(P.wind.mean[i])} km/h (90%: ${Math.round(P.wind.p90[i])})`;
+}
+function tabOutlook(s){
+  const L = s.lr, P = DATA.naefs.points[DATA.sites[s.id].naefs], t = L.t.map(x=>x.getTime()), t0 = t[0], t1 = t[t.length-1];
+  const marks = [];
+  if (L.rain.lvl) marks.push({t:t[L.rain.b24.i], lab:'RAIN', col:L.rain.lvl===2?C.r:C.y});
+  if (L.warm.lvl) marks.push({t:t[L.warm.rise.i], lab:'WARM', col:L.warm.lvl===2?C.r:C.y});
+  if (L.melt.lvl) marks.push({t:t[L.melt.best.i], lab:'MELT', col:L.melt.lvl===2?C.r:C.y});
+  const m = s.sum;
+  const rainTxt = `Wettest 24 h (ensemble mean) <b>${r1(L.rain.b24.v)} mm</b> ending ${dayLbl(L.t[L.rain.b24.i])}; wettest 72 h <b>${r1(L.rain.b72.v)} mm</b>. Highest chance of a 25 mm day ${L.rain.p25.v}%, of a 50 mm day ${L.rain.p50.v}%. Flags at ${LR.r24W}/${LR.r24F} mm in 24 h, ${LR.r72W}/${LR.r72F} mm in 72 h.`;
+  const warmTxt = `Largest 48 h rise <b>${r1(L.warm.rise.v)}°</b> (${r1(L.warm.rise.from)}° → ${r1(L.T.mean[L.warm.rise.i])}°) by ${dayLbl(L.t[L.warm.rise.i])}. Flags at ${LR.riseW}° / ${LR.riseF}°.`;
+  const meltTxt = (m.swe0<1 && L.melt.maxSwe<2) ? `No snowpack now (RDPS ${r1(m.sd0)} cm) and little forecast snow to build one — melt risk low.`
+    : `Snowpack now ~${r1(m.sd0)} cm (≈${Math.round(m.swe0)} mm water${L.melt.maxSwe>m.swe0+1?`, building to ~${Math.round(L.melt.maxSwe)} mm`:''}). Peak 72 h melt + rain-on-snow <b>${r1(L.melt.best.v)} mm</b>${L.melt.best.v>0.5?` ending ${dayLbl(L.t[L.melt.best.i])}`:''}. Flags at ${LR.meltW} / ${LR.meltF} mm.`;
+  const days = lrDaily(s);
+  return `
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-2 mb-3">
+    ${[lrRow('Extreme rainfall','cloud-rain',L.rain.lvl,rainTxt), lrRow('Rapid temperature rise','thermometer-sun',L.warm.lvl,warmTxt), lrRow('Snowmelt / rain-on-snow','snowflake',L.melt.lvl,meltTxt)].map(x=>`<div class="card">${x}</div>`).join('')}
+  </div>
+  <div class="readout mono" id="readout">NAEFS ensemble run ${DATA.naefs.run} · ${L.members} members · nearest NAEFS point: ${L.pt}. Move or tap across a graph to read the values.</div>
+  ${tChart({t0,t1, days:true, h:170, title:'Temperature (°C) — line = ensemble mean, band = 10–90% of members', zero:true, nowLine:true, bands:[{t, lo:P.t.p10, hi:P.t.p90, col:'#ffb627'}], series:[{t, v:P.t.mean, col:'#ffb627', w:2.2}], marks})}
+  ${tChart({t0,t1, days:true, h:150, title:'Precipitation per 6 h (mm) — bars = mean, dashed = 90% of members', yMin:0, minRange:5, bars:{t, v:P.apcp6.mean, col:'#4ade80', w:6*3600000*0.7}, series:[{t, v:P.apcp6.p90, col:'#4ade80', w:1.4, dash:'4 3'}], marks})}
+  ${tChart({t0,t1, days:true, h:150, title:'Chance of 25 mm / 50 mm in 24 h (%)', yMin:0, yMax:100, series:[{t, v:P.p24ge25, col:'#ffb627', w:2}, {t, v:P.p24ge50, col:'#ff3d57', w:2}], legend:[['≥25 mm','#ffb627'],['≥50 mm','#ff3d57']]})}
+  ${tChart({t0,t1, days:true, h:140, title:'Sustained wind (km/h) — mean and 10–90% band', yMin:0, bands:[{t, lo:P.wind.p10, hi:P.wind.p90, col:'#5eead4'}], series:[{t, v:P.wind.mean, col:'#5eead4', w:2}]})}
+  <div class="hdr mt-4 mb-2 flex items-center gap-1">${icon('calendar-days',12)} Day by day (NAEFS, ${tzAbbr} days)</div>
+  <div class="card overflow-x-auto"><table class="big mono">
+    <thead><tr><th>Day</th><th>High</th><th>Low</th><th>Range</th><th>Precip</th><th>90%</th><th>Chance ≥1 mm</th><th>≥25 mm</th><th>≥50 mm</th><th>Wind</th><th>Wind 90%</th><th style="text-align:left">Likely</th></tr></thead>
+    <tbody>${days.map(d=>`<tr>
+      <td><span style="color:#e6edf5">${fDay.format(d.date).toUpperCase()}</span> <span style="color:var(--dim)">${fDate.format(d.date)}</span></td>
+      <td>${Math.round(d.hi)}°</td><td>${Math.round(d.lo)}°</td><td style="color:var(--dim)">${Math.round(d.lo10)}° to ${Math.round(d.hi90)}°</td>
+      <td class="${d.pr>=LR.r24F?'cell-r':d.pr>=LR.r24W?'cell-y':''}">${r1(d.pr)}</td><td style="color:var(--dim)">${r1(d.pr90)}</td>
+      <td>${d.c1}%</td><td class="${d.c25>=LR.p25W?'cell-y':''}">${d.c25}%</td><td class="${d.c50>=LR.p50F?'cell-r':''}">${d.c50}%</td>
+      <td>${Math.round(d.wind)}</td><td style="color:var(--dim)">${Math.round(d.wind90)}</td><td style="text-align:left;color:#c9d3df">${d.phase}</td></tr>`).join('')}
+    </tbody></table></div>`;
+}
+
+/* ---------- tab: water & stations ---------- */
+function tabWater(s){
+  const now = Date.now();
+  const water = s.water.map(w=>{
+    const out = [];
+    [['STAGE','#5eead4','Water level (m)'],['FLOW','#4ade80','Flow (m³/s)']].forEach(([k,col,lab])=>{
+      const sr = w.series[k]; if (!sr || sr.length<2) return;
+      const t = sr.map(x=>parseT(x[0]).getTime()), v = sr.map(x=>x[1]);
+      const last = v[v.length-1], d24 = (()=>{ let b=null; sr.forEach((x,i)=>{ if (t[i] <= t[t.length-1]-86400000) b = v[i]; }); return b; })();
+      out.push(tChart({t0:t[0], t1:t[t.length-1], days:true, h:140, title:`${esc(w.name)} — ${lab}: ${last.toFixed(k==='FLOW'?2:3)} (24 h ${d24!=null?(last-d24>=0?'+':'')+(last-d24).toFixed(k==='FLOW'?2:3):'—'})`, series:[{t, v, col, w:2}]}));
+    });
+    return out.join('') || `<div class="card px-3 py-2 mb-3" style="color:var(--dim)">${esc(w.name)}: no recent data.</div>`;
+  }).join('');
+  let wx = '';
+  if (s.maeWx){
+    const w = s.maeWx, S = k => w.series[k] ? {t:w.series[k].map(x=>parseT(x[0]).getTime()), v:w.series[k].map(x=>x[1])} : null;
+    const at = S('AIR_TEMP'), ws = S('WIND_SPEED'), wg = S('WIND_SPEED_GUST');
+    if (at) wx += tChart({t0:at.t[0], t1:at.t[at.t.length-1], days:true, h:140, title:`${esc(w.name)} — air temperature (°C)`, zero:true, series:[{...at, col:'#ffb627', w:2}]});
+    if (ws) wx += tChart({t0:ws.t[0], t1:ws.t[ws.t.length-1], days:true, h:140, title:`${esc(w.name)} — wind (km/h)`, yMin:0, series:[{...ws, col:'#5eead4', w:2}].concat(wg?[{...wg, col:'#e6edf5', w:1.3}]:[]), legend:[['speed','#5eead4']].concat(wg?[['gust','#e6edf5']]:[])});
+  }
+  return `
+  <div class="hdr mb-2 flex items-center justify-between"><span class="flex items-center gap-1">${icon('history',12)} Last 24 h observed vs RDPS forecast</span><span class="mono" style="font-size:10px;color:var(--dim2)">ECCC SWOB · MSC RDPS</span></div>
+  <div id="obsHist"><div class="card px-3 py-3 mb-3 mono" style="color:var(--dim)">Loading Environment Canada observations…</div></div>
+  <div class="hdr mt-2 mb-2 flex items-center justify-between"><span class="flex items-center gap-1">${icon('waves',12)} Watershed &amp; reservoir gauges · last 7 days</span><span class="mono" style="font-size:10px;color:var(--dim2)">NL Water Resources · provisional</span></div>
+  ${water || '<div class="card px-3 py-2 mb-3" style="color:var(--dim)">No provincial water station configured for this site.</div>'}
+  ${wx ? `<div class="hdr mt-2 mb-2 flex items-center gap-1">${icon('radio-tower',12)} Provincial weather station · last 7 days</div>${wx}` : ''}`;
+}
+
+const OBSH = {};
+async function loadObsHist(s){
+  const el = document.getElementById('obsHist'); if (!el) return;
+  try {
+    let rec = OBSH[s.swob];
+    if (!rec || Date.now()-rec.at > 10*60000){
+      const since = new Date(Date.now()-26*3600000).toISOString().slice(0,19)+'Z';
+      const r = await fetch(`https://api.weather.gc.ca/collections/swob-realtime/items?f=json&msc_id-value=${s.swob}&datetime=${since}/..&sortby=-date_tm-value&limit=1500`);
+      const f = (await r.json()).features || [];
+      const v = (p,...ks) => { for (const k of ks){ const x = p[k]; if (typeof x==='number' && x>-900) return x; } return null; };
+      const pts = f.map(x=>{ const p = x.properties; return { t:Date.parse(p['date_tm-value']), T:v(p,'air_temp'),
+        sus:v(p,'avg_wnd_spd_10m_pst10mts','avg_wnd_spd_10m_pst2mts','avg_wnd_spd_10m_pst1hr'), gst:v(p,'max_wnd_spd_10m_pst10mts','max_wnd_spd_10m_pst1hr'), p1:v(p,'pcpn_amt_pst1hr') }; })
+        .filter(x=>x.T!=null).sort((a,b)=>a.t-b.t);
+      // keep at most one observation per 10 minutes
+      const thin = []; pts.forEach(x=>{ if (!thin.length || x.t - thin[thin.length-1].t >= 600000) thin.push(x); });
+      rec = OBSH[s.swob] = {at:Date.now(), pts:thin, name:f[0]?.properties['stn_nam-value'] || s.swob};
+    }
+    if (modal.id !== s.id || modal.tab !== 'water') return;
+    const R = DATA.rdps.sites[s.id], RT = DATA.rdps.hours.map(x=>parseT(x).getTime());
+    const t0 = Date.now()-24*3600000, t1 = Date.now()+12*3600000, P = rec.pts, pt = P.map(x=>x.t);
+    const hourly = P.filter(x=>x.p1!=null && new Date(x.t).getUTCMinutes()===0);
+    el.innerHTML = `
+      ${tChart({t0,t1, h:160, nowLine:true, title:`Temperature (°C) — ${esc(rec.name)} observed vs RDPS at the site`, series:[{t:RT, v:R.t, col:'#ffb627', w:1.6, dash:'5 4'}, {t:pt, v:P.map(x=>x.T), col:'#e6edf5', w:2}], legend:[['observed','#e6edf5'],['RDPS','#ffb627','5 4']]})}
+      ${tChart({t0,t1, h:160, nowLine:true, title:'Wind gust (km/h) — observed vs RDPS', yMin:0, series:[{t:RT, v:R.wg, col:'#5eead4', w:1.6, dash:'5 4'}, {t:pt, v:P.map(x=>x.gst), col:'#e6edf5', w:2}], thr:[{v:s.thr.gustY,col:C.y,lab:`caution ${s.thr.gustY}`}], legend:[['observed','#e6edf5'],['RDPS','#5eead4','5 4']]})}
+      ${hourly.length ? tChart({t0,t1, h:130, nowLine:true, title:'Precipitation per hour (mm) — observed (bars) vs RDPS (line)', yMin:0, minRange:2, bars:{t:hourly.map(x=>x.t), v:hourly.map(x=>x.p1), col:'#e6edf5', w:3000000}, series:[{t:RT, v:R.pcp, col:'#4ade80', w:1.6, dash:'5 4'}]}) : ''}`;
+    wireCross(el, null);
+  } catch(e) { el.innerHTML = `<div class="card px-3 py-2 mb-3" style="color:var(--dim)">Could not load Environment Canada observations right now.</div>`; }
+}
+
 refreshIcons();
 boot();
 </script>
