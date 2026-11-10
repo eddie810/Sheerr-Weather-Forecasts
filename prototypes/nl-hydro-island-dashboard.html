@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Island Site Status &amp; Weather Forecast Dashboard — Prototype</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { extend: {
+    fontFamily: {
+      mono: ['"JetBrains Mono"','"SFMono-Regular"','Menlo','Consolas','"Liberation Mono"','monospace'],
+      sans: ['Inter','"Segoe UI"','Roboto','"Helvetica Neue"','Arial','sans-serif']
+    }
+  } } };
+</script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  :root{
+    --bg:#090c10; --panel:#0f141a; --panel2:#141a22; --panel3:#1a212b; --line:#222b37; --line2:#2c3746;
+    --txt:#cfd8e3; --dim:#7b8796; --dim2:#566170;
+    --g:#2bff88; --y:#ffb627; --r:#ff3d57; --vio:#b18cff; --teal:#5eead4;
+    --fzra:#ff5ad1; --pl:#b18cff; --sn:#dfe8f2; --ra:#4ade80; --rasn:#7dd3c0;
+  }
+  html,body{height:100%;background:var(--bg);color:var(--txt);}
+  body{font-family:Inter,"Segoe UI",Roboto,Arial,sans-serif;font-size:12px;overflow:hidden;}
+  .mono{font-family:"JetBrains Mono","SFMono-Regular",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;}
+  .panel{background:var(--panel);border:1px solid var(--line);}
+  .hdr{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:600;}
+  .scroll::-webkit-scrollbar{width:8px;height:8px}
+  .scroll::-webkit-scrollbar-track{background:#0b0f14}
+  .scroll::-webkit-scrollbar-thumb{background:#263140;border-radius:4px}
+  .scroll{scrollbar-color:#263140 #0b0f14;scrollbar-width:thin}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .dot.g{background:var(--g);box-shadow:0 0 8px var(--g)}
+  .dot.y{background:var(--y);box-shadow:0 0 8px var(--y)}
+  .dot.r{background:var(--r);box-shadow:0 0 10px var(--r);animation:blink 1.1s infinite}
+  @keyframes blink{50%{opacity:.35}}
+  .site-item{border-left:3px solid transparent;cursor:pointer;transition:background .12s}
+  .site-item:hover{background:#151c25}
+  .site-item.active{background:#18212c;border-left-color:var(--teal)}
+  .chip{font-family:"JetBrains Mono",Menlo,Consolas,monospace;font-size:10px;padding:1px 5px;border-radius:2px;border:1px solid;line-height:14px;display:inline-block;white-space:nowrap}
+  .c-FZRA{color:var(--fzra);border-color:#ff5ad155;background:#ff5ad114}
+  .c-PL{color:var(--pl);border-color:#b18cff55;background:#b18cff14}
+  .c-SN{color:var(--sn);border-color:#dfe8f244;background:#dfe8f20d}
+  .c-RA{color:var(--ra);border-color:#4ade8055;background:#4ade8012}
+  .c-RASN{color:var(--rasn);border-color:#7dd3c055;background:#7dd3c012}
+  .c-NIL{color:var(--dim2);border-color:#2a3442;background:transparent}
+  .st-g{color:var(--g)} .st-y{color:var(--y)} .st-r{color:var(--r)}
+  .bd-g{border-color:#2bff8866;background:#2bff8810;color:var(--g)}
+  .bd-y{border-color:#ffb62766;background:#ffb62710;color:var(--y)}
+  .bd-r{border-color:#ff3d5788;background:#ff3d5716;color:var(--r)}
+  /* toggle */
+  .tgl{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;padding:5px 10px;border:1px solid var(--line);background:var(--panel2);border-radius:3px}
+  .tgl input{display:none}
+  .tgl .sw{width:28px;height:14px;border-radius:8px;background:#26303d;position:relative;transition:.15s;flex:none}
+  .tgl .sw:after{content:"";position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:#6b7787;transition:.15s}
+  .tgl input:checked + .sw{background:#5eead433}
+  .tgl input:checked + .sw:after{left:16px;background:var(--teal);box-shadow:0 0 6px var(--teal)}
+  .tgl span.lbl{font-size:11px;letter-spacing:.04em;color:#aab6c4}
+  /* map */
+  #map{width:100%;height:100%;display:block}
+  .node{cursor:pointer}
+  .node .halo{transform-box:fill-box;transform-origin:center}
+  .node.r .halo{animation:pulse 1.6s ease-out infinite}
+  @keyframes pulse{0%{transform:scale(.6);opacity:.9}100%{transform:scale(2.2);opacity:0}}
+  .sel-ring{transform-box:fill-box;transform-origin:center;animation:spin 6s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .lil-flow{stroke-dasharray:6 6;animation:flow 1.2s linear infinite}
+  @keyframes flow{to{stroke-dashoffset:-12}}
+  .radar-drift{animation:drift 26s ease-in-out infinite alternate}
+  @keyframes drift{0%{transform:translate(-14px,10px)}100%{transform:translate(16px,-12px)}}
+  .lbl-halo{paint-order:stroke;stroke:#090c10;stroke-width:3.5px;stroke-linejoin:round}
+  /* table */
+  table.trend{border-collapse:collapse;width:100%}
+  table.trend th{position:sticky;top:0;background:#121821;z-index:1;font-size:9.5px;letter-spacing:.08em;color:var(--dim);font-weight:600;text-transform:uppercase;padding:5px 4px;border-bottom:1px solid var(--line2);text-align:right}
+  table.trend th:first-child,table.trend td:first-child{text-align:left}
+  table.trend td{padding:3px 4px;border-bottom:1px solid #18202a;text-align:right;white-space:nowrap}
+  table.trend tr.daybreak td{border-top:1px solid #3a4658}
+  table.trend tr:hover td{background:#16202b}
+  .cell-y{color:var(--y)} .cell-r{color:var(--r);font-weight:700}
+  .ticker{white-space:nowrap;display:inline-block;animation:tick 70s linear infinite;padding-left:100%}
+  @keyframes tick{to{transform:translateX(-100%)}}
+  .tooltip{position:absolute;pointer-events:none;background:#0d1218f2;border:1px solid var(--line2);padding:7px 9px;border-radius:3px;font-size:11px;min-width:170px;display:none;z-index:20;box-shadow:0 6px 18px #0009}
+  .day{border:1px solid var(--line);background:var(--panel2)}
+  .day.sel{outline:1px solid var(--teal)}
+  .bar{height:3px;border-radius:2px}
+</style>
+</head>
+<body class="flex flex-col">
+
+<!-- ================= HEADER ================= -->
+<header class="flex items-center justify-between px-4 border-b" style="height:52px;border-color:var(--line);background:#0b1015">
+  <div class="flex items-center gap-3">
+    <div class="flex items-center justify-center" style="width:30px;height:30px;border:1px solid #5eead455;background:#5eead40f;border-radius:3px">
+      <i data-lucide="activity" style="width:17px;height:17px;color:var(--teal)"></i>
+    </div>
+    <div>
+      <div class="font-semibold tracking-wide" style="font-size:14px;color:#e6edf5">ISLAND OPS WEATHER DESK <span style="color:var(--dim);font-weight:400">· Site Status &amp; Forecast</span></div>
+      <div class="hdr" style="font-size:9.5px">Newfoundland &amp; Labrador Hydro · Island Interconnected System · Prototype</div>
+    </div>
+  </div>
+  <div class="flex items-center gap-4">
+    <div class="flex items-center gap-2 mono" id="statusCounts"></div>
+    <div class="chip" style="color:var(--y);border-color:#ffb62766;background:#ffb62710">SIMULATED DATA · DEMO</div>
+    <div class="text-right">
+      <div class="mono" style="font-size:15px;color:#e6edf5" id="clock">--:--:--</div>
+      <div class="hdr" style="font-size:9px" id="clockDate">NST</div>
+    </div>
+  </div>
+</header>
+
+<!-- ticker -->
+<div class="flex items-center border-b overflow-hidden" style="height:26px;border-color:var(--line);background:#0d1117">
+  <div class="flex items-center gap-1 px-3 h-full flex-none" style="background:#ff3d5718;border-right:1px solid #ff3d5755;color:var(--r)">
+    <i data-lucide="triangle-alert" style="width:13px;height:13px"></i><span class="mono" style="font-size:10px;font-weight:700">ALERTS</span>
+  </div>
+  <div class="overflow-hidden flex-1"><div class="ticker mono" style="font-size:11px;color:#c9d3df" id="ticker"></div></div>
+</div>
+
+<!-- ================= MAIN 3 COLUMNS ================= -->
+<main class="flex-1 grid min-h-0" style="grid-template-columns:300px minmax(0,1fr) 470px">
+
+  <!-- LEFT: SITE MATRIX -->
+  <aside class="flex flex-col min-h-0 border-r" style="border-color:var(--line);background:var(--panel)">
+    <div class="px-3 pt-3 pb-2 border-b" style="border-color:var(--line)">
+      <div class="flex items-center justify-between mb-2">
+        <div class="hdr flex items-center gap-1"><i data-lucide="layers" style="width:12px;height:12px"></i>Island Site Matrix</div>
+        <div class="mono" style="font-size:10px;color:var(--dim)" id="siteCount"></div>
+      </div>
+      <div class="flex items-center gap-2 px-2" style="border:1px solid var(--line);background:#0b1015;height:28px;border-radius:3px">
+        <i data-lucide="search" style="width:13px;height:13px;color:var(--dim)"></i>
+        <input id="search" class="bg-transparent outline-none flex-1 mono" style="font-size:11px;color:var(--txt)" placeholder="Filter sites…">
+      </div>
+    </div>
+    <div id="siteList" class="flex-1 overflow-y-auto scroll"></div>
+    <div class="px-3 py-2 border-t mono" style="border-color:var(--line);font-size:10px;color:var(--dim)">
+      <div class="flex justify-between"><span>Telemetry poll</span><span id="lastPoll">—</span></div>
+      <div class="flex justify-between"><span>Model run</span><span id="modelRun">—</span></div>
+    </div>
+  </aside>
+
+  <!-- CENTER: MAP -->
+  <section class="flex flex-col min-h-0 min-w-0">
+    <div class="flex items-center justify-between gap-2 px-3 border-b flex-wrap" style="min-height:44px;border-color:var(--line);background:var(--panel)">
+      <div class="hdr flex items-center gap-1"><i data-lucide="map" style="width:12px;height:12px"></i>Regional GIS · Island of Newfoundland</div>
+      <div class="flex items-center gap-2 flex-wrap py-1">
+        <label class="tgl"><input type="checkbox" id="tLIL" checked><span class="sw"></span><span class="lbl">Show LIL Corridor</span></label>
+        <label class="tgl"><input type="checkbox" id="tRadar" checked><span class="sw"></span><span class="lbl">Live Weather Radar Layer</span></label>
+        <label class="tgl"><input type="checkbox" id="tGrid" checked><span class="sw"></span><span class="lbl">Transmission Grid Lines</span></label>
+      </div>
+    </div>
+    <div class="relative flex-1 min-h-0" id="mapWrap" style="background:radial-gradient(ellipse at 50% 40%,#0e1620 0%,#080b0f 75%)">
+      <svg id="map"></svg>
+      <div class="tooltip mono" id="tip"></div>
+      <!-- legend -->
+      <div class="absolute left-3 bottom-3 panel px-3 py-2" style="background:#0c1117e6;border-radius:3px">
+        <div class="hdr mb-1" style="font-size:9px">Legend</div>
+        <div class="grid gap-x-4 gap-y-1 mono" style="grid-template-columns:auto auto;font-size:10px">
+          <div class="flex items-center gap-2"><span class="dot g"></span>Normal</div>
+          <div class="flex items-center gap-2"><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" stroke="#5f7d93" stroke-width="2.2"/></svg>230 kV</div>
+          <div class="flex items-center gap-2"><span class="dot y" style="animation:none"></span>Caution</div>
+          <div class="flex items-center gap-2"><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" stroke="#45596a" stroke-width="1.2" stroke-dasharray="3 2"/></svg>138/69 kV</div>
+          <div class="flex items-center gap-2"><span class="dot r" style="animation:none"></span>Critical</div>
+          <div class="flex items-center gap-2"><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" stroke="var(--vio)" stroke-width="2.2" stroke-dasharray="4 3"/></svg>LIL ±350 kV HVdc</div>
+        </div>
+        <div id="radarLegend" class="mt-2 pt-2 border-t flex items-center gap-2 mono" style="border-color:var(--line);font-size:10px">
+          <span style="color:var(--dim)">RADAR</span>
+          <span class="chip c-RA">RA</span><span class="chip c-SN">SN</span><span class="chip c-PL">PL</span><span class="chip c-FZRA">FZRA</span>
+        </div>
+      </div>
+      <div class="absolute right-3 bottom-3 panel px-3 py-2 mono text-right" style="background:#0c1117e6;font-size:10px;border-radius:3px">
+        <div style="color:var(--dim)">CURSOR</div><div id="coords" style="color:#c9d3df">—</div>
+      </div>
+      <div class="absolute right-3 top-3 panel px-3 py-2 mono" id="radarStamp" style="background:#0c1117e6;font-size:10px;border-radius:3px;color:var(--dim)"></div>
+    </div>
+  </section>
+
+  <!-- RIGHT: DETAIL -->
+  <aside class="flex flex-col min-h-0 border-l" style="border-color:var(--line);background:var(--panel)">
+    <div id="detail" class="flex-1 overflow-y-auto scroll"></div>
+  </aside>
+</main>
+
+<script>
+/* =====================================================================
+   Island Ops Weather Desk — prototype. All weather values are SIMULATED
+   (a scripted winter-storm scenario) for demonstration purposes.
+   ===================================================================== */
+const TZ = 'America/St_Johns';
+const C = {g:'#2bff88', y:'#ffb627', r:'#ff3d57'};
+const icon = (n, s=13, c='currentColor') => `<i data-lucide="${n}" style="width:${s}px;height:${s}px;color:${c}"></i>`;
+const refreshIcons = () => { if (window.lucide) lucide.createIcons(); };
+
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+/* ---------- Sites (positions approximate; capacities indicative) ---------- */
+const SITES = [
+ {id:'bde', name:"Bay d'Espoir", group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈613 MW · 7 units', lon:-55.80, lat:47.99, elev:45, region:'South Coast · Coast of Bays', lbl:[12,-10],
+  p:{base:-0.5,diur:1.2,warm:3.6,cold:6,wind:18,windPk:42,gf:1.45,pmax:3.4,nose:1500,rime:.35,width:7}, thr:{gustY:80,gustR:100,iceY:5,iceR:10}},
+ {id:'cat', name:'Cat Arm', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈127 MW · 2 units', lon:-56.80, lat:50.10, elev:380, region:'White Bay · Northern Peninsula', lbl:[12,4],
+  p:{base:-3.2,diur:1.0,warm:1.6,cold:5,wind:16,windPk:32,gf:1.5,pmax:2.1,nose:320,rime:.85,width:6}, thr:{gustY:75,gustR:95,iceY:5,iceR:10}},
+ {id:'hin', name:'Hinds Lake', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈75 MW · 1 unit', lon:-56.95, lat:49.38, elev:210, region:'Deer Lake · Humber Valley', lbl:[12,4],
+  p:{base:-2.2,diur:1.4,warm:2.0,cold:5,wind:11,windPk:22,gf:1.4,pmax:1.5,nose:380,rime:.4,width:6}, thr:{gustY:80,gustR:100,iceY:5,iceR:10}},
+ {id:'par', name:'Paradise River', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈8 MW · 1 unit', lon:-54.40, lat:47.66, elev:60, region:'Placentia Bay', lbl:[-12,16,'end'],
+  p:{base:0.2,diur:1.3,warm:3.0,cold:6,wind:19,windPk:33,gf:1.45,pmax:3.0,nose:1250,rime:.2,width:7}, thr:{gustY:85,gustR:105,iceY:5,iceR:10}},
+ {id:'gra', name:'Granite Canal', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈40 MW · 1 unit', lon:-56.35, lat:48.17, elev:330, region:'Central Plateau · Meelpaeg', lbl:[-12,4,'end'],
+  p:{base:-2.6,diur:1.0,warm:2.3,cold:6,wind:17,windPk:31,gf:1.5,pmax:2.5,nose:1100,rime:.85,width:7}, thr:{gustY:80,gustR:100,iceY:5,iceR:10}},
+ {id:'hol', name:'Holyrood TGS', group:'Thermal / Backup', type:'Thermal Generating Station (standby / sync. condenser)', icon:'flame', cap:'≈490 MW · 3 units', lon:-53.10, lat:47.43, elev:15, region:'Conception Bay · Avalon', lbl:[-14,-20,'end'],
+  p:{base:-1.9,diur:1.0,warm:1.65,cold:7,wind:22,windPk:48,gf:1.5,pmax:3.8,nose:1800,rime:.3,width:8}, thr:{gustY:80,gustR:100,iceY:5,iceR:10}},
+ {id:'sol', name:'Soldiers Pond', group:'Interconnections / Substations', type:'HVdc Converter & Terminal Station (LIL)', icon:'zap', cap:'900 MW converter · 3 sync. condensers', lon:-52.97, lat:47.40, elev:150, region:'Avalon · St. John\'s Area', lbl:[-6,26,'middle'],
+  p:{base:-2.3,diur:1.0,warm:1.9,cold:7,wind:21,windPk:46,gf:1.5,pmax:3.6,nose:1750,rime:.5,width:8}, thr:{gustY:80,gustR:100,iceY:5,iceR:10}},
+ {id:'sun', name:'Sunnyside', group:'Interconnections / Substations', type:'230 kV Terminal Station', icon:'zap', cap:'230 / 138 kV', lon:-53.92, lat:47.86, elev:40, region:'Isthmus of Avalon', lbl:[12,-6],
+  p:{base:-1.3,diur:1.2,warm:2.5,cold:6,wind:20,windPk:40,gf:1.45,pmax:2.9,nose:1450,rime:.35,width:7}, thr:{gustY:80,gustR:100,iceY:5,iceR:10}},
+];
+const GROUPS = ['Hydro Generation','Thermal / Backup','Interconnections / Substations'];
+
+/* ---------- Time helpers ---------- */
+const fmt = (o) => new Intl.DateTimeFormat('en-CA', Object.assign({timeZone:TZ}, o));
+const fH = fmt({hour:'2-digit',minute:'2-digit',hour12:false});
+const fHour = fmt({hour:'numeric',hour12:false});
+const fDay = fmt({weekday:'short'});
+const fDate = fmt({month:'short',day:'numeric'});
+const fKey = fmt({year:'numeric',month:'2-digit',day:'2-digit'});
+const hh = d => fH.format(d).replace('24:','00:');
+const hod = d => (+fHour.format(d)) % 24;
+const tzAbbr = (() => { try { return new Intl.DateTimeFormat('en-CA',{timeZone:TZ,timeZoneName:'short'}).formatToParts(new Date()).find(p=>p.type==='timeZoneName').value; } catch(e){ return 'NST'; } })();
+const T0 = (()=>{ const n=new Date(); const m=+fmt({minute:'numeric'}).format(n); return new Date(n.getTime()-m*60000-n.getSeconds()*1000-n.getMilliseconds()); })();
+const DIRS = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+const card = d => DIRS[Math.round(((d%360)+360)%360/22.5)%16];
+const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+const r1 = v => (Math.round(v*10)/10).toFixed(1);
+
+/* ---------- Scenario generator ---------- */
+function windChill(T,v){ return (T<=10 && v>5) ? 13.12+0.6215*T-11.37*Math.pow(v,.16)+0.3965*T*Math.pow(v,.16) : T; }
+
+function buildSite(s, idx){
+  const p = s.p, R = rng(1000+idx*77);
+  const peak = 5 + (s.lon + 59) * 1.9;          // system tracks SW → NE
+  const hours = []; let ice = 0, snow = 0;
+  for(let h=0; h<48; h++){
+    const t = new Date(T0.getTime()+h*3600000);
+    const sP = Math.exp(-Math.pow((h-peak)/p.width,2));
+    const sW = Math.exp(-Math.pow((h-peak)/9,2));
+    const front = 1/(1+Math.exp(-(h-(peak+5))/2.5));
+    const diur = p.diur*Math.sin(2*Math.PI*(hod(t)-9)/24);
+    let T = p.base + diur + p.warm*sW*(1-front*0.6) - p.cold*front + (R()-.5)*0.4;
+    const nose = Math.round(p.nose*sP*(1-front)/10)*10;
+    let rate = 0;
+    if(sP>0.12) rate = p.pmax*sP*(0.75+0.5*R());
+    else if(front>0.6 && R()<0.3) rate = 0.15+R()*0.3;      // post-frontal flurries
+    let type='NIL';
+    if(rate>=0.1){
+      if(T>=1) type='RA';
+      else if(nose>=900) type = T<=0.3 ? 'FZRA' : 'RA';
+      else if(nose>=450) type='PL';
+      else type = T>0.4 ? 'RASN' : 'SN';
+    }
+    const fzl = T>0 ? Math.round((T*170 + nose*0.6 + 250)/10)*10 : (nose>=450 ? nose : 0);
+    const sus = Math.max(4, Math.round(p.wind + p.windPk*Math.exp(-Math.pow((h-peak-2)/8,2)) + (R()-.5)*6));
+    const gst = Math.round(sus*p.gf*(0.94+0.12*R()));
+    const dir = 100 + 90*clamp((h-peak+8)/8,0,1) + 95*front + (R()-.5)*12;
+    const iceHr = type==='FZRA' ? rate*0.55 : 0; ice += iceHr;
+    if(type==='SN') snow += rate*1.0;
+    const rh = Math.round(clamp(72 + 26*sP + (R()-.5)*6, 55, 100));
+    const rime = Math.round(clamp(p.rime*100*(T<0 && T>-14 ? 1 : 0.15)*clamp(sus/38,0,1)*(sP>0.1||rh>90 ? 1 : 0.45) + (R()-.5)*6, 0, 100));
+    const pres = 1013 - 24*Math.exp(-Math.pow((h-peak)/10,2)) + 6*front + (R()-.5);
+    const vis = type==='NIL' ? 24 : Math.max(0.4, (type==='SN'?8:15)/(1+rate*1.6));
+    hours.push({h,t,T,feels:windChill(T,sus),dir,sus,gst,type,rate,fzl,nose,iceHr,ice,snow,rh,rime,pres,vis});
+  }
+  // 24 h summary
+  const n24 = hours.slice(0,24);
+  const gMax = n24.reduce((a,b)=>b.gst>a.gst?b:a);
+  const fz = hours.filter(x=>x.type==='FZRA');
+  const sum = {
+    gust24:gMax.gst, gustAt:gMax.t, gustDir:card(gMax.dir),
+    ice24:hours[23].ice, ice48:hours[47].ice,
+    rime24:Math.max(...n24.map(x=>x.rime)),
+    precip24:n24.reduce((a,b)=>a+b.rate,0),
+    snow48:hours[47].snow,
+    fzStart:fz.length?fz[0].t:null, fzEnd:fz.length?fz[fz.length-1].t:null,
+    tMax:Math.max(...hours.map(x=>x.T)), tMin:Math.min(...hours.map(x=>x.T)),
+    peak
+  };
+  const lvl = (v,y,r)=> v>=r?2: v>=y?1:0;
+  const sev = Math.max(lvl(sum.gust24,s.thr.gustY,s.thr.gustR), lvl(sum.ice24,s.thr.iceY,s.thr.iceR), lvl(sum.rime24,60,90), fz.some(x=>x.h<24)?1:0);
+  sum.status = ['g','y','r'][sev];
+  s.hours = hours; s.sum = sum; s.days = buildDays(s, R); s.peakH = peak;
+}
+
+const TYPE_RANK = {FZRA:5,PL:4,SN:3,RASN:2,RA:1,NIL:0};
+const TYPE_DESC = {FZRA:'Freezing rain',PL:'Ice pellets',SN:'Snow',RASN:'Rain / snow mix',RA:'Rain',NIL:'Dry'};
+
+function buildDays(s, R){
+  const days = [], byDay = {};
+  s.hours.forEach(x=>{ const k=fKey.format(x.t); (byDay[k]=byDay[k]||[]).push(x); });
+  const keys = Object.keys(byDay).slice(0,2);
+  const thr = s.thr, p = s.p;
+  keys.forEach((k,i)=>{
+    const a = byDay[k];
+    const dom = a.reduce((m,x)=>TYPE_RANK[x.type]>TYPE_RANK[m]?x.type:m,'NIL');
+    const pr = a.reduce((m,x)=>m+x.rate,0);
+    const gust = Math.max(...a.map(x=>x.gst));
+    const wet = a.filter(x=>x.rate>=0.1).length;
+    days.push({date:a[0].t, code:dom, desc: dom==='NIL' ? 'Cloudy, dry' : TYPE_DESC[dom]+(gust>=70?', strong winds':''),
+      hi:Math.max(...a.map(x=>x.T)), lo:Math.min(...a.map(x=>x.T)), gust, pr, pop:Math.round(clamp(wet/a.length*100+20*(wet>0),0,100)),
+      partial:i===0 && a.length<24});
+  });
+  const base = p.base, wf = p.windPk/40;
+  const nextSys = p.nose>=1000 ? (base>=-1 ? 'RA':'FZRA') : p.nose>=600 ? 'PL':'SN';
+  const tpl = [
+    {code:'SN',  desc:'Cold NW flow, flurries', hi:base-2, lo:base-7, gust:58*wf, pop:40, pr:2},
+    {code:'NIL', desc:'Ridge, light winds',     hi:base,   lo:base-8, gust:30,    pop:10, pr:0},
+    {code:'NIL', desc:'Milder SW flow, cloud',  hi:base+4, lo:base-1, gust:46*wf, pop:25, pr:0.5},
+    {code:nextSys, desc:'Next system: '+TYPE_DESC[nextSys].toLowerCase(), hi:base+3, lo:base-2, gust:78*wf, pop:80, pr:14},
+    {code:'SN',  desc:'Gusty NW, flash-freeze risk', hi:base-1, lo:base-9, gust:72*wf, pop:50, pr:3},
+  ];
+  for(let i=days.length; i<7; i++){
+    const t = tpl[Math.min(i-2, tpl.length-1)] || tpl[tpl.length-1];
+    const date = new Date(days[days.length-1].date.getTime()+86400000);
+    days.push({date, code:t.code, desc:t.desc, hi:t.hi+(R()-.5)*1.5, lo:t.lo+(R()-.5)*1.5, gust:Math.round(t.gust*(0.9+0.2*R())), pr:t.pr*(0.8+0.4*R()), pop:t.pop});
+  }
+  days.forEach(d=>{
+    const fzHeavy = d.code==='FZRA' && d.pr>10;
+    d.risk = (d.gust>=thr.gustR || fzHeavy) ? 'r' : (d.gust>=thr.gustY || d.code==='FZRA' || d.code==='PL' || d.pr>=15) ? 'y' : 'g';
+    d.win = (d.gust<50 && d.pop<40) ? 'GO' : (d.gust<70 && d.code!=='FZRA') ? 'LTD' : 'NO-GO';
+  });
+  return days;
+}
+SITES.forEach(buildSite);
+
+/* ---------- Header: clock, counts, ticker ---------- */
+function tickClock(){
+  const now = new Date();
+  document.getElementById('clock').textContent = fmt({hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(now);
+  document.getElementById('clockDate').textContent = fmt({weekday:'short',month:'short',day:'numeric',year:'numeric'}).format(now).toUpperCase()+' · '+tzAbbr;
+}
+setInterval(tickClock,1000); tickClock();
+
+function renderCounts(){
+  const c = {g:0,y:0,r:0}; SITES.forEach(s=>c[s.sum.status]++);
+  document.getElementById('statusCounts').innerHTML =
+    `<span class="chip bd-g">${c.g} NORMAL</span><span class="chip bd-y">${c.y} CAUTION</span><span class="chip bd-r">${c.r} CRITICAL</span>`;
+  document.getElementById('siteCount').textContent = SITES.length+' ASSETS';
+}
+
+function renderTicker(){
+  const hol = SITES.find(s=>s.id==='hol'), bde = SITES.find(s=>s.id==='bde'), cat = SITES.find(s=>s.id==='cat');
+  const items = [
+    `<span style="color:var(--fzra)">■ FREEZING RAIN WARNING</span> Avalon Peninsula North, St. John's & vicinity — ${fzWindow(hol)}; ice accretion ${r1(hol.sum.ice48)} mm possible`,
+    `<span style="color:var(--y)">■ WIND WARNING</span> Burgeo – Ramea, Connaigre, Coast of Bays — gusts to ${bde.sum.gust24} km/h ${bde.sum.gustDir}`,
+    `<span style="color:var(--y)">■ WIND WARNING</span> Wreckhouse — SE gusts 110–130 km/h ahead of the cold front`,
+    `<span style="color:var(--sn)">■ SNOWFALL WARNING</span> Northern Peninsula East, White Bay — ${Math.round(cat.sum.snow48)} cm by ${fDay.format(new Date(T0.getTime()+40*3600000))}`,
+    `<span style="color:var(--teal)">■ OPS NOTE</span> Flash-freeze behind the front: wet surfaces & conductors freeze rapidly as temperatures drop ${Math.round(hol.sum.tMax - hol.sum.tMin)}° in 6–9 h`,
+  ];
+  document.getElementById('ticker').innerHTML = items.join('<span style="color:#3a4658">&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;</span>') + '<span style="color:var(--dim2)">&nbsp;&nbsp;&nbsp;[SIMULATED SCENARIO]</span>';
+}
+function fzWindow(s){ return s.sum.fzStart ? `${fDay.format(s.sum.fzStart)} ${hh(s.sum.fzStart)} – ${fDay.format(s.sum.fzEnd)} ${hh(s.sum.fzEnd)} ${tzAbbr}` : 'not expected'; }
+
+/* ---------- Left sidebar ---------- */
+let selected = 'bde';
+function curr(s){ return s.hours[0]; }
+function renderList(){
+  const q = (document.getElementById('search').value||'').toLowerCase();
+  let html = '';
+  GROUPS.forEach(g=>{
+    const list = SITES.filter(s=>s.group===g && (s.name.toLowerCase().includes(q) || s.region.toLowerCase().includes(q)));
+    if(!list.length) return;
+    html += `<div class="hdr px-3 pt-3 pb-1 flex items-center justify-between" style="font-size:9.5px"><span>${g}</span><span class="mono" style="color:var(--dim2)">${list.length}</span></div>`;
+    list.forEach(s=>{
+      const c = curr(s), st = s.sum.status;
+      const risk = s.sum.ice24>=0.5 ? `ICE ${r1(s.sum.ice24)}mm` : s.sum.rime24>=60 ? `RIME ${s.sum.rime24}` : `GST ${s.sum.gust24}`;
+      html += `<div class="site-item px-3 py-2 ${s.id===selected?'active':''}" data-id="${s.id}">
+        <div class="flex items-center gap-2">
+          <span class="dot ${st}"></span>
+          <span style="color:#e6edf5;font-weight:600;font-size:12px" class="flex-1 truncate">${s.name}</span>
+          <span class="chip ${st==='r'?'bd-r':st==='y'?'bd-y':'bd-g'}">${risk}</span>
+        </div>
+        <div class="flex items-center justify-between mono mt-1 pl-4" style="font-size:10.5px;color:#9aa7b6">
+          <span>${c.T>=0?'+':''}${r1(c.T)}°</span>
+          <span>${card(c.dir)} ${c.sus}<span style="color:var(--dim2)">/</span><span class="${c.gst>=s.thr.gustR?'st-r':c.gst>=s.thr.gustY?'st-y':''}">${c.gst}</span></span>
+          <span class="chip c-${c.type}">${c.type==='NIL'?'DRY':c.type}</span>
+          <span style="color:var(--dim)">${c.rh}%</span>
+        </div>
+      </div>`;
+    });
+  });
+  const el = document.getElementById('siteList');
+  el.innerHTML = html;
+  el.querySelectorAll('.site-item').forEach(n=>n.onclick=()=>select(n.dataset.id));
+}
+document.getElementById('search').addEventListener('input', renderList);
+
+/* ---------- Map ---------- */
+const MAP = {lonMin:-59.85, lonMax:-52.35, latMin:46.45, latMax:51.95, k:140};
+const COS = Math.cos(49*Math.PI/180);
+const W = (MAP.lonMax-MAP.lonMin)*COS*MAP.k, H = (MAP.latMax-MAP.latMin)*MAP.k;
+const P = (lon,lat) => [ (lon-MAP.lonMin)*COS*MAP.k, (MAP.latMax-lat)*MAP.k ];
+const unP = (x,y) => [ x/(COS*MAP.k)+MAP.lonMin, MAP.latMax - y/MAP.k ];
+
+const COAST = [[-55.65,51.62],[-55.45,51.55],[-55.55,51.37],[-55.80,51.30],[-55.70,51.15],[-55.95,51.00],[-56.05,50.80],[-56.12,50.62],[-56.30,50.42],[-56.45,50.25],[-56.62,50.05],[-56.78,49.88],[-56.60,49.82],[-56.35,49.92],[-56.10,49.95],[-55.80,50.02],[-55.50,50.00],[-55.55,49.85],[-55.75,49.72],[-56.00,49.60],[-56.05,49.50],[-55.80,49.48],[-55.50,49.52],[-55.25,49.55],[-55.00,49.62],[-54.80,49.70],[-54.65,49.55],[-54.50,49.40],[-54.35,49.55],[-54.10,49.62],[-53.95,49.45],[-53.65,49.38],[-53.45,49.25],[-53.55,49.08],[-53.70,48.95],[-53.85,48.80],[-53.60,48.72],[-53.35,48.70],[-53.10,48.68],[-53.20,48.52],[-53.45,48.40],[-53.75,48.25],[-53.95,48.15],[-53.75,48.05],[-53.55,47.95],[-53.75,47.75],[-53.95,47.66],[-53.75,47.55],[-53.60,47.70],[-53.45,47.85],[-53.25,48.00],[-53.05,48.10],[-52.95,48.05],[-53.05,47.85],[-53.20,47.68],[-53.17,47.48],[-53.00,47.55],[-52.88,47.62],[-52.80,47.80],[-52.70,47.65],[-52.68,47.55],[-52.62,47.50],[-52.70,47.30],[-52.82,47.10],[-52.90,46.90],[-53.05,46.66],[-53.35,46.72],[-53.50,46.85],[-53.55,47.05],[-53.60,47.15],[-53.75,47.05],[-53.95,46.90],[-54.18,46.82],[-54.05,47.05],[-53.98,47.25],[-53.92,47.45],[-54.00,47.65],[-54.08,47.82],[-54.25,47.70],[-54.45,47.55],[-54.70,47.40],[-54.90,47.25],[-55.10,47.12],[-55.20,47.00],[-55.45,46.90],[-55.75,46.86],[-55.95,46.95],[-55.80,47.08],[-55.55,47.20],[-55.35,47.35],[-55.10,47.52],[-54.80,47.68],[-55.20,47.62],[-55.60,47.52],[-55.85,47.45],[-55.95,47.58],[-55.75,47.72],[-55.80,47.90],[-56.00,47.70],[-56.20,47.62],[-56.60,47.62],[-57.00,47.58],[-57.35,47.62],[-57.65,47.60],[-58.00,47.62],[-58.40,47.62],[-58.70,47.60],[-59.10,47.57],[-59.32,47.62],[-59.38,47.80],[-59.30,47.95],[-59.10,48.10],[-58.85,48.30],[-58.60,48.48],[-58.75,48.52],[-59.05,48.45],[-59.28,48.48],[-59.05,48.60],[-58.85,48.72],[-58.70,48.60],[-58.55,48.70],[-58.40,48.90],[-58.30,49.08],[-58.15,49.25],[-57.95,49.45],[-57.90,49.65],[-57.80,49.92],[-57.65,50.15],[-57.50,50.40],[-57.35,50.65],[-57.15,50.85],[-56.90,51.10],[-56.75,51.30],[-56.40,51.45],[-56.00,51.58]];
+const LABRADOR = [[-59.9,50.55],[-59.3,50.72],[-58.9,51.02],[-58.4,51.24],[-57.8,51.38],[-57.1,51.43],[-56.8,51.55],[-56.43,51.73],[-56.15,52.0],[-59.9,52.0]];
+const LAKES = [ // [lon,lat,rxDeg,ryDeg,rot]
+  [-57.25,49.02,.32,.05,-38],[-56.62,48.70,.30,.05,-35],[-54.55,48.90,.28,.045,-20],[-56.45,48.30,.22,.07,-10],[-57.20,48.38,.22,.05,-40],[-55.70,48.20,.12,.06,20],[-56.95,49.70,.10,.05,0]];
+const TOWNS = [["St. John's",-52.71,47.56],['Gander',-54.61,48.95],['Grand Falls-Windsor',-55.65,48.93],['Corner Brook',-57.95,48.95],['Deer Lake',-57.43,49.17],['Stephenville',-58.55,48.55],['Port aux Basques',-59.14,47.62],['St. Anthony',-55.58,51.37],['Clarenville',-53.97,48.17],['Marystown',-55.15,47.17]];
+const LIL = [[-57.55,52.0],[-57.15,51.62],[-56.96,51.47],[-56.62,51.32],[-56.85,51.0],[-57.15,50.6],[-57.10,50.2],[-56.85,49.78],[-56.40,49.35],[-55.80,49.05],[-55.20,48.75],[-54.60,48.40],[-54.10,48.05],[-53.80,47.72],[-53.40,47.55],[-52.97,47.40]];
+const NODE = Object.fromEntries(SITES.map(s=>[s.id,[s.lon,s.lat]]));
+Object.assign(NODE,{gf:[-55.65,48.93],gan:[-54.61,48.95],dl:[-57.43,49.17],cb:[-57.95,48.95],stv:[-58.50,48.45],pab:[-59.10,47.65],sjn:[-52.73,47.55],wav:[-53.70,47.55],usl:[-56.10,48.20],bb:[-58.35,48.30],how:[-57.10,49.18]});
+const LINES = [ // [from,to,kv]
+  ['bde','sun',230],['bde','gra',230],['bde','usl',230],['bde','gf',230],['gf','how',230],['how','dl',230],['dl','cb',230],['cb','stv',230],['stv','bb',230],['bb','pab',138],
+  ['how','hin',230],['hin','cat',230],['gf','gan',230],['gan','sun',230],['sun','wav',230],['wav','hol',230],['hol','sol',230],['sol','sjn',230],['sun','par',138],['gra','usl',138],['hol','sjn',138]];
+const RADAR = [ // [lon,lat,rx,ry,type,op]
+  [-53.25,47.55,.55,.38,'FZRA',.75],[-52.95,47.25,.35,.30,'FZRA',.6],[-53.55,47.95,.40,.28,'FZRA',.55],[-54.10,47.70,.38,.30,'PL',.5],
+  [-54.90,47.80,.55,.35,'RA',.55],[-55.75,47.65,.55,.35,'RA',.65],[-56.60,47.85,.45,.30,'RA',.45],[-56.30,48.25,.40,.30,'PL',.5],
+  [-57.70,48.10,.50,.30,'RA',.45],[-58.70,47.85,.35,.25,'RA',.5],[-57.30,49.30,.50,.40,'SN',.45],[-56.75,50.10,.55,.45,'SN',.55],[-56.30,50.90,.45,.40,'SN',.4],[-55.30,49.30,.45,.35,'SN',.35],[-54.40,48.70,.40,.30,'PL',.35]];
+const RCOL = {FZRA:'#ff5ad1',PL:'#b18cff',SN:'#dfe8f2',RA:'#4ade80'};
+
+function smoothPath(pts, closed=true){
+  const p = pts.map(a=>P(a[0],a[1])), n = p.length;
+  let d = `M${p[0][0].toFixed(1)},${p[0][1].toFixed(1)}`;
+  const lim = closed ? n : n-1;
+  for(let i=0;i<lim;i++){
+    const p0=p[(i-1+n)%n], p1=p[i], p2=p[(i+1)%n], p3=p[(i+2)%n];
+    const a = closed||i>0 ? p0 : p1, b = closed||i<n-2 ? p3 : p2;
+    const c1=[p1[0]+(p2[0]-a[0])/6, p1[1]+(p2[1]-a[1])/6], c2=[p2[0]-(b[0]-p1[0])/6, p2[1]-(b[1]-p1[1])/6];
+    d += `C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+  }
+  return d + (closed?'Z':'');
+}
+const lineD = pts => 'M'+pts.map(a=>P(a[0],a[1]).map(v=>v.toFixed(1)).join(',')).join('L');
+
+function drawMap(){
+  const svg = document.getElementById('map');
+  svg.setAttribute('viewBox',`0 0 ${W.toFixed(0)} ${H.toFixed(0)}`);
+  svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+  const coast = smoothPath(COAST);
+  let g = `
+  <defs>
+    <pattern id="dots" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".6" fill="#2a3644"/></pattern>
+    <filter id="blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7"/></filter>
+    <filter id="echo" x="-50%" y="-50%" width="200%" height="200%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="38" xChannelSelector="R" yChannelSelector="G"/>
+      <feGaussianBlur stdDeviation="2.2"/>
+    </filter>
+    <radialGradient id="relief" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#2a3442" stop-opacity=".55"/><stop offset="1" stop-color="#2a3442" stop-opacity="0"/></radialGradient>
+    ${Object.entries(RCOL).map(([k,c])=>`<radialGradient id="rg-${k}"><stop offset="0" stop-color="${c}" stop-opacity=".95"/><stop offset=".55" stop-color="${c}" stop-opacity=".45"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient>`).join('')}
+    <clipPath id="frame"><rect width="${W}" height="${H}"/></clipPath>
+  </defs>
+  <g clip-path="url(#frame)">`;
+  // graticule
+  for(let lon=-59; lon<=-53; lon++){ const [x]=P(lon,0); g+=`<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#16202b" stroke-dasharray="2 4"/><text x="${x+3}" y="${H-6}" fill="#3a4757" font-size="9" class="mono">${-lon}°W</text>`; }
+  for(let lat=47; lat<=51; lat++){ const [,y]=P(0,lat); g+=`<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="#16202b" stroke-dasharray="2 4"/><text x="4" y="${y-3}" fill="#3a4757" font-size="9" class="mono">${lat}°N</text>`; }
+  // labrador
+  g += `<path d="${smoothPath(LABRADOR)}" fill="#10161d" stroke="#2a3542" stroke-width="1"/>`;
+  { const [x,y]=P(-58.8,51.62); g+=`<text x="${x}" y="${y}" fill="#3e4b5b" font-size="10" letter-spacing="3">LABRADOR / QUÉBEC</text>`; }
+  // shelf glow + land
+  g += `<path d="${coast}" fill="none" stroke="#14303a" stroke-width="22" stroke-opacity=".35" filter="url(#blur)"/>
+        <path d="${coast}" fill="none" stroke="#1d3a44" stroke-width="6" stroke-opacity=".35"/>
+        <path d="${coast}" fill="#131a22"/>
+        <path d="${coast}" fill="url(#dots)" opacity=".7"/>`;
+  // relief (Long Range Mtns, central plateau)
+  [[-57.55,49.6,.55,.95],[-58.6,47.95,.35,.45],[-56.0,48.35,.6,.35],[-56.5,50.6,.35,.5]].forEach(([lo,la,rx,ry])=>{
+    const [x,y]=P(lo,la); g+=`<ellipse cx="${x}" cy="${y}" rx="${rx*COS*MAP.k}" ry="${ry*MAP.k}" fill="url(#relief)"/>`; });
+  g += `<path d="${coast}" fill="none" stroke="#3d5163" stroke-width="1.1"/>`;
+  // lakes
+  LAKES.forEach(([lo,la,rx,ry,rot])=>{ const [x,y]=P(lo,la); g+=`<ellipse cx="${x}" cy="${y}" rx="${rx*COS*MAP.k}" ry="${ry*MAP.k}" transform="rotate(${rot} ${x} ${y})" fill="#0b1117" stroke="#24323f" stroke-width=".8"/>`; });
+  // region labels
+  [['LONG RANGE MTNS',-57.75,50.0,-62],['AVALON',-53.3,47.15,0],['CENTRAL',-55.3,48.55,0],['NORTHERN PENINSULA',-56.85,50.95,-58],['BURIN',-55.35,47.12,0]].forEach(([t,lo,la,r])=>{
+    const [x,y]=P(lo,la); g+=`<text x="${x}" y="${y}" fill="#334051" font-size="9.5" letter-spacing="2.5" text-anchor="middle" transform="rotate(${r} ${x} ${y})">${t}</text>`; });
+  // water labels
+  [['GULF OF ST. LAWRENCE',-59.1,49.6],['ATLANTIC OCEAN',-53.3,46.75],['NOTRE DAME BAY',-55.2,49.85],['STRAIT OF BELLE ISLE',-56.25,51.78],['CABOT STRAIT',-59.0,47.2]].forEach(([t,lo,la])=>{
+    const [x,y]=P(lo,la); g+=`<text x="${x}" y="${y}" fill="#243444" font-size="9" font-style="italic" letter-spacing="2" text-anchor="middle">${t}</text>`; });
+  // radar
+  g += `<g id="lyrRadar"><g class="radar-drift" filter="url(#echo)" style="mix-blend-mode:screen">`;
+  RADAR.forEach(([lo,la,rx,ry,t,op])=>{ const [x,y]=P(lo,la); g+=`<ellipse cx="${x}" cy="${y}" rx="${rx*COS*MAP.k}" ry="${ry*MAP.k}" fill="url(#rg-${t})" opacity="${op}"/>`; });
+  g += `</g></g>`;
+  // grid lines
+  g += `<g id="lyrGrid">`;
+  LINES.forEach(([a,b,kv])=>{ const d=lineD([NODE[a],NODE[b]]);
+    g += kv>=230 ? `<path d="${d}" stroke="#5f7d93" stroke-width="1.9" fill="none" stroke-opacity=".85"/>` : `<path d="${d}" stroke="#45596a" stroke-width="1.1" fill="none" stroke-dasharray="3 2"/>`; });
+  Object.entries(NODE).forEach(([k,[lo,la]])=>{ if(SITES.find(s=>s.id===k)) return; const [x,y]=P(lo,la); g+=`<rect x="${x-2.5}" y="${y-2.5}" width="5" height="5" fill="#0b1015" stroke="#6c8aa0" stroke-width="1"/>`; });
+  g += `</g>`;
+  // LIL
+  g += `<g id="lyrLIL"><path d="${lineD(LIL)}" stroke="#b18cff" stroke-opacity=".25" stroke-width="7" fill="none" stroke-linejoin="round"/>
+        <path d="${lineD(LIL)}" stroke="#b18cff" stroke-width="2" fill="none" class="lil-flow" stroke-linejoin="round"/>`;
+  { const [x,y]=P(-57.45,51.88); g+=`<text x="${x+6}" y="${y+4}" fill="#b18cff" font-size="9.5" class="mono">↖ TO MUSKRAT FALLS · LIL ±350 kV HVdc</text>`; }
+  { const [x,y]=P(-56.80,51.40); g+=`<text x="${x-8}" y="${y+12}" fill="#8f76c9" font-size="8.5" class="mono" text-anchor="end">SOBI CABLE CROSSING</text>`; }
+  g += `</g>`;
+  // towns
+  TOWNS.forEach(([t,lo,la])=>{ const [x,y]=P(lo,la); g+=`<circle cx="${x}" cy="${y}" r="1.8" fill="#6b7787"/><text x="${x+5}" y="${y+3}" fill="#5c6878" font-size="9" class="lbl-halo">${t}</text>`; });
+  // nodes
+  g += `<g id="lyrNodes">`;
+  SITES.forEach(s=>{
+    const [x,y]=P(s.lon,s.lat), st=s.sum.status, col=C[st], [dx,dy,anc]=s.lbl, a=anc||'start';
+    const shape = s.group==='Hydro Generation' ? `<circle r="6.5" fill="${col}" stroke="#090c10" stroke-width="2"/>`
+               : s.group==='Thermal / Backup' ? `<rect x="-6" y="-6" width="12" height="12" fill="${col}" stroke="#090c10" stroke-width="2"/>`
+               : `<path d="M0,-8 L8,0 L0,8 L-8,0Z" fill="${col}" stroke="#090c10" stroke-width="2"/>`;
+    g += `<g class="node ${st}" data-id="${s.id}" transform="translate(${x.toFixed(1)},${y.toFixed(1)})">
+      <circle class="halo" r="9" fill="none" stroke="${col}" stroke-width="2"/>
+      <circle r="13" fill="${col}" fill-opacity=".08" stroke="${col}" stroke-opacity=".5" stroke-width="1"/>
+      <g class="sel" style="display:none"><circle class="sel-ring" r="19" fill="none" stroke="#5eead4" stroke-width="1.6" stroke-dasharray="5 4"/></g>
+      ${shape}
+      <text x="${dx}" y="${dy}" text-anchor="${a}" fill="#e6edf5" font-size="11.5" font-weight="600" class="lbl-halo">${s.name}</text>
+      <text x="${dx}" y="${dy+12}" text-anchor="${a}" fill="${col}" font-size="9.5" class="mono lbl-halo" data-live="${s.id}">${liveLabel(s)}</text>
+      <circle r="18" fill="transparent"/>
+    </g>`;
+  });
+  g += `</g>`;
+  // compass + scale
+  g += `<g transform="translate(${W-46},44)"><circle r="20" fill="#0c1117" stroke="#2a3542"/><path d="M0,-16 L5,0 L0,4 L-5,0Z" fill="#5eead4"/><path d="M0,16 L5,0 L0,-4 L-5,0Z" fill="#3a4757"/><text y="-24" text-anchor="middle" fill="#7b8796" font-size="9" class="mono">N</text></g>`;
+  { const kmPx = MAP.k/111; const L=100*kmPx; g+=`<g transform="translate(${W-L-20},${H-62})"><rect x="0" y="0" width="${L/2}" height="4" fill="#7b8796"/><rect x="${L/2}" y="0" width="${L/2}" height="4" fill="#2a3542" stroke="#7b8796" stroke-width=".5"/><text x="0" y="16" fill="#7b8796" font-size="9" class="mono">0</text><text x="${L}" y="16" fill="#7b8796" font-size="9" class="mono" text-anchor="end">100 km</text></g>`; }
+  g += `</g>`;
+  svg.innerHTML = g;
+
+  // interactions
+  const tip = document.getElementById('tip'), wrap = document.getElementById('mapWrap');
+  svg.querySelectorAll('.node').forEach(n=>{
+    const s = SITES.find(x=>x.id===n.dataset.id);
+    n.addEventListener('click',()=>select(s.id));
+    n.addEventListener('mouseenter',()=>{
+      const c=curr(s);
+      tip.innerHTML = `<div style="color:#e6edf5;font-weight:700;margin-bottom:3px">${s.name}</div>
+        <div style="color:var(--dim);font-size:10px;margin-bottom:5px">${s.type}</div>
+        <div class="flex justify-between"><span style="color:var(--dim)">Temp</span><span>${r1(c.T)}°C</span></div>
+        <div class="flex justify-between"><span style="color:var(--dim)">Wind</span><span>${card(c.dir)} ${c.sus} G${c.gst} km/h</span></div>
+        <div class="flex justify-between"><span style="color:var(--dim)">Precip</span><span>${TYPE_DESC[c.type]}</span></div>
+        <div class="flex justify-between"><span style="color:var(--dim)">24h peak gust</span><span class="st-${s.sum.gust24>=s.thr.gustR?'r':s.sum.gust24>=s.thr.gustY?'y':'g'}">${s.sum.gust24} km/h</span></div>
+        <div class="flex justify-between"><span style="color:var(--dim)">24h radial ice</span><span>${r1(s.sum.ice24)} mm</span></div>`;
+      tip.style.display='block';
+    });
+    n.addEventListener('mousemove',e=>{ const r=wrap.getBoundingClientRect(); let x=e.clientX-r.left+14, y=e.clientY-r.top+14; if(x>r.width-200) x-=220; if(y>r.height-170) y-=180; tip.style.left=x+'px'; tip.style.top=y+'px'; });
+    n.addEventListener('mouseleave',()=>tip.style.display='none');
+  });
+  svg.addEventListener('mousemove',e=>{
+    const pt = svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
+    const m = svg.getScreenCTM(); if(!m) return; const q = pt.matrixTransform(m.inverse());
+    const [lo,la] = unP(q.x,q.y);
+    document.getElementById('coords').textContent = `${la.toFixed(3)}°N  ${(-lo).toFixed(3)}°W`;
+  });
+  applyLayers(); markSelected();
+}
+function liveLabel(s){ const c=curr(s); return `${c.T>=0?'+':''}${r1(c.T)}° · G${c.gst}${c.type!=='NIL'?' · '+c.type:''}`; }
+function markSelected(){ document.querySelectorAll('#map .node').forEach(n=>n.querySelector('.sel').style.display = n.dataset.id===selected?'':'none'); }
+function applyLayers(){
+  const on = id => document.getElementById(id).checked;
+  document.getElementById('lyrLIL').style.display = on('tLIL')?'':'none';
+  document.getElementById('lyrRadar').style.display = on('tRadar')?'':'none';
+  document.getElementById('lyrGrid').style.display = on('tGrid')?'':'none';
+  document.getElementById('radarLegend').style.display = on('tRadar')?'':'none';
+  document.getElementById('radarStamp').style.display = on('tRadar')?'':'none';
+}
+['tLIL','tRadar','tGrid'].forEach(id=>document.getElementById(id).addEventListener('change',applyLayers));
+
+/* ---------- Gauges ---------- */
+function gauge({label, value, max, y, r, unit, dec=0, sub}){
+  const cx=90, cy=100, R=62;
+  const ang = v => Math.PI*(1-clamp(v,0,max)/max);
+  const pt = (a,rad=R) => [cx+rad*Math.cos(a), cy-rad*Math.sin(a)];
+  const arc = (v1,v2,rad=R) => { const [x1,y1]=pt(ang(v1),rad), [x2,y2]=pt(ang(v2),rad); return `M${x1.toFixed(1)},${y1.toFixed(1)} A${rad},${rad} 0 0 1 ${x2.toFixed(1)},${y2.toFixed(1)}`; };
+  const col = value>=r?C.r: value>=y?C.y:C.g;
+  const [mx1,my1] = pt(ang(value), R-10), [mx2,my2] = pt(ang(value), R+6);
+  let ticks=''; for(let i=0;i<=10;i++){ const a=ang(max*i/10), [x1,y1]=pt(a,R+7), [x2,y2]=pt(a,R+(i%5?10:13)); ticks+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#3a4757" stroke-width="1"/>`; }
+  const tl = v => { const [x,yy]=pt(ang(v),R+21); return `<text x="${x}" y="${yy+3}" fill="#7b8796" font-size="8.5" text-anchor="middle" class="mono">${v}</text>`; };
+  return `<div class="panel px-2 pt-2 pb-1" style="background:var(--panel2);border-radius:3px">
+    <div class="flex items-center justify-between"><span class="hdr" style="font-size:9px">${label}</span><span class="dot ${value>=r?'r':value>=y?'y':'g'}" style="animation:none;width:7px;height:7px"></span></div>
+    <svg viewBox="0 0 180 112" class="w-full" style="max-height:118px">
+      <path d="${arc(0,y)}" stroke="${C.g}" stroke-opacity=".28" stroke-width="9" fill="none"/>
+      <path d="${arc(y,r)}" stroke="${C.y}" stroke-opacity=".38" stroke-width="9" fill="none"/>
+      <path d="${arc(r,max)}" stroke="${C.r}" stroke-opacity=".42" stroke-width="9" fill="none"/>
+      <path d="${arc(0,value)}" stroke="${col}" stroke-width="3" fill="none" style="filter:drop-shadow(0 0 3px ${col})" transform="translate(0,0)" />
+      ${ticks}${tl(0)}${tl(y)}${tl(r)}${tl(max)}
+      <line x1="${mx1}" y1="${my1}" x2="${mx2}" y2="${my2}" stroke="#f1f5f9" stroke-width="2.5" stroke-linecap="round"/>
+      <text x="${cx}" y="${cy-16}" text-anchor="middle" fill="${col}" font-size="22" font-weight="700" class="mono">${value.toFixed(dec)}</text>
+      <text x="${cx}" y="${cy-3}" text-anchor="middle" fill="#7b8796" font-size="9" class="mono">${unit}</text>
+    </svg>
+    <div class="mono text-center" style="font-size:9.5px;color:var(--dim);margin-top:-2px">${sub}</div>
+  </div>`;
+}
+
+/* ---------- Right detail panel ---------- */
+function opsNotes(s){
+  const n = [], sm = s.sum, h = s.hours;
+  if(sm.fzStart){
+    const lvl = sm.ice48>=s.thr.iceR?'r':sm.ice48>=s.thr.iceY?'y':'g';
+    n.push([lvl,'snowflake',`Freezing rain ${fzWindow(s)}. Est. radial ice <b>${r1(sm.ice48)} mm</b> (caution ≥${s.thr.iceY}, critical ≥${s.thr.iceR}). Warm layer aloft to ~${Math.max(...h.map(x=>x.nose))} m.`]);
+  }
+  const gl = sm.gust24>=s.thr.gustR?'r':sm.gust24>=s.thr.gustY?'y':'g';
+  n.push([gl,'wind',`Peak gust <b>${sm.gust24} km/h ${sm.gustDir}</b> at ${fDay.format(sm.gustAt)} ${hh(sm.gustAt)} ${tzAbbr}. ${gl!=='g'?'Galloping / conductor clash risk on exposed spans if ice-loaded.':'Within design limits.'}`]);
+  if(sm.rime24>=50) n.push([sm.rime24>=90?'r':sm.rime24>=60?'y':'g','mountain',`In-cloud rime icing index ${sm.rime24}/100 — exposed towers & intake structures above ~300 m at risk.`]);
+  const drop = (()=>{ let best=0, at=null; for(let i=0;i<40;i++){ const d=h[i].T-h[i+8].T; if(d>best){best=d;at=h[i+8].t;} } return [best,at]; })();
+  if(drop[0]>=4) n.push(['y','thermometer',`Flash-freeze: temperature falls ~${Math.round(drop[0])}° behind the cold front by ${fDay.format(drop[1])} ${hh(drop[1])}. Wet surfaces / switchgear freeze quickly.`]);
+  if(sm.snow48>=5) n.push([sm.snow48>=20?'y':'g','snowflake',`Snow accumulation ~${Math.round(sm.snow48)} cm through 48 h — access roads and spillway gates may need clearing.`]);
+  const go = s.days.findIndex((d,i)=>d.win==='GO' && !(i===0 && d.partial));
+  n.push(['g','calendar-days', go>=0 ? `Next full field-work window: <b>${fDay.format(s.days[go].date)} ${fDate.format(s.days[go].date)}</b> (gusts &lt; 50 km/h, low precip risk).` : 'No full field-work window in the 7-day outlook.']);
+  return n;
+}
+
+function renderDetail(){
+  const s = SITES.find(x=>x.id===selected), c = curr(s), sm = s.sum, st = sm.status;
+  const stTxt = {g:'NORMAL',y:'CAUTION',r:'CRITICAL'}[st];
+  const [lo,la] = [s.lon,s.lat];
+  const presTrend = s.hours[3].pres - c.pres;
+  const row = (k,v,extra='') => `<div class="flex justify-between items-baseline py-1 border-b" style="border-color:#1b232e"><span style="color:var(--dim)">${k}</span><span class="mono ${extra}" style="color:#e6edf5">${v}</span></div>`;
+
+  let html = `
+  <div class="px-4 pt-3 pb-3 border-b" style="border-color:var(--line);background:linear-gradient(180deg,#121a23,#0f141a)">
+    <div class="flex items-start justify-between gap-2">
+      <div>
+        <div class="hdr flex items-center gap-1" style="font-size:9.5px">${icon(s.icon,12)} ${s.group}</div>
+        <div style="font-size:20px;font-weight:700;color:#f1f5f9;letter-spacing:.01em;margin-top:2px">${s.name}</div>
+        <div style="color:var(--dim);font-size:11px">${s.type}</div>
+      </div>
+      <div class="text-right">
+        <div class="chip bd-${st}" style="font-size:11px;padding:3px 8px;font-weight:700">● ${stTxt}</div>
+        <div class="mono mt-1" style="font-size:10px;color:var(--dim)">${s.cap}</div>
+      </div>
+    </div>
+    <div class="grid grid-cols-3 gap-2 mt-3 mono" style="font-size:10px">
+      <div><div style="color:var(--dim2)">REGION</div><div style="color:#c9d3df">${s.region}</div></div>
+      <div><div style="color:var(--dim2)">LOCATION</div><div style="color:#c9d3df">${la.toFixed(2)}°N ${(-lo).toFixed(2)}°W</div></div>
+      <div><div style="color:var(--dim2)">ELEV · SITE ID</div><div style="color:#c9d3df">${s.elev} m · ${s.id.toUpperCase()}-WX01</div></div>
+    </div>
+  </div>
+
+  <!-- CURRENT -->
+  <div class="px-4 pt-3">
+    <div class="hdr mb-2 flex items-center justify-between"><span class="flex items-center gap-1">${icon('radio-tower',12)} Current Conditions</span><span class="mono" style="font-size:9.5px;color:var(--dim2)" id="obsTime">OBS ${hh(new Date())} ${tzAbbr}</span></div>
+    <div class="grid gap-3" style="grid-template-columns:auto 1fr">
+      <div class="panel px-3 py-2 flex flex-col justify-center" style="background:var(--panel2);border-radius:3px;min-width:132px">
+        <div class="mono" style="font-size:34px;line-height:1;font-weight:700;color:${c.T<=0?'#cfe3f5':'#f3f4f6'}" id="curT">${c.T>=0?'+':''}${r1(c.T)}°</div>
+        <div class="mono mt-1" style="font-size:10.5px;color:var(--dim)">FEELS <span style="color:#c9d3df" id="curF">${Math.round(c.feels)}°</span></div>
+        <div class="mt-2"><span class="chip c-${c.type}" style="font-size:11px">${c.type==='NIL'?'NO PRECIP':c.type+' · '+TYPE_DESC[c.type]}</span></div>
+      </div>
+      <div style="font-size:11px">
+        ${row('Wind (sus / gust)', `<span id="curW">${card(c.dir)} ${Math.round(c.dir)}° · ${c.sus} / <span class="${c.gst>=s.thr.gustR?'st-r':c.gst>=s.thr.gustY?'st-y':''}">${c.gst}</span> km/h</span>`)}
+        ${row('Pressure', `${c.pres.toFixed(1)} hPa <span style="color:${presTrend<0?'var(--y)':'var(--g)'}">${presTrend<0?'▼':'▲'} ${Math.abs(presTrend).toFixed(1)}/3h</span>`)}
+        ${row('Rel. humidity · Vis', `${c.rh}% · ${c.vis.toFixed(1)} km`)}
+        ${row('Freezing level', c.fzl===0?'SFC (column &lt; 0°)':`${c.fzl} m${c.T<=0?' (warm layer aloft)':''}`)}
+        ${row('Precip rate', c.rate>=0.1?`${c.rate.toFixed(1)} mm/h`:'0.0 mm/h')}
+      </div>
+    </div>
+  </div>
+
+  <!-- GAUGES -->
+  <div class="px-4 pt-4">
+    <div class="hdr mb-2 flex items-center gap-1">${icon('gauge',12)} Asset Risk Gauges · Next 24 h</div>
+    <div class="grid grid-cols-2 gap-2">
+      ${gauge({label:'Peak Wind Gust', value:sm.gust24, max:150, y:s.thr.gustY, r:s.thr.gustR, unit:'km/h', sub:`${sm.gustDir} · ${fDay.format(sm.gustAt)} ${hh(sm.gustAt)} · design ${s.thr.gustR}`})}
+      ${gauge({label:'Radial Ice Accretion', value:sm.ice24, max:25, y:s.thr.iceY, r:s.thr.iceR, unit:'mm radial', dec:1, sub:`48 h: ${r1(sm.ice48)} mm · FZRA ${sm.fzStart?'YES':'NO'}`})}
+      ${gauge({label:'Rime Ice Index', value:sm.rime24, max:100, y:60, r:90, unit:'index /100', sub:`in-cloud icing · elev ${s.elev} m`})}
+      ${gauge({label:'Precip Total (w.e.)', value:sm.precip24, max:60, y:25, r:40, unit:'mm', dec:1, sub:`snow 48 h: ${Math.round(sm.snow48)} cm`})}
+    </div>
+  </div>
+
+  <!-- OPS NOTES -->
+  <div class="px-4 pt-4">
+    <div class="hdr mb-2 flex items-center gap-1">${icon('shield-alert',12)} Operational Risk Drivers</div>
+    <div class="panel" style="background:var(--panel2);border-radius:3px">
+      ${opsNotes(s).map(([l,ic,t])=>`<div class="flex gap-2 px-3 py-2 border-b" style="border-color:#1d2632;font-size:11px;line-height:1.45">
+        <span class="mt-0.5" style="color:${C[l]}">${icon(ic,13,C[l])}</span><span style="color:#c3cdd9">${t}</span></div>`).join('')}
+    </div>
+  </div>
+
+  <!-- 48H TABLE -->
+  <div class="px-4 pt-4">
+    <div class="hdr mb-2 flex items-center justify-between"><span class="flex items-center gap-1">${icon('clock',12)} 48-Hour Critical Trend Matrix</span><span class="mono" style="font-size:9.5px;color:var(--dim2)">HOURLY · ${tzAbbr}</span></div>
+    <div class="panel overflow-y-auto scroll" style="max-height:330px;background:#0d1218;border-radius:3px">
+      <table class="trend mono" style="font-size:10.5px">
+        <thead><tr><th>Time</th><th>Temp</th><th>Wind</th><th>Sus/Gst</th><th style="text-align:center">Precip</th><th>Amt</th><th>FZL m</th><th>Ice Σ</th></tr></thead>
+        <tbody>${s.hours.map((x,i)=>{
+          const newDay = i>0 && fKey.format(x.t)!==fKey.format(s.hours[i-1].t);
+          const gc = x.gst>=s.thr.gustR?'cell-r':x.gst>=s.thr.gustY?'cell-y':'';
+          const amt = x.rate<0.1 ? '<span style="color:#3a4757">—</span>' : x.type==='SN' ? `${x.rate.toFixed(1)}cm` : `${x.rate.toFixed(1)}`;
+          const fzl = x.fzl===0 ? '<span style="color:#8aa0b6">SFC</span>' : (x.T<=0 ? `<span style="color:var(--fzra)">${x.fzl}↑</span>` : x.fzl);
+          const ic = x.ice>=s.thr.iceR?'cell-r':x.ice>=s.thr.iceY?'cell-y':'';
+          return `<tr class="${newDay?'daybreak':''}">
+            <td><span style="color:${i===0||newDay?'#c9d3df':'var(--dim2)'}">${(i===0||newDay)?fDay.format(x.t).toUpperCase():'···'}</span> <span style="color:#e6edf5">${hh(x.t)}</span></td>
+            <td style="color:${x.T<=0?'#9ec3e6':'#e6edf5'}">${x.T>=0?'+':''}${r1(x.T)}</td>
+            <td style="color:var(--dim)">${card(x.dir)}</td>
+            <td><span style="color:#c9d3df">${x.sus}</span><span style="color:#3a4757">/</span><span class="${gc}">${x.gst}</span></td>
+            <td style="text-align:center"><span class="chip c-${x.type}">${x.type==='NIL'?'—':x.type}</span></td>
+            <td>${amt}</td><td>${fzl}</td>
+            <td class="${ic}">${x.ice<0.05?'<span style="color:#3a4757">0.0</span>':r1(x.ice)}</td></tr>`;}).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="mono mt-1" style="font-size:9.5px;color:var(--dim2)">Wind km/h · Amt mm/h (cm/h snow) · FZL ↑ = warm layer aloft over sub-freezing surface · Ice Σ = cumulative radial mm</div>
+  </div>
+
+  <!-- 7 DAY -->
+  <div class="px-4 pt-4 pb-4">
+    <div class="hdr mb-2 flex items-center justify-between"><span class="flex items-center gap-1">${icon('calendar-days',12)} 7-Day Planning Outlook</span><span class="mono" style="font-size:9.5px;color:var(--dim2)">FIELD WINDOW · RISK</span></div>
+    <div class="grid grid-cols-7 gap-1">
+      ${s.days.map((d,i)=>`<div class="day px-1.5 py-2 flex flex-col gap-1" style="border-radius:3px;border-top:2px solid ${C[d.risk]}">
+        <div class="mono" style="font-size:10.5px;font-weight:700;color:#e6edf5">${i===0?'TODAY':fDay.format(d.date).toUpperCase()}</div>
+        <div class="mono" style="font-size:9px;color:var(--dim2)">${fDate.format(d.date)}</div>
+        <span class="chip c-${d.code}" style="text-align:center">${d.code==='NIL'?'DRY':d.code}</span>
+        <div class="mono" style="font-size:11px;color:#e6edf5;font-weight:600;white-space:nowrap">${Math.round(d.hi)}°<span style="color:var(--dim);font-weight:400">/${Math.round(d.lo)}°</span></div>
+        <div class="mono" style="font-size:9.5px;color:${d.gust>=s.thr.gustR?C.r:d.gust>=s.thr.gustY?C.y:'var(--dim)'}">G${Math.round(d.gust)}</div>
+        <div class="mono" style="font-size:9.5px;color:var(--dim)">${d.pop}% · ${d.pr<0.1?'0':d.pr.toFixed(d.pr<10?1:0)}mm</div>
+        <div class="bar" style="background:${C[d.risk]};opacity:.75"></div>
+        <div class="mono text-center" style="font-size:9px;font-weight:700;color:${d.win==='GO'?C.g:d.win==='LTD'?C.y:C.r}">${d.win}</div>
+        <div style="font-size:9px;color:var(--dim);line-height:1.25;min-height:34px">${d.desc}</div>
+      </div>`).join('')}
+    </div>
+  </div>
+
+  <div class="px-4 pb-4 mono" style="font-size:9.5px;color:var(--dim2);line-height:1.5">
+    PROTOTYPE · values are a simulated winter-storm scenario for demonstration only. Production build would ingest site
+    telemetry, ECCC HRDPS/RDPS/GDPS guidance, TWC forecasts and ECCC alerts. Forecast desk: Sheerr Weather.
+  </div>`;
+  document.getElementById('detail').innerHTML = html;
+  refreshIcons();
+}
+
+/* ---------- Selection ---------- */
+function select(id){
+  selected = id;
+  document.querySelectorAll('.site-item').forEach(n=>n.classList.toggle('active', n.dataset.id===id));
+  markSelected(); renderDetail();
+  document.getElementById('detail').scrollTop = 0;
+}
+
+/* ---------- Simulated live telemetry ---------- */
+const LIVE = R => SITES.forEach(s=>{
+  const c = s.hours[0];
+  c.T = c.T + (R()-.5)*0.2;
+  c.sus = Math.max(3, Math.round(c.sus + (R()-.5)*3));
+  c.gst = Math.max(c.sus+3, Math.round(c.sus*s.p.gf*(0.94+0.12*R())));
+  c.feels = windChill(c.T, c.sus);
+});
+const RL = rng(42);
+function pollTick(){
+  LIVE(RL);
+  document.getElementById('lastPoll').textContent = hh(new Date()) + ':' + String(new Date().getSeconds()).padStart(2,'0') + ' ' + tzAbbr;
+  document.querySelectorAll('[data-live]').forEach(t=>{ t.textContent = liveLabel(SITES.find(s=>s.id===t.dataset.live)); });
+  renderList();
+  const s = SITES.find(x=>x.id===selected), c = curr(s);
+  const set = (id,v)=>{ const e=document.getElementById(id); if(e) e.innerHTML=v; };
+  set('curT', `${c.T>=0?'+':''}${r1(c.T)}°`); set('curF', `${Math.round(c.feels)}°`);
+  set('curW', `${card(c.dir)} ${Math.round(c.dir)}° · ${c.sus} / <span class="${c.gst>=s.thr.gustR?'st-r':c.gst>=s.thr.gustY?'st-y':''}">${c.gst}</span> km/h`);
+  set('obsTime', `OBS ${hh(new Date())} ${tzAbbr}`);
+}
+
+/* ---------- Boot ---------- */
+document.getElementById('modelRun').textContent = (()=>{ const d=new Date(T0.getTime()-3*3600000); return `HRDPS ${String(Math.floor(d.getUTCHours()/6)*6).padStart(2,'0')}Z`; })();
+document.getElementById('radarStamp').innerHTML = `<span style="color:var(--teal)">●</span> RADAR COMPOSITE · ${hh(new Date(Date.now()-6*60000))} ${tzAbbr} <span style="color:var(--dim2)">(SIM)</span>`;
+renderCounts(); renderTicker(); renderList(); drawMap(); renderDetail(); pollTick();
+setInterval(pollTick, 5000);
+refreshIcons();
+</script>
+</body>
+</html>
