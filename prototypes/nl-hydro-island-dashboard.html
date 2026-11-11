@@ -143,12 +143,13 @@
       <i data-lucide="activity" style="width:17px;height:17px;color:var(--teal)"></i>
     </div>
     <div>
-      <div class="font-semibold tracking-wide" style="font-size:14px;color:#e6edf5">ISLAND OPS WEATHER DESK <span style="color:var(--dim);font-weight:400">· Site Status &amp; Forecast</span></div>
-      <div class="hdr hdr-sub" style="font-size:9.5px">Newfoundland &amp; Labrador Hydro · Island Interconnected System · Prototype</div>
+      <div class="font-semibold tracking-wide" style="font-size:14px;color:#e6edf5"><span id="appTitle">ISLAND OPS WEATHER DESK</span> <span style="color:var(--dim);font-weight:400">· Site Status &amp; Forecast</span></div>
+      <div class="hdr hdr-sub" id="appSub" style="font-size:9.5px">Newfoundland &amp; Labrador Hydro · Island Interconnected System · Prototype</div>
     </div>
   </div>
   <div class="flex items-center gap-4">
     <div class="flex items-center gap-2 mono" id="statusCounts"></div>
+    <a class="chip" id="regionSwitch" style="color:var(--teal);border-color:#5eead466;background:#5eead40f;text-decoration:none"></a>
     <div class="chip bd-g" id="liveChip" style="font-weight:700">● LIVE</div>
     <div class="mono text-right" style="font-size:9.5px;color:var(--dim);line-height:1.35" id="srcChip"></div>
     <div class="text-right">
@@ -171,7 +172,7 @@
   <aside class="flex flex-col min-h-0 border-r" style="border-color:var(--line);background:var(--panel)">
     <div class="px-3 pt-3 pb-2 border-b" style="border-color:var(--line)">
       <div class="flex items-center justify-between mb-2">
-        <div class="hdr flex items-center gap-1"><i data-lucide="layers" style="width:12px;height:12px"></i>Island Site Matrix</div>
+        <div class="hdr flex items-center gap-1"><i data-lucide="layers" style="width:12px;height:12px"></i><span id="matrixTitle">Island Site Matrix</span></div>
         <div class="mono" style="font-size:10px;color:var(--dim)" id="siteCount"></div>
       </div>
       <div class="flex items-center gap-2 px-2" style="border:1px solid var(--line);background:#0b1015;height:28px;border-radius:3px">
@@ -191,7 +192,7 @@
   <!-- CENTER -->
   <section class="flex flex-col min-h-0 min-w-0">
     <div class="flex items-center justify-between gap-2 px-3 border-b flex-wrap" style="min-height:44px;border-color:var(--line);background:var(--panel)">
-      <div class="hdr flex items-center gap-1"><i data-lucide="map" style="width:12px;height:12px"></i>Regional GIS · Island of Newfoundland</div>
+      <div class="hdr flex items-center gap-1"><i data-lucide="map" style="width:12px;height:12px"></i><span id="gisTitle">Regional GIS · Island of Newfoundland</span></div>
       <div class="flex items-center gap-2 flex-wrap py-1">
         <label class="tgl"><input type="checkbox" id="tLIL" checked><span class="sw"></span><span class="lbl">Show LIL Corridor</span></label>
         <label class="tgl"><input type="checkbox" id="tRadar" checked><span class="sw"></span><span class="lbl">Live Weather Radar Layer</span></label>
@@ -268,25 +269,67 @@ const LR  = { r24W:25, r24F:40, r72W:50, r72F:75, p50F:20, p25W:40, riseW:8, ris
 
 /* ---------- sites ---------- */
 // sea: wind directions (FROM, degrees) that blow off salt water at the site, and distance to the shore (km).
-const SITES = [
- {id:'bde', name:"Bay d'Espoir", group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈613 MW · 7 units', lon:-55.80, lat:47.99, elev:45, region:'South Coast · Coast of Bays', lbl:[12,-10],
+const ALL_SITES = [
+ {id:'bde', rg:'island', name:"Bay d'Espoir", group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈613 MW · 7 units', lon:-55.80, lat:47.99, elev:45, region:'South Coast · Coast of Bays', lbl:[12,-10],
   swob:'8400416', sea:{from:135,to:225,km:2}, thr:{gustY:80,gustR:100}},
- {id:'cat', name:'Cat Arm', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈127 MW · 2 units', lon:-56.80, lat:50.10, elev:380, region:'White Bay · Northern Peninsula', lbl:[12,4],
+ {id:'cat', rg:'island', name:'Cat Arm', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈127 MW · 2 units', lon:-56.80, lat:50.10, elev:380, region:'White Bay · Northern Peninsula', lbl:[12,4],
   swob:'8401538', sea:{from:30,to:140,km:1}, thr:{gustY:75,gustR:95}},
- {id:'hin', name:'Hinds Lake', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈75 MW · 1 unit', lon:-56.95, lat:49.38, elev:210, region:'Deer Lake · Humber Valley', lbl:[12,4],
+ {id:'hin', rg:'island', name:'Hinds Lake', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈75 MW · 1 unit', lon:-56.95, lat:49.38, elev:210, region:'Deer Lake · Humber Valley', lbl:[12,4],
   swob:'8401295', sea:null, thr:{gustY:80,gustR:100}},
- {id:'par', name:'Paradise River', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈8 MW · 1 unit', lon:-54.40, lat:47.66, elev:60, region:'Placentia Bay', lbl:[-12,16,'end'],
+ {id:'par', rg:'island', name:'Paradise River', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈8 MW · 1 unit', lon:-54.40, lat:47.66, elev:60, region:'Placentia Bay', lbl:[-12,16,'end'],
   swob:'8400104', sea:{from:120,to:230,km:3}, thr:{gustY:85,gustR:105}},
- {id:'gra', name:'Granite Canal', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈40 MW · 1 unit', lon:-56.35, lat:48.17, elev:330, region:'Central Plateau · Meelpaeg', lbl:[-12,4,'end'],
+ {id:'gra', rg:'island', name:'Granite Canal', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈40 MW · 1 unit', lon:-56.35, lat:48.17, elev:330, region:'Central Plateau · Meelpaeg', lbl:[-12,4,'end'],
   swob:'8402757', sea:null, thr:{gustY:80,gustR:100}},
- {id:'hol', name:'Holyrood TGS', group:'Thermal / Backup', type:'Thermal Generating Station (standby / sync. condenser)', icon:'flame', cap:'≈490 MW · 3 units', lon:-53.10, lat:47.43, elev:15, region:'Conception Bay · Avalon', lbl:[-14,-20,'end'],
+ {id:'hol', rg:'island', name:'Holyrood TGS', group:'Thermal / Backup', type:'Thermal Generating Station (standby / sync. condenser)', icon:'flame', cap:'≈490 MW · 3 units', lon:-53.10, lat:47.43, elev:15, region:'Conception Bay · Avalon', lbl:[-14,-20,'end'],
   swob:'8403603', sea:{from:300,to:60,km:0.3}, thr:{gustY:80,gustR:100}},
- {id:'sol', name:'Soldiers Pond', group:'Interconnections / Substations', type:'HVdc Converter & Terminal Station (LIL)', icon:'zap', cap:'900 MW converter · 3 sync. condensers', lon:-52.97, lat:47.40, elev:150, region:"Avalon · St. John's Area", lbl:[-6,26,'middle'],
+ {id:'sol', rg:'island', name:'Soldiers Pond', group:'Interconnections / Substations', type:'HVdc Converter & Terminal Station (LIL)', icon:'zap', cap:'900 MW converter · 3 sync. condensers', lon:-52.97, lat:47.40, elev:150, region:"Avalon · St. John's Area", lbl:[-6,26,'middle'],
   swob:'8403603', sea:{from:300,to:100,km:9}, thr:{gustY:80,gustR:100}},
- {id:'sun', name:'Sunnyside', group:'Interconnections / Substations', type:'230 kV Terminal Station', icon:'zap', cap:'230 / 138 kV', lon:-53.92, lat:47.86, elev:40, region:'Isthmus of Avalon', lbl:[12,-6],
+ {id:'sun', rg:'island', name:'Sunnyside', group:'Interconnections / Substations', type:'230 kV Terminal Station', icon:'zap', cap:'230 / 138 kV', lon:-53.92, lat:47.86, elev:40, region:'Isthmus of Avalon', lbl:[12,-6],
   swob:'8400104', sea:{from:300,to:60,km:1}, thr:{gustY:80,gustR:100}},
+ {id:'shc', rg:'island', name:'Shoal Cove', group:'Interconnections / Substations', type:'LIL SOBI cable transition compound', icon:'cable', cap:'±350 kV HVdc landing', lon:-56.62, lat:51.33, elev:20, region:'Strait of Belle Isle · Northern Peninsula', lbl:[12,4],
+  swob:'8403399', sea:{from:250,to:40,km:0.3}, thr:{gustY:80,gustR:100}},
+ // ---------------- Labrador ----------------
+ {id:'chf', rg:'labrador', name:'Churchill Falls', group:'Generation & LIL', type:'Hydroelectric Generating Station (CF(L)Co)', icon:'waves', cap:'≈5,428 MW · 11 units', lon:-64.05, lat:53.53, elev:470, region:'Western Labrador · Churchill River', lbl:[12,4],
+  swob:'8501136', sea:null, thr:{gustY:80,gustR:100}},
+ {id:'msk', rg:'labrador', name:'Muskrat Falls', group:'Generation & LIL', type:'Hydro GS + LIL converter station', icon:'waves', cap:'≈824 MW · 4 units · 900 MW HVdc', lon:-60.77, lat:53.25, elev:40, region:'Lower Churchill River', lbl:[-12,16,'end'],
+  swob:'8501915', sea:null, thr:{gustY:80,gustR:100}},
+ {id:'mea', rg:'labrador', name:'LIL · Mealy Mtns', group:'Generation & LIL', type:'HVdc line corridor — exposed high terrain', icon:'cable', cap:'±350 kV HVdc overhead line', lon:-59.60, lat:52.80, elev:550, region:'Mealy Mountains crossing', lbl:[-12,16,'end'],
+  swob:'NL-DFFA_022', sea:null, thr:{gustY:70,gustR:90}},
+ {id:'lwt', rg:'labrador', name:'Labrador West', group:'Labrador West & Goose Bay', type:'Terminal stations (Labrador City / Wabush)', icon:'zap', cap:'230 kV', lon:-66.87, lat:52.94, elev:550, region:'Labrador West', lbl:[12,4],
+  swob:'8504177', sea:null, thr:{gustY:80,gustR:100}},
+ {id:'hvg', rg:'labrador', name:'Happy Valley-Goose Bay', group:'Labrador West & Goose Bay', type:'Terminal station + gas turbine (backup)', icon:'flame', cap:'138 kV · GT backup', lon:-60.39, lat:53.32, elev:40, region:'Lake Melville', lbl:[12,-6],
+  swob:'8501915', sea:{from:30,to:120,km:6}, thr:{gustY:80,gustR:100}},
+ {id:'frt', rg:'labrador', name:'Forteau Point', group:'Labrador Straits', type:'LIL SOBI cable transition compound', icon:'cable', cap:'±350 kV HVdc landing', lon:-56.95, lat:51.47, elev:30, region:'Strait of Belle Isle', lbl:[-12,8,'end'],
+  swob:'7040815', sea:{from:150,to:260,km:0.5}, thr:{gustY:80,gustR:100}},
+ {id:'lal', rg:'labrador', name:"L'Anse au Loup", group:'Labrador Straits', type:'Diesel plant + Hydro-Québec interconnection', icon:'zap', cap:'Labrador Straits system', lon:-56.83, lat:51.52, elev:20, region:'Strait of Belle Isle', lbl:[-12,-12,'end'],
+  swob:'7040815', sea:{from:120,to:250,km:0.3}, thr:{gustY:80,gustR:100}},
+ {id:'mrh', rg:'labrador', name:"Mary's Harbour", group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-55.85, lat:52.31, elev:15, region:'Southeast Labrador', lbl:[-12,16,'end'],
+  swob:'8502592', sea:{from:30,to:170,km:0.3}, thr:{gustY:80,gustR:100}},
+ {id:'phs', rg:'labrador', name:'Port Hope Simpson', group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-56.30, lat:52.53, elev:20, region:'Southeast Labrador', lbl:[-12,-8,'end'],
+  swob:'8502592', sea:{from:45,to:150,km:4}, thr:{gustY:80,gustR:100}},
+ {id:'crt', rg:'labrador', name:'Cartwright', group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-57.03, lat:53.71, elev:15, region:'Sandwich Bay', lbl:[12,4],
+  swob:'8501106', sea:{from:0,to:110,km:0.3}, thr:{gustY:80,gustR:100}},
+ {id:'rig', rg:'labrador', name:'Rigolet', group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-58.43, lat:54.18, elev:15, region:'Hamilton Inlet', lbl:[-12,4,'end'],
+  swob:'8501106', sea:{from:20,to:110,km:0.3}, thr:{gustY:80,gustR:100}},
+ {id:'psv', rg:'labrador', name:'Postville', group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-59.78, lat:54.91, elev:15, region:'North Coast', lbl:[-12,8,'end'],
+  swob:'8502580', sea:{from:30,to:120,km:2}, thr:{gustY:80,gustR:100}},
+ {id:'mkv', rg:'labrador', name:'Makkovik', group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-59.18, lat:55.08, elev:15, region:'North Coast', lbl:[12,4],
+  swob:'8502580', sea:{from:0,to:130,km:0.3}, thr:{gustY:80,gustR:100}},
+ {id:'hpd', rg:'labrador', name:'Hopedale', group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-60.21, lat:55.45, elev:15, region:'North Coast', lbl:[12,4],
+  swob:'8502400', sea:{from:0,to:140,km:0.3}, thr:{gustY:80,gustR:100}},
+ {id:'nan', rg:'labrador', name:'Nain', group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-61.69, lat:56.54, elev:15, region:'North Coast', lbl:[12,4],
+  swob:'8502799', sea:{from:20,to:140,km:0.3}, thr:{gustY:80,gustR:100}},
 ];
-const GROUPS = ['Hydro Generation','Thermal / Backup','Interconnections / Substations'];
+const REGION = (()=>{
+  const q = new URLSearchParams(location.search).get('region');
+  if (q==='labrador' || q==='island') return q;
+  if (/labrador/i.test(location.pathname)) return 'labrador';
+  const m = location.hash.match(/site=(\w+)/), s = m && ALL_SITES.find(x=>x.id===m[1]);
+  return s ? s.rg : 'island';
+})();
+const SITES = ALL_SITES.filter(s=>s.rg===REGION);
+const GROUPS = REGION==='island' ? ['Hydro Generation','Thermal / Backup','Interconnections / Substations']
+  : ['Generation & LIL','Labrador West & Goose Bay','Labrador Straits','Coastal Diesel Systems'];
 
 /* ---------- time helpers ---------- */
 const fmt = o => new Intl.DateTimeFormat('en-CA', Object.assign({timeZone:TZ}, o));
@@ -306,7 +349,7 @@ const kmBetween = (a,b,c,d) => { const R=6371, t=Math.PI/180; const x=(c-a)*t*Ma
 function windChill(T,v){ return (T<=10 && v>5) ? 13.12+0.6215*T-11.37*Math.pow(v,.16)+0.3965*T*Math.pow(v,.16) : T; }
 
 /* ---------- state ---------- */
-let DATA = null, ALERTS = [], OBS = {}, selected = 'bde';
+let DATA = null, ALERTS = [], OBS = {}, selected = SITES[0].id;
 const TYPE_DESC = {FZRA:'Freezing rain',PL:'Ice pellets',SN:'Snow',RASN:'Rain / snow mix',RA:'Rain',NIL:'No precip',MIX:'Mixed — freezing rain risk'};
 
 /* =====================================================================
@@ -479,7 +522,7 @@ function renderTicker(){
   ALERTS.forEach(a=>{ const k=a.name+'|'+a.area; if(seen.has(k)) return; seen.add(k);
     const col = a.risk==='red'?'var(--r)':a.risk==='orange'?'#ff8a3d':'var(--y)';
     items.push(`<span style="color:${col}">■ ${esc(a.name.toUpperCase())}</span> ${esc(a.area)}${a.end?` — until ${dayLbl(a.end)} ${tzAbbr}`:''}`); });
-  if (!ALERTS.length) items.push(`<span style="color:var(--g)">■ NO ECCC ALERTS</span> in effect for Newfoundland & Labrador`);
+  if (!ALERTS.length) items.push(`<span style="color:var(--g)">■ NO ECCC ALERTS</span> in effect for ${RG.label}`);
   const by = k => [...SITES].sort((a,b)=>b.sum[k]-a.sum[k])[0];
   const g = by('gust'); items.push(`<span style="color:var(--teal)">■ RDPS 48 h</span> peak gust ${g.sum.gust} km/h ${g.sum.gustDir} at ${g.name}, ${dayLbl(g.sum.gustAt)}`);
   const p = by('pcp'); items.push(`<span style="color:var(--teal)">■ RDPS 48 h</span> most precip ${r1(p.sum.pcp)} mm at ${p.name}`);
@@ -506,8 +549,12 @@ function headline(s){
 
 function cur(s){
   const o = OBS[s.swob];
-  if (o && Date.now()-o.t < 3*3600000) return {...o, src:'obs'};
   const h = s.hours[0];
+  if (o && Date.now()-o.t < 3*3600000){
+    const r = {...o, src:'obs', filled:[]}, mdl = {sus:h.sus, gst:h.gst, dir:h.dir, rh:h.rh, mslp:h.pres};
+    Object.keys(mdl).forEach(k=>{ if (r[k]==null){ r[k] = mdl[k]; r.filled.push(k); } });
+    return r;
+  }
   return {T:h.T, sus:h.sus, gst:h.gst, dir:h.dir, rh:h.rh, mslp:h.pres, src:'model', t:h.t};
 }
 
@@ -544,8 +591,15 @@ document.getElementById('search').addEventListener('input', ()=>DATA && renderLi
 /* =====================================================================
    MAP
    ===================================================================== */
-const MAP = {lonMin:-59.85, lonMax:-52.35, latMin:46.45, latMax:51.95, k:140};
-const COS = Math.cos(49*Math.PI/180);
+const REGIONS = {
+  island:   { label:'the Island of Newfoundland', title:'ISLAND OPS WEATHER DESK', sub:'Newfoundland &amp; Labrador Hydro · Island Interconnected System · Prototype', gis:'Regional GIS · Island of Newfoundland', other:'labrador', otherLabel:'LABRADOR ›',
+              map:{lonMin:-59.85, lonMax:-52.35, latMin:46.45, latMax:51.95, k:140}, midLat:49, lonTicks:[-59,-58,-57,-56,-55,-54,-53], latTicks:[47,48,49,50,51] },
+  labrador: { label:'Labrador', title:'LABRADOR OPS WEATHER DESK', sub:'Newfoundland &amp; Labrador Hydro · Labrador Interconnected &amp; Isolated Systems · Prototype', gis:'Regional GIS · Labrador', other:'island', otherLabel:'‹ ISLAND',
+              map:{lonMin:-67.8, lonMax:-55.0, latMin:51.0, latMax:57.0, k:95}, midLat:54, lonTicks:[-67,-65,-63,-61,-59,-57], latTicks:[52,53,54,55,56] },
+};
+const RG = REGIONS[REGION];
+const MAP = RG.map;
+const COS = Math.cos(RG.midLat*Math.PI/180);
 const W = (MAP.lonMax-MAP.lonMin)*COS*MAP.k, H = (MAP.latMax-MAP.latMin)*MAP.k;
 const P = (lon,lat) => [ (lon-MAP.lonMin)*COS*MAP.k, (MAP.latMax-lat)*MAP.k ];
 const unP = (x,y) => [ x/(COS*MAP.k)+MAP.lonMin, MAP.latMax - y/MAP.k ];
@@ -556,9 +610,76 @@ const LAKES = [[-57.25,49.02,.32,.05,-38],[-56.62,48.70,.30,.05,-35],[-54.55,48.
 const TOWNS = [["St. John's",-52.71,47.56],['Gander',-54.61,48.95],['Grand Falls-Windsor',-55.65,48.93],['Corner Brook',-57.95,48.95],['Deer Lake',-57.43,49.17],['Stephenville',-58.55,48.55],['Port aux Basques',-59.14,47.62],['St. Anthony',-55.58,51.37],['Clarenville',-53.97,48.17],['Marystown',-55.15,47.17]];
 const LIL = [[-57.55,52.0],[-57.15,51.62],[-56.96,51.47],[-56.62,51.32],[-56.85,51.0],[-57.15,50.6],[-57.10,50.2],[-56.85,49.78],[-56.40,49.35],[-55.80,49.05],[-55.20,48.75],[-54.60,48.40],[-54.10,48.05],[-53.80,47.72],[-53.40,47.55],[-52.97,47.40]];
 const NODE = Object.fromEntries(SITES.map(s=>[s.id,[s.lon,s.lat]]));
-Object.assign(NODE,{gf:[-55.65,48.93],gan:[-54.61,48.95],dl:[-57.43,49.17],cb:[-57.95,48.95],stv:[-58.50,48.45],pab:[-59.10,47.65],sjn:[-52.73,47.55],wav:[-53.70,47.55],usl:[-56.10,48.20],bb:[-58.35,48.30],how:[-57.10,49.18]});
-const LINES = [['bde','sun',230],['bde','gra',230],['bde','usl',230],['bde','gf',230],['gf','how',230],['how','dl',230],['dl','cb',230],['cb','stv',230],['stv','bb',230],['bb','pab',138],
+if (REGION==='labrador') Object.assign(NODE,{hq:[-66.3,51.15], bsb:[-57.13,51.43], hqw:[-58.9,51.15]});
+else Object.assign(NODE,{gf:[-55.65,48.93],gan:[-54.61,48.95],dl:[-57.43,49.17],cb:[-57.95,48.95],stv:[-58.50,48.45],pab:[-59.10,47.65],sjn:[-52.73,47.55],wav:[-53.70,47.55],usl:[-56.10,48.20],bb:[-58.35,48.30],how:[-57.10,49.18]});
+const LINES = REGION==='labrador' ? [['chf','msk',315],['chf','lwt',230],['chf','hq',735],['msk','hvg',138],['lal','bsb',69],['bsb','hqw',69]] : [['bde','sun',230],['bde','gra',230],['bde','usl',230],['bde','gf',230],['gf','how',230],['how','dl',230],['dl','cb',230],['cb','stv',230],['stv','bb',230],['bb','pab',138],
   ['how','hin',230],['hin','cat',230],['gf','gan',230],['gan','sun',230],['sun','wav',230],['wav','hol',230],['hol','sol',230],['sol','sjn',230],['sun','par',138],['gra','usl',138],['hol','sjn',138]];
+
+
+/* ---------- Labrador map geometry (approximate) ---------- */
+const LAB_COAST = [[-57.13,51.43],[-56.83,51.52],[-56.43,51.73],[-56.1,51.95],[-55.85,52.15],[-55.7,52.33],[-55.68,52.55],[-55.9,52.8],[-56.0,53.05],[-55.8,53.3],[-55.95,53.5],[-56.6,53.62],[-57.03,53.71],[-57.25,53.85],[-57.6,54.05],[-58.0,54.2],[-58.35,54.25],[-58.6,54.4],[-58.9,54.7],[-59.18,55.08],[-59.6,55.2],[-60.2,55.45],[-60.6,55.75],[-61.1,56.1],[-61.5,56.35],[-61.69,56.54],[-61.9,56.8],[-62.1,57.05],[-62.3,57.4]];
+const LAB_BORDER = [[-65.0,57.4],[-65.4,56.9],[-65.9,56.3],[-66.5,55.6],[-66.7,55.0],[-67.2,54.5],[-67.4,53.9],[-67.1,53.4],[-67.25,52.9],[-67.0,52.3],[-66.8,52.0],[-64.5,52.0],[-63.7,51.9],[-62.3,51.65],[-60.5,51.75],[-58.6,52.0],[-57.11,52.0],[-57.11,51.43]];
+const LAB_LAND = LAB_COAST.concat([[-62.6,57.6],[-68.3,57.6],[-68.3,50.9],[-58.9,50.9],[-58.65,51.22],[-58.0,51.33],[-57.4,51.42]]);
+const LAB_LAB = LAB_COAST.concat(LAB_BORDER);
+const LAB_MELVILLE = [[-60.42,53.35],[-60.0,53.48],[-59.4,53.58],[-58.9,53.85],[-58.55,54.12],[-58.42,54.24],[-58.62,54.08],[-59.1,53.8],[-59.75,53.66],[-60.2,53.55],[-60.45,53.42]];
+const LAB_LAKES = [[-64.2,54.1,.78,.33,-12],[-64.85,53.45,.22,.1,-20],[-64.6,52.72,.3,.1,10],[-66.85,52.98,.06,.16,15],[-66.2,52.75,.12,.18,0],[-62.7,52.95,.18,.08,0]];
+const LAB_TOWNS = [['Labrador City',-66.95,52.94-0.28],['North West River',-60.14,53.53],['Natuashish',-61.11,55.91],['Black Tickle',-55.78,53.46],['Red Bay',-56.43,51.73],['Charlottetown',-56.12,52.77],['St. Lewis',-55.67,52.37],['Schefferville (QC)',-66.81,54.81]];
+const LAB_LIL = [[-60.77,53.25],[-60.3,53.05],[-59.6,52.8],[-59.0,52.5],[-58.4,52.15],[-57.75,51.85],[-57.25,51.6],[-56.95,51.47],[-56.62,51.32],[-56.45,51.05]];
+const TOWN_LIST = REGION==='labrador' ? LAB_TOWNS : TOWNS;
+const LIL_PATH = REGION==='labrador' ? LAB_LIL : LIL;
+
+function graticule(){
+  let g = '';
+  RG.lonTicks.forEach(lon=>{ const [x]=P(lon,MAP.latMax); g+=`<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#16202b" stroke-dasharray="2 4"/><text x="${x+3}" y="${H-6}" fill="#3a4757" font-size="9" class="mono">${-lon}°W</text>`; });
+  RG.latTicks.forEach(lat=>{ const [,y]=P(MAP.lonMin,lat); g+=`<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="#16202b" stroke-dasharray="2 4"/><text x="4" y="${y-3}" fill="#3a4757" font-size="9" class="mono">${lat}°N</text>`; });
+  return g;
+}
+const txt = (t,lo,la,o={}) => { const [x,y]=P(lo,la); return `<text x="${x}" y="${y}" fill="${o.col||'#334051'}" font-size="${o.fs||9.5}" letter-spacing="${o.ls??2.5}" text-anchor="${o.anchor||'middle'}" ${o.it?'font-style="italic"':''} ${o.rot?`transform="rotate(${o.rot} ${x} ${y})"`:''}>${t}</text>`; };
+const ell = ([lo,la,rx,ry,rot=0], fill, stroke) => { const [x,y]=P(lo,la); return `<ellipse cx="${x}" cy="${y}" rx="${rx*COS*MAP.k}" ry="${ry*MAP.k}" transform="rotate(${rot} ${x} ${y})" fill="${fill}" ${stroke?`stroke="${stroke}" stroke-width=".8"`:''}/>`; };
+function landStyle(d, fill='#131a22'){
+  return `<path d="${d}" fill="none" stroke="#14303a" stroke-width="22" stroke-opacity=".35" filter="url(#blur)"/>
+        <path d="${d}" fill="none" stroke="#1d3a44" stroke-width="6" stroke-opacity=".35"/>
+        <path d="${d}" fill="${fill}"/><path d="${d}" fill="url(#dots)" opacity=".7"/>`;
+}
+function baseIsland(){
+  const coast = smoothPath(COAST);
+  let g = `<path d="${smoothPath(LABRADOR)}" fill="#10161d" stroke="#2a3542" stroke-width="1"/>`;
+  { const [x,y]=P(-58.8,51.62); g+=`<text x="${x}" y="${y}" fill="#3e4b5b" font-size="10" letter-spacing="3">LABRADOR / QUÉBEC</text>`; }
+  g += landStyle(coast);
+  [[-57.55,49.6,.55,.95],[-58.6,47.95,.35,.45],[-56.0,48.35,.6,.35],[-56.5,50.6,.35,.5]].forEach(e=>{ g += ell(e,'url(#relief)'); });
+  g += `<path d="${coast}" fill="none" stroke="#3d5163" stroke-width="1.1"/>`;
+  LAKES.forEach(e=>{ g += ell(e,'#0b1117','#24323f'); });
+  [['LONG RANGE MTNS',-57.75,50.0,-62],['AVALON',-53.3,47.15,0],['CENTRAL',-55.3,48.55,0],['NORTHERN PENINSULA',-56.85,50.95,-58],['BURIN',-55.35,47.12,0]].forEach(([t,lo,la,r])=>{ g += txt(t,lo,la,{rot:r}); });
+  [['GULF OF ST. LAWRENCE',-59.1,49.6],['ATLANTIC OCEAN',-53.3,46.75],['NOTRE DAME BAY',-55.2,49.85],['STRAIT OF BELLE ISLE',-56.25,51.78],['CABOT STRAIT',-59.0,47.2]].forEach(([t,lo,la])=>{ g += txt(t,lo,la,{col:'#243444',fs:9,ls:2,it:true}); });
+  return g;
+}
+function baseLabrador(){
+  let g = `<path d="${smoothPath(LAB_LAND)}" fill="#121820" stroke="none"/>`;
+  g += landStyle(smoothPath(LAB_LAB), '#19212b');
+  g += ell([-59.6,53.0,.75,.28,-15],'url(#relief)') + ell([-63.0,55.6,1.2,.6,-30],'url(#relief)');
+  g += `<path d="${lineD(LAB_BORDER)}" fill="none" stroke="#4a5868" stroke-width="1" stroke-dasharray="5 4"/>`;
+  g += `<path d="${lineD(LAB_COAST)}" fill="none" stroke="#3d5163" stroke-width="1.1"/>`;
+  g += `<path d="${smoothPath(COAST)}" fill="#131a22" stroke="#3d5163" stroke-width="1.1"/>`;   // Newfoundland (Northern Peninsula tip)
+  g += `<path d="${smoothPath(LAB_MELVILLE)}" fill="#0b1117" stroke="#24323f" stroke-width=".8"/>`;
+  LAB_LAKES.forEach(e=>{ g += ell(e,'#0b1117','#24323f'); });
+  g += txt('LABRADOR',-62.6,54.85,{fs:16,ls:8,col:'#2f3b4a'}) + txt('QUÉBEC',-66.2,51.55,{fs:11,ls:5,col:'#2a3542'}) + txt('QUÉBEC',-67.3,55.9,{fs:11,ls:5,col:'#2a3542',rot:-60});
+  g += txt('MEALY MTNS',-59.55,53.12,{fs:9,rot:-15}) + txt('SMALLWOOD RES.',-64.2,54.48,{fs:8.5,ls:1.5}) + txt('NEWFOUNDLAND',-56.2,51.27,{fs:8.5,ls:2});
+  [['LABRADOR SEA',-57.4,55.4,0],['LAKE MELVILLE',-59.35,53.86,-28],['STRAIT OF BELLE ISLE',-56.1,51.62,28]].forEach(([t,lo,la,r])=>{ g += txt(t,lo,la,{col:'#243444',fs:9,ls:2,it:true,rot:r}); });
+  g += txt('Québec border approximate',-66.5,52.15,{fs:8,ls:0,col:'#3a4757',it:true});
+  return g;
+}
+function lilLabels(){
+  if (REGION==='labrador'){
+    let g = ''; { const [x,y]=P(-56.5,51.08); g+=`<text x="${x-8}" y="${y+4}" fill="#b18cff" font-size="9.5" class="mono" text-anchor="end">TO SOLDIERS POND (ISLAND) ↘</text>`; }
+    { const [x,y]=P(-58.7,52.33); g+=`<text x="${x-8}" y="${y+4}" fill="#8f76c9" font-size="9" class="mono" text-anchor="end">LIL ±350 kV HVdc</text>`; }
+    { const [x,y]=P(-66.3,51.15); g+=`<text x="${x+6}" y="${y-8}" fill="#6c8aa0" font-size="9" class="mono">↙ 735 kV TO HYDRO-QUÉBEC</text>`; }
+    { const [x,y]=P(-58.9,51.15); g+=`<text x="${x-4}" y="${y-6}" fill="#6c8aa0" font-size="8.5" class="mono" text-anchor="end">↙ TO HQ LAC-ROBERTSON</text>`; }
+    return g;
+  }
+  let g = ''; { const [x,y]=P(-57.45,51.88); g+=`<text x="${x+6}" y="${y+4}" fill="#b18cff" font-size="9.5" class="mono">↖ TO MUSKRAT FALLS · LIL ±350 kV HVdc</text>`; }
+  { const [x,y]=P(-56.80,51.40); g+=`<text x="${x-8}" y="${y+12}" fill="#8f76c9" font-size="8.5" class="mono" text-anchor="end">SOBI CABLE CROSSING</text>`; }
+  return g;
+}
 
 function smoothPath(pts, closed=true){
   const p = pts.map(a=>P(a[0],a[1])), n = p.length;
@@ -578,7 +699,6 @@ function drawMap(){
   const svg = document.getElementById('map');
   svg.setAttribute('viewBox',`0 0 ${W.toFixed(0)} ${H.toFixed(0)}`);
   svg.setAttribute('preserveAspectRatio','xMidYMid meet');
-  const coast = smoothPath(COAST);
   let g = `
   <defs>
     <pattern id="dots" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".6" fill="#2a3644"/></pattern>
@@ -587,38 +707,23 @@ function drawMap(){
     <clipPath id="frame"><rect width="${W}" height="${H}"/></clipPath>
   </defs>
   <g clip-path="url(#frame)">`;
-  for(let lon=-59; lon<=-53; lon++){ const [x]=P(lon,0); g+=`<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#16202b" stroke-dasharray="2 4"/><text x="${x+3}" y="${H-6}" fill="#3a4757" font-size="9" class="mono">${-lon}°W</text>`; }
-  for(let lat=47; lat<=51; lat++){ const [,y]=P(0,lat); g+=`<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="#16202b" stroke-dasharray="2 4"/><text x="4" y="${y-3}" fill="#3a4757" font-size="9" class="mono">${lat}°N</text>`; }
-  g += `<path d="${smoothPath(LABRADOR)}" fill="#10161d" stroke="#2a3542" stroke-width="1"/>`;
-  { const [x,y]=P(-58.8,51.62); g+=`<text x="${x}" y="${y}" fill="#3e4b5b" font-size="10" letter-spacing="3">LABRADOR / QUÉBEC</text>`; }
-  g += `<path d="${coast}" fill="none" stroke="#14303a" stroke-width="22" stroke-opacity=".35" filter="url(#blur)"/>
-        <path d="${coast}" fill="none" stroke="#1d3a44" stroke-width="6" stroke-opacity=".35"/>
-        <path d="${coast}" fill="#131a22"/><path d="${coast}" fill="url(#dots)" opacity=".7"/>`;
-  [[-57.55,49.6,.55,.95],[-58.6,47.95,.35,.45],[-56.0,48.35,.6,.35],[-56.5,50.6,.35,.5]].forEach(([lo,la,rx,ry])=>{
-    const [x,y]=P(lo,la); g+=`<ellipse cx="${x}" cy="${y}" rx="${rx*COS*MAP.k}" ry="${ry*MAP.k}" fill="url(#relief)"/>`; });
-  g += `<path d="${coast}" fill="none" stroke="#3d5163" stroke-width="1.1"/>`;
-  LAKES.forEach(([lo,la,rx,ry,rot])=>{ const [x,y]=P(lo,la); g+=`<ellipse cx="${x}" cy="${y}" rx="${rx*COS*MAP.k}" ry="${ry*MAP.k}" transform="rotate(${rot} ${x} ${y})" fill="#0b1117" stroke="#24323f" stroke-width=".8"/>`; });
-  [['LONG RANGE MTNS',-57.75,50.0,-62],['AVALON',-53.3,47.15,0],['CENTRAL',-55.3,48.55,0],['NORTHERN PENINSULA',-56.85,50.95,-58],['BURIN',-55.35,47.12,0]].forEach(([t,lo,la,r])=>{
-    const [x,y]=P(lo,la); g+=`<text x="${x}" y="${y}" fill="#334051" font-size="9.5" letter-spacing="2.5" text-anchor="middle" transform="rotate(${r} ${x} ${y})">${t}</text>`; });
-  [['GULF OF ST. LAWRENCE',-59.1,49.6],['ATLANTIC OCEAN',-53.3,46.75],['NOTRE DAME BAY',-55.2,49.85],['STRAIT OF BELLE ISLE',-56.25,51.78],['CABOT STRAIT',-59.0,47.2]].forEach(([t,lo,la])=>{
-    const [x,y]=P(lo,la); g+=`<text x="${x}" y="${y}" fill="#243444" font-size="9" font-style="italic" letter-spacing="2" text-anchor="middle">${t}</text>`; });
+  g += graticule() + (REGION==='labrador' ? baseLabrador() : baseIsland());
   // live radar (MSC GeoMet composite; EPSG:4326 lines up with this plate-carrée projection)
   g += `<g id="lyrRadar"><image id="radarImg" href="${radarUrl()}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="none" opacity=".85"/></g>`;
   g += `<g id="lyrAlerts"></g>`;
   g += `<g id="lyrGrid">`;
   LINES.forEach(([a,b,kv])=>{ const d=lineD([NODE[a],NODE[b]]);
-    g += kv>=230 ? `<path d="${d}" stroke="#5f7d93" stroke-width="1.9" fill="none" stroke-opacity=".85"/>` : `<path d="${d}" stroke="#45596a" stroke-width="1.1" fill="none" stroke-dasharray="3 2"/>`; });
+    g += kv>=230 ? `<path d="${d}" stroke="#5f7d93" stroke-width="${kv>=700?2.8:kv>=300?2.3:1.9}" fill="none" stroke-opacity=".85"/>` : `<path d="${d}" stroke="#45596a" stroke-width="1.1" fill="none" stroke-dasharray="3 2"/>`; });
   Object.entries(NODE).forEach(([k,[lo,la]])=>{ if(SITES.find(s=>s.id===k)) return; const [x,y]=P(lo,la); g+=`<rect x="${x-2.5}" y="${y-2.5}" width="5" height="5" fill="#0b1015" stroke="#6c8aa0" stroke-width="1"/>`; });
   g += `</g>`;
-  g += `<g id="lyrLIL"><path d="${lineD(LIL)}" stroke="#b18cff" stroke-opacity=".25" stroke-width="7" fill="none" stroke-linejoin="round"/>
-        <path d="${lineD(LIL)}" stroke="#b18cff" stroke-width="2" fill="none" class="lil-flow" stroke-linejoin="round"/>`;
-  { const [x,y]=P(-57.45,51.88); g+=`<text x="${x+6}" y="${y+4}" fill="#b18cff" font-size="9.5" class="mono">↖ TO MUSKRAT FALLS · LIL ±350 kV HVdc</text>`; }
-  { const [x,y]=P(-56.80,51.40); g+=`<text x="${x-8}" y="${y+12}" fill="#8f76c9" font-size="8.5" class="mono" text-anchor="end">SOBI CABLE CROSSING</text>`; }
+  g += `<g id="lyrLIL"><path d="${lineD(LIL_PATH)}" stroke="#b18cff" stroke-opacity=".25" stroke-width="7" fill="none" stroke-linejoin="round"/>
+        <path d="${lineD(LIL_PATH)}" stroke="#b18cff" stroke-width="2" fill="none" class="lil-flow" stroke-linejoin="round"/>`;
+  g += lilLabels();
   g += `</g>`;
-  TOWNS.forEach(([t,lo,la])=>{ const [x,y]=P(lo,la); g+=`<circle cx="${x}" cy="${y}" r="1.8" fill="#6b7787"/><text x="${x+5}" y="${y+3}" fill="#5c6878" font-size="9" class="lbl-halo">${t}</text>`; });
+  TOWN_LIST.forEach(([t,lo,la])=>{ const [x,y]=P(lo,la); g+=`<circle cx="${x}" cy="${y}" r="1.8" fill="#6b7787"/><text x="${x+5}" y="${y+3}" fill="#5c6878" font-size="9" class="lbl-halo">${t}</text>`; });
   g += `<g id="lyrNodes"></g>`;
   g += `<g transform="translate(${W-46},44)"><circle r="20" fill="#0c1117" stroke="#2a3542"/><path d="M0,-16 L5,0 L0,4 L-5,0Z" fill="#5eead4"/><path d="M0,16 L5,0 L0,-4 L-5,0Z" fill="#3a4757"/><text y="-24" text-anchor="middle" fill="#7b8796" font-size="9" class="mono">N</text></g>`;
-  { const L=100*MAP.k/111; g+=`<g transform="translate(${W-L-20},${H-62})"><rect x="0" y="0" width="${L/2}" height="4" fill="#7b8796"/><rect x="${L/2}" y="0" width="${L/2}" height="4" fill="#2a3542" stroke="#7b8796" stroke-width=".5"/><text x="0" y="16" fill="#7b8796" font-size="9" class="mono">0</text><text x="${L}" y="16" fill="#7b8796" font-size="9" class="mono" text-anchor="end">100 km</text></g>`; }
+  { const L=100*MAP.k/111; g+=`<g transform="translate(${REGION==='labrador'?20:W-L-20},${REGION==='labrador'?24:H-62})"><rect x="0" y="0" width="${L/2}" height="4" fill="#7b8796"/><rect x="${L/2}" y="0" width="${L/2}" height="4" fill="#2a3542" stroke="#7b8796" stroke-width=".5"/><text x="0" y="16" fill="#7b8796" font-size="9" class="mono">0</text><text x="${L}" y="16" fill="#7b8796" font-size="9" class="mono" text-anchor="end">100 km</text></g>`; }
   g += `</g>`;
   svg.innerHTML = g;
   svg.addEventListener('mousemove',e=>{
@@ -846,7 +951,7 @@ function renderDetail(){
   const stTxt = {g:'NORMAL',y:'CAUTION',r:'CRITICAL'}[st];
   const row = (k,v) => `<div class="flex justify-between items-baseline py-1 border-b" style="border-color:#1b232e"><span style="color:var(--dim)">${k}</span><span class="mono" style="color:#e6edf5">${v}</span></div>`;
   const h0 = s.hours[0], o = OBS[s.swob];
-  const obsLine = c.src==='obs' ? `ECCC ${esc(o.name)} · ${Math.round(kmBetween(s.lon,s.lat,o.lon,o.lat))} km · ${hh(new Date(o.t))} ${tzAbbr}` : `RDPS ${hh(h0.t)} ${tzAbbr} (no recent ECCC obs)`;
+  const obsLine = c.src==='obs' ? `ECCC ${esc(o.name)} · ${Math.round(kmBetween(s.lon,s.lat,o.lon,o.lat))} km · ${hh(new Date(o.t))} ${tzAbbr}${c.filled.length?` · ${c.filled.includes('sus')?'wind':c.filled.join('/')} from RDPS`:''}` : `RDPS ${hh(h0.t)} ${tzAbbr} (no recent ECCC obs)`;
   const L = s.lr;
   const rainTxt = `Wettest 24 h (ens. mean) <b>${r1(L.rain.b24.v)} mm</b> ending ${dayLbl(L.t[L.rain.b24.i])}; wettest 72 h <b>${r1(L.rain.b72.v)} mm</b>. Chance of a 25 mm day ${L.rain.p25.v}%, a 50 mm day ${L.rain.p50.v}%.`;
   const warmTxt = `Largest 48 h rise <b>${r1(L.warm.rise.v)}°</b> (${r1(L.warm.rise.from)}° → ${r1(L.T.mean[L.warm.rise.i])}°) by ${dayLbl(L.t[L.warm.rise.i])}.`;
@@ -998,9 +1103,9 @@ async function loadObs(){
       const f = (await r.json()).features[0]; if (!f) return;
       const p = f.properties, v = (...ks) => { for (const k of ks){ const x = p[k]; if (typeof x==='number' && x>-900) return x; } return null; };
       const o = { t: new Date(p['date_tm-value']), name: p['stn_nam-value'], lon:f.geometry.coordinates[0], lat:f.geometry.coordinates[1],
-        T: v('air_temp'), rh: v('rel_hum'), sus: v('avg_wnd_spd_10m_pst10mts','avg_wnd_spd_10m_pst2mts','avg_wnd_spd_10m_pst1hr'),
-        dir: v('avg_wnd_dir_10m_pst10mts','avg_wnd_dir_10m_pst2mts','avg_wnd_dir_10m_pst1hr'),
-        gst: v('max_wnd_spd_10m_pst10mts','max_wnd_spd_10m_pst1hr'),
+        T: v('air_temp'), rh: v('rel_hum'), sus: v('avg_wnd_spd_10m_pst10mts','avg_wnd_spd_10m_pst2mts','avg_wnd_spd_10m_pst1hr','avg_wnd_spd_pst10mts'),
+        dir: v('avg_wnd_dir_10m_pst10mts','avg_wnd_dir_10m_pst2mts','avg_wnd_dir_10m_pst1hr','wnd_dir_10m_pst1hr_max_spd','wnd_dir_pst1hr_max_spd'),
+        gst: v('max_wnd_spd_10m_pst10mts','max_wnd_spd_10m_pst1hr','max_wnd_gst_spd_10m_pst10mts','max_wnd_spd_pst1hr'),
         mslp: v('mslp'), p1: v('pcpn_amt_pst1hr','rnfl_amt_pst1hr'), p24: v('pcpn_amt_pst24hrs') };
       const a = v('pres_tend_amt_pst3hrs'), ch = v('pres_tend_char_pst3hrs');
       o.ptend = a==null ? null : (ch!=null && ch>=5 && ch<=8 ? -a : a);
@@ -1021,6 +1126,7 @@ async function loadAlerts(){
         return { name: p.alert_name_en || p.alert_short_name_en, area: p.feature_name_en, risk: p.risk_colour_en, type:p.alert_type,
           end: p.event_end_datetime ? new Date(p.event_end_datetime) : null, polys }; });
   } catch(e) { ALERTS = []; }
+  ALERTS = ALERTS.filter(a=>a.polys.some(r=>r.some(([x,y])=>x>=MAP.lonMin && x<=MAP.lonMax && y>=MAP.latMin && y<=MAP.latMax)));
   const inside = (pt, ring) => { let c=false; for (let i=0,j=ring.length-1;i<ring.length;j=i++){ const [xi,yi]=ring[i],[xj,yj]=ring[j]; if(((yi>pt[1])!==(yj>pt[1])) && (pt[0]<(xj-xi)*(pt[1]-yi)/(yj-yi)+xi)) c=!c; } return c; };
   SITES.forEach(s=>{ const seen=new Set(); s.alerts = ALERTS.filter(a=>a.polys.some(r=>inside([s.lon,s.lat],r))).filter(a=>!seen.has(a.name)&&seen.add(a.name)); });
 }
@@ -1037,6 +1143,14 @@ function renderAll(){
 }
 
 async function boot(){
+  { const h = parseHash(), o = h && ALL_SITES.find(x=>x.id===h.id);
+    if (o && o.rg !== REGION){ location.replace(location.pathname + '?region=' + o.rg + location.hash); return; } }
+  document.getElementById('appTitle').textContent = RG.title;
+  document.getElementById('appSub').innerHTML = RG.sub;
+  document.getElementById('gisTitle').textContent = RG.gis;
+  document.getElementById('matrixTitle').textContent = REGION==='labrador' ? 'Labrador Site Matrix' : 'Island Site Matrix';
+  document.title = (REGION==='labrador' ? 'Labrador' : 'Island') + ' Site Status & Weather Forecast Dashboard — Live Prototype';
+  const sw = document.getElementById('regionSwitch'); sw.textContent = RG.otherLabel; sw.href = location.pathname + '?region=' + RG.other;
   try {
     document.getElementById('loadMsg').textContent = 'Loading forecast data (MSC RDPS · NAEFS · NL Water Resources)…';
     DATA = await loadData();
@@ -1075,7 +1189,7 @@ function openModal(id, tab='overview'){
 function closeModal(){ history.replaceState(null, '', location.pathname + location.search); hideModal(); }
 function hideModal(){ modal.id = null; document.getElementById('siteModal').style.display = 'none'; document.body.style.overflow = ''; }
 function stepSite(d){ if (!modal.id) return; const i = SITES.findIndex(s=>s.id===modal.id); openModal(SITES[(i+d+SITES.length)%SITES.length].id, modal.tab); }
-window.addEventListener('hashchange', ()=>{ const h = parseHash(); if (h && DATA && SITES.find(s=>s.id===h.id)) showModal(h.id, h.tab); else hideModal(); });
+window.addEventListener('hashchange', ()=>{ const h = parseHash(); { const o = h && ALL_SITES.find(x=>x.id===h.id); if (o && o.rg!==REGION){ location.replace(location.pathname+'?region='+o.rg+location.hash); return; } } if (h && DATA && SITES.find(s=>s.id===h.id)) showModal(h.id, h.tab); else hideModal(); });
 document.addEventListener('keydown', e=>{ if (!modal.id) return; if (e.key==='Escape') closeModal(); if (e.key==='ArrowRight') stepSite(1); if (e.key==='ArrowLeft') stepSite(-1); });
 document.getElementById('siteModal').addEventListener('click', e=>{ if (e.target.id==='siteModal') closeModal(); });
 
@@ -1135,7 +1249,7 @@ function tChart(o){
   if (o.yMin==null) lo = Math.floor(lo/st)*st; if (o.yMax==null) hi = Math.ceil(hi/st)*st;
   const Y = v => pt + (hi-v)/(hi-lo)*ih;
   let g = '';
-  for (let v=lo; v<=hi+1e-9; v+=st) g += `<line x1="${pl}" x2="${w-pr}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="${Math.abs(v)<1e-9 && o.zero?'#3d5163':'#18212c'}"/><text x="${pl-6}" y="${(Y(v)+4).toFixed(1)}" fill="#6b7787" font-size="11" text-anchor="end" class="mono">${+v.toFixed(st<1?1:0)}</text>`;
+  for (let v=lo; v<=hi+1e-9; v+=st) g += `<line x1="${pl}" x2="${w-pr}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="${Math.abs(v)<1e-9 && o.zero?'#3d5163':'#18212c'}"/><text x="${pl-6}" y="${(Y(v)+4).toFixed(1)}" fill="#6b7787" font-size="11" text-anchor="end" class="mono">${+v.toFixed(st<0.01?3:st<0.1?2:st<1?1:0)}</text>`;
   // local-time ticks
   const m0 = +fMin.format(new Date(t0)); let t = t0 - m0*60000 + (m0 ? 3600000 : 0);
   for (; t<=t1; t+=3600000){
@@ -1180,7 +1294,7 @@ function hourReadout(s, x){
 function tabOverview(s){
   const c = cur(s), h0 = s.hours[0], o = OBS[s.swob], m = s.sum;
   const tile = (k,v,sub='') => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div>${sub?`<div class="s">${sub}</div>`:''}</div>`;
-  const src = c.src==='obs' ? `ECCC ${esc(o.name)} · ${Math.round(kmBetween(s.lon,s.lat,o.lon,o.lat))} km away · ${hh(new Date(o.t))} ${tzAbbr}` : `RDPS model (no recent ECCC observation)`;
+  const src = c.src==='obs' ? `ECCC ${esc(o.name)} · ${Math.round(kmBetween(s.lon,s.lat,o.lon,o.lat))} km away · ${hh(new Date(o.t))} ${tzAbbr}${c.filled.length?` · ${c.filled.includes('sus')?'wind':c.filled.join('/')} from RDPS`:''}` : `RDPS model (no recent ECCC observation)`;
   return `
   <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
     <div class="flex flex-col gap-4 min-w-0">
@@ -1355,7 +1469,7 @@ async function loadObsHist(s){
       const f = (await r.json()).features || [];
       const v = (p,...ks) => { for (const k of ks){ const x = p[k]; if (typeof x==='number' && x>-900) return x; } return null; };
       const pts = f.map(x=>{ const p = x.properties; return { t:Date.parse(p['date_tm-value']), T:v(p,'air_temp'),
-        sus:v(p,'avg_wnd_spd_10m_pst10mts','avg_wnd_spd_10m_pst2mts','avg_wnd_spd_10m_pst1hr'), gst:v(p,'max_wnd_spd_10m_pst10mts','max_wnd_spd_10m_pst1hr'), p1:v(p,'pcpn_amt_pst1hr') }; })
+        sus:v(p,'avg_wnd_spd_10m_pst10mts','avg_wnd_spd_10m_pst2mts','avg_wnd_spd_10m_pst1hr','avg_wnd_spd_pst10mts'), gst:v(p,'max_wnd_spd_10m_pst10mts','max_wnd_spd_10m_pst1hr','max_wnd_gst_spd_10m_pst10mts','max_wnd_spd_pst1hr'), p1:v(p,'pcpn_amt_pst1hr') }; })
         .filter(x=>x.T!=null).sort((a,b)=>a.t-b.t);
       // keep at most one observation per 10 minutes
       const thin = []; pts.forEach(x=>{ if (!thin.length || x.t - thin[thin.length-1].t >= 600000) thin.push(x); });
