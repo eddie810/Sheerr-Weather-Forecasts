@@ -109,6 +109,7 @@ SFC = {  # key -> (RDPS variable, scale, offset)
     "pl": ("IcePellets-Accum1h_Sfc", 1, 0),
     "sn": ("Snow-Accum1h_Sfc", 1, 0),
     "ra": ("Rain-Accum1h_Sfc", 1, 0),
+    "cc": ("TotalCloudCover_Sfc", 1, 0),  # %
 }
 LEVELS = ["1000", "0950", "0925", "0900", "0850", "0800", "0750", "0700"]
 NAEFS_VARS = ["TMP-SFC", "APCP-SFC", "WIND-SFC"]
@@ -208,6 +209,7 @@ def fetch_rdps(run: dt.datetime) -> dict:
             rec[key] = [round(out[key][h][k] * scale + off, 2) for h in range(1, HOURS + 1)]
         rec["wd"] = [round(v) % 360 for v in rec["wd"]]
         rec["rh"] = [round(min(100, max(0, v))) for v in rec["rh"]]
+        rec["cc"] = [round(min(100, max(0, v))) for v in rec["cc"]]
         # snow depth (cm), linear between 6-hourly values
         sd = {h: out["sd"][h][k] * 100 for h in out["sd"]}
         rec["sd"] = [round(_interp(sd, h), 1) for h in range(1, HOURS + 1)]

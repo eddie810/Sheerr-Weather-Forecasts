@@ -278,21 +278,21 @@ const sgn = v => (v>=0?'+':'') + r1(v);
 const esc = s => String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* ---------- thresholds (placeholders — to be set with NL Hydro) ---------- */
-const THR = { iceY:6, iceR:12, saltY:40, saltR:70, rimeY:60, rimeR:90, pcpY:30, pcpR:50, runY:25, runR:40 };
+const THR = { frzY:40, frzR:70, iceY:6, iceR:12, saltY:40, saltR:70, rimeY:60, rimeR:90, pcpY:30, pcpR:50, runY:25, runR:40 };
 const LR  = { r24W:25, r24F:40, r72W:50, r72F:75, p50F:20, p25W:40, riseW:8, riseF:12, meltW:20, meltF:35 };
 
 /* ---------- sites ---------- */
 // sea: wind directions (FROM, degrees) that blow off salt water at the site, and distance to the shore (km).
 const ALL_SITES = [
- {id:'bde', rg:'island', name:"Bay d'Espoir", group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈613 MW · 7 units', lon:-55.80, lat:47.99, elev:45, region:'South Coast · Coast of Bays', lbl:[12,-10],
+ {id:'bde', frazil:'02ZE004', rg:'island', name:"Bay d'Espoir", group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈613 MW · 7 units', lon:-55.80, lat:47.99, elev:45, region:'South Coast · Coast of Bays', lbl:[12,-10],
   swob:'8400416', sea:{from:135,to:225,km:2}, thr:{gustY:80,gustR:100}},
- {id:'cat', rg:'island', name:'Cat Arm', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈127 MW · 2 units', lon:-56.80, lat:50.10, elev:380, region:'White Bay · Northern Peninsula', lbl:[12,4],
+ {id:'cat', frazil:'02YF002', rg:'island', name:'Cat Arm', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈127 MW · 2 units', lon:-56.80, lat:50.10, elev:380, region:'White Bay · Northern Peninsula', lbl:[12,4],
   swob:'8401538', sea:{from:30,to:140,km:1}, thr:{gustY:75,gustR:95}},
- {id:'hin', rg:'island', name:'Hinds Lake', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈75 MW · 1 unit', lon:-56.95, lat:49.38, elev:210, region:'Deer Lake · Humber Valley', lbl:[12,4],
+ {id:'hin', frazil:'02YK008', rg:'island', name:'Hinds Lake', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈75 MW · 1 unit', lon:-56.95, lat:49.38, elev:210, region:'Deer Lake · Humber Valley', lbl:[12,4],
   swob:'8401295', sea:null, thr:{gustY:80,gustR:100}},
- {id:'par', rg:'island', name:'Paradise River', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈8 MW · 1 unit', lon:-54.40, lat:47.66, elev:60, region:'Placentia Bay', lbl:[-12,16,'end'],
+ {id:'par', frazil:'02ZH001', rg:'island', name:'Paradise River', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈8 MW · 1 unit', lon:-54.40, lat:47.66, elev:60, region:'Placentia Bay', lbl:[-12,16,'end'],
   swob:'8400104', sea:{from:120,to:230,km:3}, thr:{gustY:85,gustR:105}},
- {id:'gra', rg:'island', name:'Granite Canal', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈40 MW · 1 unit', lon:-56.35, lat:48.17, elev:330, region:'Central Plateau · Meelpaeg', lbl:[-12,4,'end'],
+ {id:'gra', frazil:'02ZD003', rg:'island', name:'Granite Canal', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈40 MW · 1 unit', lon:-56.35, lat:48.17, elev:330, region:'Central Plateau · Meelpaeg', lbl:[-12,4,'end'],
   swob:'8402757', sea:null, thr:{gustY:80,gustR:100}},
  {id:'hol', rg:'island', name:'Holyrood TGS', group:'Thermal / Backup', type:'Thermal Generating Station (standby / sync. condenser)', icon:'flame', cap:'≈490 MW · 3 units', lon:-53.10, lat:47.43, elev:15, region:'Conception Bay · Avalon', lbl:[-14,-20,'end'],
   swob:'8403603', sea:{from:300,to:60,km:0.3}, thr:{gustY:80,gustR:100}},
@@ -303,9 +303,9 @@ const ALL_SITES = [
  {id:'shc', rg:'island', name:'Shoal Cove', group:'Interconnections / Substations', type:'LIL SOBI cable transition compound', icon:'cable', cap:'±350 kV HVdc landing', lon:-56.62, lat:51.33, elev:20, region:'Strait of Belle Isle · Northern Peninsula', lbl:[12,4],
   swob:'8403399', sea:{from:250,to:40,km:0.3}, thr:{gustY:80,gustR:100}},
  // ---------------- Labrador ----------------
- {id:'chf', rg:'labrador', name:'Churchill Falls', group:'Generation & LIL', type:'Hydroelectric Generating Station (CF(L)Co)', icon:'waves', cap:'≈5,428 MW · 11 units', lon:-64.05, lat:53.53, elev:470, region:'Western Labrador · Churchill River', lbl:[12,4],
+ {id:'chf', frazil:'03OD008', rg:'labrador', name:'Churchill Falls', group:'Generation & LIL', type:'Hydroelectric Generating Station (CF(L)Co)', icon:'waves', cap:'≈5,428 MW · 11 units', lon:-64.05, lat:53.53, elev:470, region:'Western Labrador · Churchill River', lbl:[12,4],
   swob:'8501136', sea:null, thr:{gustY:80,gustR:100}},
- {id:'msk', rg:'labrador', name:'Muskrat Falls', group:'Generation & LIL', type:'Hydro GS + LIL converter station', icon:'waves', cap:'≈824 MW · 4 units · 900 MW HVdc', lon:-60.77, lat:53.25, elev:40, region:'Lower Churchill River', lbl:[-34,30,'end'], lead:1,
+ {id:'msk', frazil:'03OE001', rg:'labrador', name:'Muskrat Falls', group:'Generation & LIL', type:'Hydro GS + LIL converter station', icon:'waves', cap:'≈824 MW · 4 units · 900 MW HVdc', lon:-60.77, lat:53.25, elev:40, region:'Lower Churchill River', lbl:[-34,30,'end'], lead:1,
   swob:'8501915', sea:null, thr:{gustY:80,gustR:100}},
  {id:'mea', rg:'labrador', name:'LIL · Mealy Mtns', group:'Generation & LIL', type:'HVdc line corridor — exposed high terrain', icon:'cable', cap:'±350 kV HVdc overhead line', lon:-59.60, lat:52.80, elev:550, region:'Mealy Mountains crossing', lbl:[-12,16,'end'],
   swob:'NL-DFFA_022', sea:null, thr:{gustY:70,gustR:90}},
@@ -409,9 +409,10 @@ function derive(s){
     if (t <= 0.5) swe += sn + pl + fz; const m = Math.min(swe, Math.max(0,t)*0.125); swe -= m; melt += m;
     snow += sn; rain += ra + fz; pcp += p;
     hours.push({t:T[i], T:t, feels:windChill(t,ws), dir:wd, sus:Math.round(ws), gst:Math.round(R.wg[i]), rh, pres:R.p[i], rate:p, type,
-      sn, ra, fzr:fz, plv:pl, melt:m, fzl:R.fzl[i], warm:R.warm[i], warmz:R.warmz[i], iceHr, ice, salt, rime, flash, sd:R.sd[i]});
+      sn, ra, fzr:fz, plv:pl, melt:m, cc:(R.cc ? R.cc[i] : 60), fzl:R.fzl[i], warm:R.warm[i], warmz:R.warmz[i], iceHr, ice, salt, rime, flash, sd:R.sd[i]});
   }
   s.hoursAll = hours.slice(); hours.splice(48);
+  s.frz = frazil(s, s.hoursAll);
   pcp = hours.reduce((a,x)=>a+x.rate,0); rain = hours.reduce((a,x)=>a+x.ra+x.fzr,0);
   snow = hours.reduce((a,x)=>a+x.sn,0); melt = hours.reduce((a,x)=>a+x.melt,0); ice = hours.length ? hours[hours.length-1].ice : 0;
   const gMax = hours.reduce((a,b)=>b.gst>a.gst?b:a, hours[0]);
@@ -422,12 +423,43 @@ function derive(s){
     rime:Math.max(...hours.map(x=>x.rime)), pcp, rain, snow, melt, runoff:rain+melt,
     fzStart:fz[0]?.t, fzEnd:fz[fz.length-1]?.t, fzHours:fz.length, flashStart:fl[0]?.t, flashHours:fl.length,
     tMax:Math.max(...hours.map(x=>x.T)), tMin:Math.min(...hours.map(x=>x.T)), sd0:hours[0].sd, swe0:(R.sd[i0]||0)*2.5 };
+  if (s.frz && !s.frz.na){
+    const h48 = hours, top = h48.reduce((a,b)=>b.frz>a.frz?b:a, h48[0]);
+    s.sum.frazil = top.frz; s.sum.frazilAt = top.t;
+  } else s.sum.frazil = 0;
   s.lr = longRange(s);
   s.days = buildDays(s);
   s.grid = DATA.rdps.grid[s.id];
   s.water = (DATA.sites[s.id].mae||[]).map(id=>DATA.mae[id]).filter(Boolean);
   s.maeWx = DATA.mae[DATA.sites[s.id].mae_wx];
   s.status = status(s);
+}
+
+
+/* ---------- frazil ice (risk index, not a measurement) ----------
+   Open water must cool to 0 °C and keep losing heat while turbulent.
+   Start from the latest gauge water temperature, then step a 2 m mixed
+   layer forward with a simple surface heat budget:
+     sensible + latent  ≈ (10 + 4·wind[m/s]) · (Tw − Ta)        W/m²
+     net longwave       ≈ 100 · (1 − 0.8·cloud)                 W/m²
+     solar gain (day)   ≈ 120 · (1 − 0.7·cloud)                 W/m²
+   Index is high when projected water is at ~0 °C and heat loss is strong,
+   boosted at night and when snow falls into open water. */
+function frazil(s, H){
+  if (!s.frazil) return null;
+  const g = DATA.mae[s.frazil], wt = g && g.series.WATER_TEMP;
+  if (!wt || !wt.length){ H.forEach(x=>{ x.frz = 0; x.tw = null; }); return {na:true, gauge:g}; }
+  const last = wt[wt.length-1]; let Tw = Math.max(0, last[1]);
+  const t0w = parseT(last[0]).getTime();
+  H.forEach(x=>{
+    const V = x.sus/3.6, cc = clamp((x.cc ?? 60)/100, 0, 1), hr = +fHr.format(x.t) % 24, night = (hr < 8 || hr >= 17) ? 1 : 0;
+    const Q = (10 + 4*V)*(Tw - x.T) + 100*(1 - 0.8*cc) - (night ? 0 : 120*(1 - 0.7*cc));
+    if (x.t.getTime() > t0w) Tw = clamp(Tw - Q*3600/(4.186e6*2), 0, 30);
+    const cold = Tw <= 0.1 ? 1 : Tw <= 0.5 ? 0.55 : Tw <= 1 ? 0.2 : 0;
+    x.tw = Tw; x.q = Q;
+    x.frz = Math.round(clamp(cold * clamp((Q - 100)/350, 0, 1) * 100 * (1 + 0.25*night + (x.sn >= 0.1 ? 0.2 : 0)), 0, 100));
+  });
+  return {gauge:g, tw0:last[1], at:parseT(last[0])};
 }
 
 const lvl = (v,y,r) => v>=r?2 : v>=y?1 : 0;
@@ -438,6 +470,7 @@ function status(s){
     ice:  lvl(m.ice, THR.iceY, THR.iceR) || (m.fzHours ? 1 : 0),
     salt: lvl(m.salt, THR.saltY, THR.saltR),
     rime: lvl(m.rime, THR.rimeY, THR.rimeR),
+    frazil: lvl(m.frazil||0, THR.frzY, THR.frzR),
     pcp:  lvl(m.pcp, THR.pcpY, THR.pcpR),
     run:  lvl(m.runoff, THR.runY, THR.runR),
     lr:   Math.max(s.lr.rain.lvl, s.lr.warm.lvl, s.lr.melt.lvl) ? 1 : 0,
@@ -539,6 +572,38 @@ function renderHeader(){
   document.getElementById('built').textContent = `${hh(built)} ${tzAbbr} · ${ago(built)}`;
 }
 
+
+/* ---------- plain-language hazard lines (risk notes + ticker) ---------- */
+function windowOf(H, pred){
+  const i = H.findIndex(pred); if (i < 0) return null;
+  let j = i; while (j+1 < H.length && pred(H[j+1])) j++;
+  return {a:H[i].t, b:H[j].t, i, j};
+}
+function whenWord(t){
+  const now = new Date(), k = fKey.format(t), today = fKey.format(now), tmrw = fKey.format(new Date(now.getTime()+86400000));
+  const hr = +fHr.format(t) % 24;
+  if ((k===today && hr>=17) || (k===tmrw && hr<8 && +fHr.format(now)%24 >= 12)) return 'TONIGHT';
+  if (k===today) return hr < 12 ? 'THIS MORNING' : 'TODAY';
+  if (k===tmrw) return hr < 8 ? 'OVERNIGHT' : 'TOMORROW';
+  return fDay.format(t).toUpperCase();
+}
+const span = w => !w ? '' : fKey.format(w.a)===fKey.format(w.b) ? `${whenWord(w.a)} ${hh(w.a)}–${hh(w.b)}` : `${whenWord(w.a)} ${hh(w.a)} – ${fDay.format(w.b).toUpperCase()} ${hh(w.b)}`;
+function hazardLines(s){
+  const m = s.sum, P = s.parts, H = s.hours, out = [];
+  if (P.frazil){ const w = windowOf(H, x=>x.frz>=THR.frzY); out.push([P.frazil, `RISK OF FRAZIL ICE ${span(w)}`]); }
+  if (m.fzHours){ const w = windowOf(H, x=>x.type==='FZRA'); out.push([Math.max(P.ice,1), `FREEZING RAIN ${span(w)} · ~${r1(m.ice)} MM RADIAL ICE`]); }
+  if (P.gust){ const w = windowOf(H, x=>x.gst>=s.thr.gustY); out.push([P.gust, `GUSTS TO ${m.gust} KM/H ${m.gustDir} ${span(w)}`]); }
+  if (P.salt){ const w = windowOf(H, x=>x.salt>=THR.saltY); out.push([P.salt, `SALT CONTAMINATION RISK ${span(w)}${m.flashHours?' · FLASHOVER WETTING':''}`]); }
+  if (P.rime){ const w = windowOf(H, x=>x.rime>=THR.rimeY); out.push([P.rime, `RIME ICING ${span(w)}`]); }
+  if (P.pcp) out.push([P.pcp, `HEAVY PRECIPITATION ${Math.round(m.pcp)} MM IN 48 H${m.snow>=2?` (~${Math.round(m.snow)} CM SNOW)`:''}`]);
+  if (P.run) out.push([P.run, `RAIN + SNOWMELT ~${Math.round(m.runoff)} MM IN 48 H`]);
+  const L = s.lr;
+  if (L.rain.lvl) out.push([1, `16-DAY OUTLOOK: HEAVY RAIN SIGNAL AROUND ${fDay.format(L.t[L.rain.b24.i]).toUpperCase()} ${fDate.format(L.t[L.rain.b24.i]).toUpperCase()}`]);
+  if (L.warm.lvl) out.push([1, `16-DAY OUTLOOK: RAPID WARM-UP (+${Math.round(L.warm.rise.v)}°) BY ${fDay.format(L.t[L.warm.rise.i]).toUpperCase()} ${fDate.format(L.t[L.warm.rise.i]).toUpperCase()}`]);
+  if (L.melt.lvl) out.push([1, `16-DAY OUTLOOK: SNOWMELT / RAIN-ON-SNOW ~${Math.round(L.melt.best.v)} MM BY ${fDay.format(L.t[L.melt.best.i]).toUpperCase()} ${fDate.format(L.t[L.melt.best.i]).toUpperCase()}`]);
+  return out;
+}
+
 function renderTicker(){
   const ALERTS = regionAlerts();
   const items = [], seen = new Set();
@@ -546,13 +611,16 @@ function renderTicker(){
     const col = a.risk==='red'?'var(--r)':a.risk==='orange'?'#ff8a3d':'var(--y)';
     items.push(`<span style="color:${col}">■ ${esc(a.name.toUpperCase())}</span> ${esc(a.area)}${a.end?` — until ${dayLbl(a.end)} ${tzAbbr}`:''}`); });
   if (!ALERTS.length) items.push(`<span style="color:var(--g)">■ NO ECCC ALERTS</span> in effect for ${RG.label}`);
+  const haz = [];
+  SITES.forEach(st=>hazardLines(st).forEach(([lv,t])=>haz.push([lv, st, t])));
+  haz.sort((a,b)=>b[0]-a[0]).forEach(([lv,st,t])=>items.push(`<span style="color:${lv===2?'var(--r)':'var(--y)'}">■ ${esc(st.name.toUpperCase())}:</span> ${esc(t)}`));
+  if (!haz.length) items.push(`<span style="color:var(--g)">■ ALL SITES NORMAL</span> no site cautions in the next 48 h`);
   const by = k => [...SITES].sort((a,b)=>b.sum[k]-a.sum[k])[0];
   const g = by('gust'); items.push(`<span style="color:var(--teal)">■ RDPS 48 h</span> peak gust ${g.sum.gust} km/h ${g.sum.gustDir} at ${g.name}, ${dayLbl(g.sum.gustAt)}`);
   const p = by('pcp'); items.push(`<span style="color:var(--teal)">■ RDPS 48 h</span> most precip ${r1(p.sum.pcp)} mm at ${p.name}`);
-  const iceS = SITES.filter(s=>s.sum.fzHours); if (iceS.length) items.push(`<span style="color:var(--fzra)">■ FREEZING RAIN (RDPS)</span> ${iceS.map(s=>`${s.name} ${r1(s.sum.ice)} mm radial`).join(' · ')}`);
-  const lr = SITES.filter(s=>s.lr.rain.lvl||s.lr.warm.lvl||s.lr.melt.lvl);
-  if (lr.length) items.push(`<span style="color:var(--y)">■ LONG RANGE (NAEFS)</span> ${lr.map(s=>`${s.name}: ${[s.lr.rain.lvl&&'heavy rain',s.lr.warm.lvl&&'rapid warm-up',s.lr.melt.lvl&&'snowmelt'].filter(Boolean).join(', ')}`).join(' · ')}`);
-  document.getElementById('ticker').innerHTML = items.join('<span style="color:#3a4658">&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;</span>');
+  const tk = document.getElementById('ticker');
+  tk.innerHTML = items.join('<span style="color:#3a4658">&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;</span>');
+  tk.style.animationDuration = Math.max(45, Math.round(tk.textContent.length / 7)) + 's';
   const tag = document.getElementById('alertTag');
   tag.style.background = ALERTS.length ? '#ff3d5718' : '#2bff8810'; tag.style.color = ALERTS.length ? 'var(--r)' : 'var(--g)'; tag.style.borderColor = ALERTS.length ? '#ff3d5755' : '#2bff8844';
 }
@@ -561,6 +629,7 @@ function headline(s){
   const m = s.sum, P = s.parts;
   if (P.alert) return [P.alert===2?'r':'y', 'ECCC ALERT'];
   if (m.fzHours) return [P.ice===2?'r':'y', `ICE ${r1(m.ice)}mm`];
+  if (P.frazil) return [P.frazil===2?'r':'y', `FRAZIL ${m.frazil}`];
   if (P.gust) return [P.gust===2?'r':'y', `GST ${m.gust}`];
   if (P.salt) return [P.salt===2?'r':'y', `SALT ${m.salt}`];
   if (P.pcp) return [P.pcp===2?'r':'y', `PCPN ${Math.round(m.pcp)}mm`];
@@ -887,6 +956,15 @@ function opsNotes(s){
     if (m.salt >= 15) n.push([['g','y','r'][s.parts.salt],'waves',`Salt contamination index peaks at <b>${m.salt}</b> ${dayLbl(m.saltAt)} (strong onshore ${card(s.sea.from)}–${card(s.sea.to)} wind with little rain to wash insulators).${m.flashHours?` Flashover-favourable wetting (fog / drizzle / RH ≥ 92%) from ${dayLbl(m.flashStart)}.`:''}`]);
     else n.push(['g','waves',`Salt contamination low — no sustained strong onshore (${card(s.sea.from)}–${card(s.sea.to)}) wind in the next 48 h.`]);
   }
+  if (s.frazil){
+    if (s.frz && s.frz.na) n.push(['g','snowflake',`Frazil ice: no water-temperature gauge near this intake — risk not assessed.`]);
+    else {
+      const w = windowOf(h, x=>x.frz>=THR.frzY), top = h.reduce((a,b)=>b.frz>a.frz?b:a, h[0]);
+      n.push([['g','y','r'][s.parts.frazil],'snowflake', w
+        ? `<b>Frazil ice risk ${span(w).toLowerCase()}</b>: water ${r1(s.frz.tw0)}°C (${esc(s.frz.gauge.name)}), air ${r1(top.T)}°, ${top.cc<40?'clear':top.cc<75?'partly cloudy':'cloudy'}, wind ${top.sus} km/h. Watch intake trash racks.`
+        : `Frazil ice risk low: water ${r1(s.frz.tw0)}°C at ${esc(s.frz.gauge.name)}${top.frz?`; peak index ${top.frz} ${dayLbl(top.t)}`:''}.`]);
+    }
+  }
   if (m.rime >= 40) n.push([['g','y','r'][s.parts.rime],'mountain',`In-cloud rime icing index ${m.rime}/100 — saturated, sub-freezing and windy at site elevation (${s.elev} m).`]);
   const fzl = h.filter(x=>x.fzl!=null && x.fzl>0).map(x=>x.fzl);
   const warmAloft = h.filter(x=>x.T<=0 && x.warm>0);
@@ -945,7 +1023,8 @@ function gaugeList(s){
     gauge({label:'Radial Ice', value:m.ice, max:25, y:THR.iceY, r:THR.iceR, unit:'mm radial', dec:1, sub:m.fzHours?`FZRA ${m.fzHours} h`:'no FZRA forecast'}),
     gauge({label:'Salt Contam.', value:m.salt, max:100, y:THR.saltY, r:THR.saltR, unit:'index', na:!s.sea, sub:s.sea?(m.flashHours?`wetting ${m.flashHours} h`:`onshore ${card(s.sea.from)}–${card(s.sea.to)}`):'inland site'}),
     gauge({label:'Rime Ice', value:m.rime, max:100, y:THR.rimeY, r:THR.rimeR, unit:'index', sub:`elev ${s.elev} m`}),
-    gauge({label:'Precip 48 h', value:m.pcp, max:80, y:THR.pcpY, r:THR.pcpR, unit:'mm', dec:1, sub:m.snow>=0.5?`snow ~${Math.round(m.snow)} cm`:`rain ${r1(m.rain)} mm`}),
+    s.frazil ? gauge({label:'Frazil Ice', value:m.frazil||0, max:100, y:THR.frzY, r:THR.frzR, unit:'risk index', na:!!(s.frz&&s.frz.na), sub:s.frz&&!s.frz.na?`water ${r1(s.frz.tw0)}°C · ${s.frz.gauge.id}`:'no water-temp gauge'})
+             : gauge({label:'Precip 48 h', value:m.pcp, max:80, y:THR.pcpY, r:THR.pcpR, unit:'mm', dec:1, sub:m.snow>=0.5?`snow ~${Math.round(m.snow)} cm`:`rain ${r1(m.rain)} mm`}),
     gauge({label:'Rain + Melt', value:m.runoff, max:80, y:THR.runY, r:THR.runR, unit:'mm runoff', dec:1, sub:`melt ${r1(m.melt)} mm`})
   ];
 }
@@ -1319,7 +1398,7 @@ function wireCross(root, onT){
 const nearestHour = (s, t) => s.hoursAll.reduce((a,b)=>Math.abs(b.t-t)<Math.abs(a.t-t)?b:a);
 function hourReadout(s, x){
   const amt = x.type==='NIL' ? 'dry' : `<span style="color:${TCOL[x.type]}">${TYPE_DESC[x.type]}</span> ${x.type==='SN'?x.sn.toFixed(1)+' cm':x.rate.toFixed(1)+' mm'}`;
-  return `<b style="color:#e6edf5">${dayLbl(x.t)} ${tzAbbr}</b> · ${sgn(x.T)}° (feels ${Math.round(x.feels)}°) · ${card(x.dir)} ${x.sus}/<span class="${x.gst>=s.thr.gustR?'st-r':x.gst>=s.thr.gustY?'st-y':''}">${x.gst}</span> km/h · ${amt} · FZL ${x.fzl===0?(x.warm>0?'SFC, warm layer +'+r1(x.warm)+'°':'SFC'):x.fzl+' m'} · ice Σ ${r1(x.ice)} mm${s.sea?` · salt ${x.salt}`:''} · RH ${x.rh}% · ${r1(x.pres)} hPa`;
+  return `<b style="color:#e6edf5">${dayLbl(x.t)} ${tzAbbr}</b> · ${sgn(x.T)}° (feels ${Math.round(x.feels)}°) · ${card(x.dir)} ${x.sus}/<span class="${x.gst>=s.thr.gustR?'st-r':x.gst>=s.thr.gustY?'st-y':''}">${x.gst}</span> km/h · ${amt} · FZL ${x.fzl===0?(x.warm>0?'SFC, warm layer +'+r1(x.warm)+'°':'SFC'):x.fzl+' m'} · ice Σ ${r1(x.ice)} mm${s.sea?` · salt ${x.salt}`:''}${s.frazil&&x.tw!=null?` · water ${x.tw.toFixed(1)}°C · frazil ${x.frz}`:''} · cloud ${x.cc}% · RH ${x.rh}% · ${r1(x.pres)} hPa`;
 }
 
 /* ---------- tab: overview ---------- */
@@ -1380,6 +1459,7 @@ function tabGraphs(s){
       series: (s.sea?[ser('salt','#ffb627',{w:2})]:[]).concat([ser('rime','#b18cff',{w:2,dash:'5 3'})]),
       thr: s.sea?[{v:THR.saltY,col:C.y,lab:`salt caution ${THR.saltY}`},{v:THR.saltR,col:C.r,lab:`salt critical ${THR.saltR}`}]:[],
       legend:(s.sea?[['salt','#ffb627']]:[]).concat([['rime','#b18cff','5 3']])})}
+  ${s.frazil && !(s.frz&&s.frz.na) ? tChart({t0,t1, title:'Frazil ice risk index (0–100) and projected water temperature ×10 (°C)', yMin:0, yMax:100, series:[ser('frz','#9ec3e6',{w:2.5}), {t, v:H.map(x=>x.tw==null?null:x.tw*10), col:'#5eead4', w:1.5, dash:'5 3'}], thr:[{v:THR.frzY,col:C.y,lab:`watch ${THR.frzY}`},{v:THR.frzR,col:C.r,lab:`high ${THR.frzR}`}], legend:[['frazil index','#9ec3e6'],['water °C ×10','#5eead4','5 3']]}) : ''}
   ${tChart({t0,t1, h:130, title:'Relative humidity (%)', yMin:40, yMax:100, series:[ser('rh','#7dd3c0',{w:2})], thr:[{v:92,col:'#566170',lab:'92% (salt wetting)'}]})}
   ${tChart({t0,t1, h:130, title:'Sea-level pressure (hPa)', minRange:6, series:[ser('pres','#c9d3df',{w:2})]})}`;
 }
@@ -1391,7 +1471,7 @@ function tabTable(s){
   <div class="mono mb-2" style="font-size:10.5px;color:var(--dim)">${H.length} hours · MSC RDPS 10 km run ${DATA.rdps.run} · grid point ${s.grid.km} km from the site · times ${tzAbbr}</div>
   <div class="card overflow-x-auto">
   <table class="big mono">
-    <thead><tr><th>Time</th><th>Temp</th><th>Feels</th><th>Dir</th><th>Sus</th><th>Gust</th><th>RH</th><th>MSLP</th><th style="text-align:center">Type</th><th>Rain</th><th>FZRA</th><th>PL</th><th>Snow cm</th><th>FZL m</th><th>Warm aloft</th><th>Ice Σ</th>${s.sea?'<th>Salt</th>':''}<th>Rime</th><th>Snow depth</th></tr></thead>
+    <thead><tr><th>Time</th><th>Temp</th><th>Feels</th><th>Dir</th><th>Sus</th><th>Gust</th><th>RH</th><th>MSLP</th><th style="text-align:center">Type</th><th>Rain</th><th>FZRA</th><th>PL</th><th>Snow cm</th><th>FZL m</th><th>Warm aloft</th><th>Ice Σ</th>${s.sea?'<th>Salt</th>':''}<th>Rime</th>${s.frazil?'<th>Water °C</th><th>Frazil</th>':''}<th>Cloud</th><th>Snow depth</th></tr></thead>
     <tbody>${H.map((x,i)=>{
       const nd = i===0 || fKey.format(x.t)!==fKey.format(H[i-1].t);
       const gc = x.gst>=s.thr.gustR?'cell-r':x.gst>=s.thr.gustY?'cell-y':'';
@@ -1405,7 +1485,7 @@ function tabTable(s){
         <td>${x.fzl===0?'<span style="color:#8aa0b6">SFC</span>':x.fzl}</td><td>${x.T<=0&&x.warm>0?`<span style="color:var(--fzra)">+${r1(x.warm)}°</span>`:z}</td>
         <td class="${x.ice>=THR.iceR?'cell-r':x.ice>=THR.iceY?'cell-y':''}">${x.ice<0.05?z:r1(x.ice)}</td>
         ${s.sea?`<td class="${x.salt>=THR.saltR?'cell-r':x.salt>=THR.saltY?'cell-y':''}">${x.salt||z}${x.flash?'<span style="color:var(--y)">*</span>':''}</td>`:''}
-        <td>${x.rime||z}</td><td style="color:var(--dim)">${r1(x.sd)}</td></tr>`; }).join('')}
+        <td>${x.rime||z}</td>${s.frazil?`<td style="color:#5eead4">${x.tw==null?z:x.tw.toFixed(2)}</td><td class="${x.frz>=THR.frzR?'cell-r':x.frz>=THR.frzY?'cell-y':''}">${x.frz||z}</td>`:''}<td style="color:var(--dim)">${x.cc}%</td><td style="color:var(--dim)">${r1(x.sd)}</td></tr>`; }).join('')}
     </tbody>
   </table></div>
   <div class="mono mt-2" style="font-size:10px;color:var(--dim2)">Amounts mm per hour (snow in cm) · FZL = height of the 0° level · Warm aloft = warmest layer above a sub-freezing surface (freezing-rain set-up) · Ice Σ = running radial ice (Jones model) · Salt * = wetting favours flashover</div>`;
