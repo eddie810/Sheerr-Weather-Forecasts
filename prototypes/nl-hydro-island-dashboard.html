@@ -280,7 +280,7 @@ const sgn = v => (v>=0?'+':'') + r1(v);
 const esc = s => String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* ---------- thresholds (placeholders — to be set with NL Hydro) ---------- */
-const THR = { frzY:40, frzR:70, iceY:6, iceR:12, saltY:40, saltR:70, rimeY:60, rimeR:90, pcpY:30, pcpR:50, runY:25, runR:40 };
+const THR = { loadY:1.0, loadR:2.0, frzY:40, frzR:70, iceY:6, iceR:12, saltY:40, saltR:70, rimeY:60, rimeR:90, pcpY:30, pcpR:50, runY:25, runR:40 };
 const LR  = { r24W:25, r24F:40, r72W:50, r72F:75, p50F:20, p25W:40, riseW:8, riseF:12, meltW:20, meltF:35 };
 
 /* ---------- sites ---------- */
@@ -381,14 +381,17 @@ function derive(s){
   const n = T.length - i0;
   // salt deposit runs from the start of the model run so recent hours count
   let D = 0, ice = 0, snow = 0, rain = 0, pcp = 0, swe = (R.sd[i0]||0)*2.5, melt = 0;
+  // conductor ice load: wet-snow sleeve (Ms) + glaze (Mg), kg per metre on a 25 mm conductor
+  const r0 = 0.0125, RHO_S = 500, RHO_I = 900; let Ms = 0, Mg = 0, seqAt = null;
   const seaF = s.sea ? Math.exp(-s.sea.km/8) : 0;
   const hours = [];
   for (let i=0; i<i0+n; i++){
     const ws = R.ws[i], wd = R.wd[i], p = R.pcp[i], rh = R.rh[i], t = R.t[i];
     const on = s.sea && inSector(wd, s.sea.from, s.sea.to);
-    const drive = on ? clamp((ws-25)/35, 0, 1) * seaF : 0;
-    D = D*0.97 + drive*(p<0.3 ? 1 : 0.4);
-    if (p >= 2) D *= 0.6;
+    // sea spray rises steeply with wind (≈ wind²); only rain/drizzle washes insulators — snow and ice pellets don't
+    const drive = on ? Math.min(2, Math.pow(Math.max(0, ws-20)/40, 2)) * seaF : 0, liq = R.ra[i] + R.fzra[i];
+    D = D*0.97 + drive*(liq<0.3 ? 1 : 0.4);
+    if (R.ra[i] >= 2) D *= 0.6;
     const salt = Math.round(clamp(D/6*100, 0, 100));
     if (i < i0) continue;
     // precip type from model accumulations
@@ -406,12 +409,27 @@ function derive(s){
     ice += iceHr;
     // in-cloud rime (proxy): saturated, sub-freezing, windy, worse with elevation
     const rime = Math.round(clamp((rh-90)/10,0,1) * clamp(ws/30,0,1) * (t<=0 && t>-15 ? 1 : 0) * (s.elev>=300 ? 100 : s.elev>=100 ? 75 : 55));
-    const flash = salt >= THR.saltY && (rh >= 92 || (p >= 0.1 && p < 1));
+    // wetting of salted insulators: fog/drizzle/high humidity, wet snow, freezing drizzle/rain, or a thaw
+    const thaw = i>=3 && t > 0 && Math.min(R.t[i-1],R.t[i-2],R.t[i-3]) <= 0 && rh >= 85;
+    const wetSnow = sn >= 0.1 && t >= -1 && t <= 2;
+    const flash = salt >= THR.saltY && (rh >= 92 || (p >= 0.1 && p < 1) || wetSnow || (fz > 0 && fz < 2) || thaw);
+    // wet-snow sleeve (sticky snow −1…+2 °C), Admirat-type sticking efficiency ≈ 1/V
+    const rOut = Math.sqrt(r0*r0 + Ms/(RHO_S*Math.PI) + Mg/(RHO_I*Math.PI)), V = Math.max(1, ws/3.6);
+    if (wetSnow) Ms += sn * 2*rOut * Math.min(1, 1/V) * Math.sqrt(V*V+1);
+    // freezing rain glazes over the (possibly snow-covered) conductor: Jones radial increment on the current outer radius
+    if (fz > 0){
+      if (Ms > 0.05 && !seqAt) seqAt = T[i];
+      const dR = iceHr/1000; Mg += RHO_I*Math.PI*((rOut+dR)*(rOut+dR) - rOut*rOut);
+    }
+    // shedding / melting
+    if (t > 2){ Ms *= 0.7; Mg *= 0.85; } else if (t > 0.5 && p < 0.1){ Ms *= 0.93; Mg *= 0.97; }
+    if (ws >= 60 && t < -1) Ms *= 0.9;
+    const load = Ms + Mg;
     // snowpack: melt 0.125 mm per °C-hour
     if (t <= 0.5) swe += sn + pl + fz; const m = Math.min(swe, Math.max(0,t)*0.125); swe -= m; melt += m;
     snow += sn; rain += ra + fz; pcp += p;
     hours.push({t:T[i], T:t, feels:windChill(t,ws), dir:wd, sus:Math.round(ws), gst:Math.round(R.wg[i]), rh, pres:R.p[i], rate:p, type,
-      sn, ra, fzr:fz, plv:pl, melt:m, cc:(R.cc ? R.cc[i] : 60), fzl:R.fzl[i], warm:R.warm[i], warmz:R.warmz[i], iceHr, ice, salt, rime, flash, sd:R.sd[i]});
+      sn, ra, fzr:fz, plv:pl, melt:m, cc:(R.cc ? R.cc[i] : 60), fzl:R.fzl[i], warm:R.warm[i], warmz:R.warmz[i], iceHr, ice, salt, rime, flash, sd:R.sd[i], ms:Ms, mg:Mg, load, wetSnow});
   }
   s.hoursAll = hours.slice(); hours.splice(48);
   s.frz = frazil(s, s.hoursAll);
@@ -420,10 +438,12 @@ function derive(s){
   const gMax = hours.reduce((a,b)=>b.gst>a.gst?b:a, hours[0]);
   const fz = hours.filter(x=>x.type==='FZRA'), fl = hours.filter(x=>x.flash);
   const sMax = hours.reduce((a,b)=>b.salt>a.salt?b:a, hours[0]);
+  const lMax = hours.reduce((a,b)=>b.load>a.load?b:a, hours[0]);
   s.hours = hours;
   s.sum = { gust:gMax.gst, gustAt:gMax.t, gustDir:card(gMax.dir), ice, salt:sMax.salt, saltAt:sMax.t,
     rime:Math.max(...hours.map(x=>x.rime)), pcp, rain, snow, melt, runoff:rain+melt,
     fzStart:fz[0]?.t, fzEnd:fz[fz.length-1]?.t, fzHours:fz.length, flashStart:fl[0]?.t, flashHours:fl.length,
+    load:lMax.load, loadAt:lMax.t, loadMs:lMax.ms, loadMg:lMax.mg, seqAt:(seqAt && seqAt <= hours[hours.length-1].t) ? seqAt : null,
     tMax:Math.max(...hours.map(x=>x.T)), tMin:Math.min(...hours.map(x=>x.T)), sd0:hours[0].sd, swe0:(R.sd[i0]||0)*2.5 };
   if (s.frz && !s.frz.na){
     const h48 = hours, top = h48.reduce((a,b)=>b.frz>a.frz?b:a, h48[0]);
@@ -502,6 +522,7 @@ function status(s){
   const parts = {
     gust: lvl(m.gust, s.thr.gustY, s.thr.gustR),
     ice:  lvl(m.ice, THR.iceY, THR.iceR) || (m.fzHours ? 1 : 0),
+    load: lvl(m.load||0, THR.loadY, THR.loadR),
     salt: lvl(m.salt, THR.saltY, THR.saltR),
     rime: lvl(m.rime, THR.rimeY, THR.rimeR),
     frazil: lvl(m.frazil||0, THR.frzY, THR.frzR),
@@ -627,7 +648,11 @@ function hazardLines(s){
   const m = s.sum, P = s.parts, H = s.hours, out = [];
   if (P.obs){ const nt = nowType(s); out.push([1, `${TYPE_DESC[nt.type].toUpperCase()} OBSERVED AT ${nt.w.name ? nt.w.name.toUpperCase()+' ' : ''}(${nt.w.icao}) ${hh(nt.w.t)}`]); }
   if (P.frazil){ const w = windowOf(H, x=>x.frz>=THR.frzY); out.push([P.frazil, `RISK OF FRAZIL ICE ${span(w)}`]); }
-  if (m.fzHours){ const w = windowOf(H, x=>x.type==='FZRA'); out.push([Math.max(P.ice,1), `FREEZING RAIN ${span(w)} · ~${r1(m.ice)} MM RADIAL ICE`]); }
+  if (P.load){
+    const w = windowOf(H, x=>x.load>=THR.loadY);
+    out.push([P.load, m.seqAt ? `WET SNOW THEN FREEZING RAIN ${span(windowOf(H, x=>x.wetSnow || x.type==='FZRA'))} · EST. LINE LOAD ${r1(m.load)} KG/M` : `ICE / SNOW LOAD ON LINES ${span(w)} · EST. ${r1(m.load)} KG/M`]);
+  }
+  if (m.fzHours && !(P.load && m.seqAt)){ const w = windowOf(H, x=>x.type==='FZRA'); out.push([Math.max(P.ice,1), `FREEZING RAIN ${span(w)} · ~${r1(m.ice)} MM RADIAL ICE`]); }
   if (P.gust){ const w = windowOf(H, x=>x.gst>=s.thr.gustY); out.push([P.gust, `GUSTS TO ${m.gust} KM/H ${m.gustDir} ${span(w)}`]); }
   if (P.salt){ const w = windowOf(H, x=>x.salt>=THR.saltY); out.push([P.salt, `SALT CONTAMINATION RISK ${span(w)}${m.flashHours?' · FLASHOVER WETTING':''}`]); }
   if (P.rime){ const w = windowOf(H, x=>x.rime>=THR.rimeY); out.push([P.rime, `RIME ICING ${span(w)}`]); }
@@ -664,6 +689,7 @@ function renderTicker(){
 function headline(s){
   const m = s.sum, P = s.parts;
   if (P.alert) return [P.alert===2?'r':'y', 'ECCC ALERT'];
+  if (P.load) return [P.load===2?'r':'y', `LOAD ${r1(m.load)}kg/m`];
   if (m.fzHours) return [P.ice===2?'r':'y', `ICE ${r1(m.ice)}mm`];
   if (P.obs) return ['y', `OBS ${nowType(s).type}`];
   if (P.frazil) return [P.frazil===2?'r':'y', `FRAZIL ${m.frazil}`];
@@ -985,12 +1011,15 @@ function spark(series, w=120, h=26, col='#5eead4'){
 function opsNotes(s){
   const n = [], m = s.sum, h = s.hours;
   (s.alerts||[]).forEach(a=>n.push([a.risk==='red'?'r':'y','triangle-alert',`<b>ECCC ${esc(a.name)}</b> — ${esc(a.area)}${a.end?`, until ${dayLbl(a.end)} ${tzAbbr}`:''}.`]));
+  if ((m.load||0) >= 0.2) n.push([['g','y','r'][s.parts.load],'cable', m.seqAt
+      ? `<b>Wet snow then freezing rain</b> (glaze from ${dayLbl(m.seqAt)}): est. conductor load <b>${r1(m.load)} kg/m</b> (snow sleeve ${r1(m.loadMs)} + glaze ${r1(m.loadMg)}) by ${dayLbl(m.loadAt)}. Heavy-loading / sag / galloping risk.`
+      : `Est. conductor ice/snow load <b>${r1(m.load)} kg/m</b> by ${dayLbl(m.loadAt)} (snow sleeve ${r1(m.loadMs)} + glaze ${r1(m.loadMg)}; 25 mm conductor).`]);
   if (m.fzHours) n.push([s.parts.ice===2?'r':'y','snowflake',`RDPS freezing rain ${dayLbl(m.fzStart)}–${dayLbl(m.fzEnd)} ${tzAbbr} (${m.fzHours} h). Radial ice on conductors ~<b>${r1(m.ice)} mm</b> (Jones model; caution ≥${THR.iceY}, critical ≥${THR.iceR}).`]);
   else n.push(['g','snowflake','No freezing rain in the RDPS for the next 48 h — radial ice 0 mm.']);
   const gl = ['g','y','r'][s.parts.gust];
   n.push([gl,'wind',`Peak gust <b>${m.gust} km/h ${m.gustDir}</b> at ${dayLbl(m.gustAt)} ${tzAbbr}${gl!=='g'?' — above site caution level.':'.'}${m.ice>=2&&m.gust>=60?' Ice + wind: galloping / conductor-clash risk.':''}`]);
   if (s.sea){
-    if (m.salt >= 15) n.push([['g','y','r'][s.parts.salt],'waves',`Salt contamination index peaks at <b>${m.salt}</b> ${dayLbl(m.saltAt)} (strong onshore ${card(s.sea.from)}–${card(s.sea.to)} wind with little rain to wash insulators).${m.flashHours?` Flashover-favourable wetting (fog / drizzle / RH ≥ 92%) from ${dayLbl(m.flashStart)}.`:''}`]);
+    if (m.salt >= 15) n.push([['g','y','r'][s.parts.salt],'waves',`Salt contamination index peaks at <b>${m.salt}</b> ${dayLbl(m.saltAt)} (strong onshore ${card(s.sea.from)}–${card(s.sea.to)} wind; snow and ice pellets don't wash insulators).${m.flashHours?` Flashover-favourable wetting (fog, drizzle, wet snow, freezing drizzle or thaw) from ${dayLbl(m.flashStart)}.`:''}`]);
     else n.push(['g','waves',`Salt contamination low — no sustained strong onshore (${card(s.sea.from)}–${card(s.sea.to)}) wind in the next 48 h.`]);
   }
   { const nt = nowType(s);
@@ -1059,7 +1088,7 @@ function gaugeList(s){
   const m = s.sum;
   return [
     gauge({label:'Peak Wind Gust', value:m.gust, max:150, y:s.thr.gustY, r:s.thr.gustR, unit:'km/h', sub:`${m.gustDir} · ${dayLbl(m.gustAt)}`}),
-    gauge({label:'Radial Ice', value:m.ice, max:25, y:THR.iceY, r:THR.iceR, unit:'mm radial', dec:1, sub:m.fzHours?`FZRA ${m.fzHours} h`:'no FZRA forecast'}),
+    gauge({label:'Line Ice Load', value:m.load||0, max:4, y:THR.loadY, r:THR.loadR, unit:'kg/m', dec:1, sub:(m.load||0)>=0.05?`snow ${r1(m.loadMs)} + glaze ${r1(m.loadMg)} · ${r1(m.ice)} mm`:(m.fzHours?`FZRA ${m.fzHours} h`:'no wet snow / FZRA')}),
     gauge({label:'Salt Contam.', value:m.salt, max:100, y:THR.saltY, r:THR.saltR, unit:'index', na:!s.sea, sub:s.sea?(m.flashHours?`wetting ${m.flashHours} h`:`onshore ${card(s.sea.from)}–${card(s.sea.to)}`):'inland site'}),
     gauge({label:'Rime Ice', value:m.rime, max:100, y:THR.rimeY, r:THR.rimeR, unit:'index', sub:`elev ${s.elev} m`}),
     s.frazil ? gauge({label:'Frazil Ice', value:m.frazil||0, max:100, y:THR.frzY, r:THR.frzR, unit:'risk index', na:!!(s.frz&&s.frz.na), sub:s.frz&&!s.frz.na?`water ${r1(s.frz.tw0)}°C · ${s.frz.gauge.id}`:'no water-temp gauge'})
@@ -1445,7 +1474,7 @@ function wireCross(root, onT){
 const nearestHour = (s, t) => s.hoursAll.reduce((a,b)=>Math.abs(b.t-t)<Math.abs(a.t-t)?b:a);
 function hourReadout(s, x){
   const amt = x.type==='NIL' ? 'dry' : `<span style="color:${TCOL[x.type]}">${TYPE_DESC[x.type]}</span> ${x.type==='SN'?x.sn.toFixed(1)+' cm':x.rate.toFixed(1)+' mm'}`;
-  return `<b style="color:#e6edf5">${dayLbl(x.t)} ${tzAbbr}</b> · ${sgn(x.T)}° (feels ${Math.round(x.feels)}°) · ${card(x.dir)} ${x.sus}/<span class="${x.gst>=s.thr.gustR?'st-r':x.gst>=s.thr.gustY?'st-y':''}">${x.gst}</span> km/h · ${amt} · FZL ${x.fzl===0?(x.warm>0?'SFC, warm layer +'+r1(x.warm)+'°':'SFC'):x.fzl+' m'} · ice Σ ${r1(x.ice)} mm${s.sea?` · salt ${x.salt}`:''}${s.frazil&&x.tw!=null?` · water ${x.tw.toFixed(1)}°C · frazil ${x.frz}`:''} · cloud ${x.cc}% · RH ${x.rh}% · ${r1(x.pres)} hPa`;
+  return `<b style="color:#e6edf5">${dayLbl(x.t)} ${tzAbbr}</b> · ${sgn(x.T)}° (feels ${Math.round(x.feels)}°) · ${card(x.dir)} ${x.sus}/<span class="${x.gst>=s.thr.gustR?'st-r':x.gst>=s.thr.gustY?'st-y':''}">${x.gst}</span> km/h · ${amt} · FZL ${x.fzl===0?(x.warm>0?'SFC, warm layer +'+r1(x.warm)+'°':'SFC'):x.fzl+' m'} · ice Σ ${r1(x.ice)} mm · load ${x.load.toFixed(2)} kg/m${s.sea?` · salt ${x.salt}`:''}${s.frazil&&x.tw!=null?` · water ${x.tw.toFixed(1)}°C · frazil ${x.frz}`:''} · cloud ${x.cc}% · RH ${x.rh}% · ${r1(x.pres)} hPa`;
 }
 
 /* ---------- tab: overview ---------- */
@@ -1501,6 +1530,7 @@ function tabGraphs(s){
   ${tChart({t0,t1, title:'Wind (km/h)', yMin:0, series:[ser('sus','#5eead4',{w:2}), ser('gst','#e6edf5',{w:1.6})], thr:[{v:s.thr.gustY,col:C.y,lab:`caution ${s.thr.gustY}`},{v:s.thr.gustR,col:C.r,lab:`critical ${s.thr.gustR}`}], legend:[['sustained','#5eead4'],['gust','#e6edf5']]})}
   ${tChart({t0,t1, title:'Precipitation (mm/h · cm/h snow), coloured by type', yMin:0, minRange:2, bars:{t, v:H.map(x=>x.type==='SN'?x.sn:x.rate), cols:H.map(x=>TCOL[x.type]), w:3000000}, legend:legendTypes})}
   ${tChart({t0,t1, title:'Freezing level (m above sea level, 0 = at the surface)', yMin:0, minRange:500, series:[ser('fzl','#9ec3e6',{w:2})], legend:[['0° level','#9ec3e6']]})}
+  ${tChart({t0,t1, title:'Conductor ice load (kg/m, 25 mm conductor): wet-snow sleeve + glaze', yMin:0, minRange:1, series:[ser('load','#ff5ad1',{w:2.5}), ser('ms','#dfe8f2',{w:1.5,dash:'5 3'}), ser('mg','#b18cff',{w:1.5,dash:'2 3'})], thr:[{v:THR.loadY,col:C.y,lab:`caution ${THR.loadY}`},{v:THR.loadR,col:C.r,lab:`critical ${THR.loadR}`}], legend:[['total','#ff5ad1'],['snow sleeve','#dfe8f2','5 3'],['glaze','#b18cff','2 3']]})}
   ${tChart({t0,t1, title:'Radial ice on conductors, running total (mm)', yMin:0, series:[ser('ice','#ff5ad1',{w:2.5})], thr:[{v:THR.iceY,col:C.y,lab:`caution ${THR.iceY}`},{v:THR.iceR,col:C.r,lab:`critical ${THR.iceR}`}], legend:[['radial ice','#ff5ad1']]})}
   ${tChart({t0,t1, title: s.sea ? 'Salt contamination & rime icing (index 0–100)' : 'Rime icing (index 0–100) · inland site, no salt index', yMin:0, yMax:100,
       series: (s.sea?[ser('salt','#ffb627',{w:2})]:[]).concat([ser('rime','#b18cff',{w:2,dash:'5 3'})]),
@@ -1518,7 +1548,7 @@ function tabTable(s){
   <div class="mono mb-2" style="font-size:10.5px;color:var(--dim)">${H.length} hours · MSC RDPS 10 km run ${DATA.rdps.run} · grid point ${s.grid.km} km from the site · times ${tzAbbr}</div>
   <div class="card overflow-x-auto">
   <table class="big mono">
-    <thead><tr><th>Time</th><th>Temp</th><th>Feels</th><th>Dir</th><th>Sus</th><th>Gust</th><th>RH</th><th>MSLP</th><th style="text-align:center">Type</th><th>Rain</th><th>FZRA</th><th>PL</th><th>Snow cm</th><th>FZL m</th><th>Warm aloft</th><th>Ice Σ</th>${s.sea?'<th>Salt</th>':''}<th>Rime</th>${s.frazil?'<th>Water °C</th><th>Frazil</th>':''}<th>Cloud</th><th>Snow depth</th></tr></thead>
+    <thead><tr><th>Time</th><th>Temp</th><th>Feels</th><th>Dir</th><th>Sus</th><th>Gust</th><th>RH</th><th>MSLP</th><th style="text-align:center">Type</th><th>Rain</th><th>FZRA</th><th>PL</th><th>Snow cm</th><th>FZL m</th><th>Warm aloft</th><th>Ice Σ</th><th>Load kg/m</th>${s.sea?'<th>Salt</th>':''}<th>Rime</th>${s.frazil?'<th>Water °C</th><th>Frazil</th>':''}<th>Cloud</th><th>Snow depth</th></tr></thead>
     <tbody>${H.map((x,i)=>{
       const nd = i===0 || fKey.format(x.t)!==fKey.format(H[i-1].t);
       const gc = x.gst>=s.thr.gustR?'cell-r':x.gst>=s.thr.gustY?'cell-y':'';
@@ -1531,6 +1561,7 @@ function tabTable(s){
         <td>${f1(x.ra)}</td><td style="color:var(--fzra)">${f1(x.fzr)}</td><td style="color:var(--pl)">${f1(x.plv)}</td><td>${f1(x.sn)}</td>
         <td>${x.fzl===0?'<span style="color:#8aa0b6">SFC</span>':x.fzl}</td><td>${x.T<=0&&x.warm>0?`<span style="color:var(--fzra)">+${r1(x.warm)}°</span>`:z}</td>
         <td class="${x.ice>=THR.iceR?'cell-r':x.ice>=THR.iceY?'cell-y':''}">${x.ice<0.05?z:r1(x.ice)}</td>
+        <td class="${x.load>=THR.loadR?'cell-r':x.load>=THR.loadY?'cell-y':''}">${x.load<0.05?z:x.load.toFixed(2)}</td>
         ${s.sea?`<td class="${x.salt>=THR.saltR?'cell-r':x.salt>=THR.saltY?'cell-y':''}">${x.salt||z}${x.flash?'<span style="color:var(--y)">*</span>':''}</td>`:''}
         <td>${x.rime||z}</td>${s.frazil?`<td style="color:#5eead4">${x.tw==null?z:x.tw.toFixed(2)}</td><td class="${x.frz>=THR.frzR?'cell-r':x.frz>=THR.frzY?'cell-y':''}">${x.frz||z}</td>`:''}<td style="color:var(--dim)">${x.cc}%</td><td style="color:var(--dim)">${r1(x.sd)}</td></tr>`; }).join('')}
     </tbody>
