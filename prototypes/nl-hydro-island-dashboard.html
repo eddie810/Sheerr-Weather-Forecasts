@@ -1035,11 +1035,13 @@ function opsNotes(s){
   }
   if (m.rime >= 40) n.push([['g','y','r'][s.parts.rime],'mountain',`In-cloud rime icing index ${m.rime}/100 — saturated, sub-freezing and windy at site elevation (${s.elev} m).`]);
   const fzl = h.filter(x=>x.fzl!=null && x.fzl>0).map(x=>x.fzl);
-  const warmAloft = h.filter(x=>x.T<=0 && x.warm>0);
-  if (warmAloft.length) n.push(['y','thermometer',`Warm layer aloft over sub-freezing surface (up to +${r1(Math.max(...warmAloft.map(x=>x.warm)))}°) — classic freezing-rain profile.`]);
+  // only a freezing-rain set-up when precipitation is actually falling into the cold surface layer
+  const warmAloft = h.filter(x=>x.T<=0 && x.warm>=1 && x.rate>=0.1);   // ≥ +1° aloft is needed to melt snow
+  if (warmAloft.length) n.push(['y','thermometer',`Warm layer aloft over a sub-freezing surface while precipitation falls (up to +${r1(Math.max(...warmAloft.map(x=>x.warm)))}° aloft, ${dayLbl(warmAloft[0].t)}) — freezing-rain set-up.`]);
   else if (fzl.length) n.push(['g','thermometer',`Freezing level ${Math.min(...fzl)}–${Math.max(...fzl)} m; surface ${r1(m.tMin)}° to ${r1(m.tMax)}°.`]);
-  let drop=[0,null]; for(let i=0;i+9<h.length;i++){ const d=h[i].T-h[i+9].T; if(d>drop[0] && h[i+9].T<0) drop=[d,h[i+9].t]; }
-  if (drop[0]>=4) n.push(['y','thermometer',`Flash-freeze: temperature falls ~${Math.round(drop[0])}° to below freezing by ${dayLbl(drop[1])}. Wet surfaces / switchgear freeze quickly.`]);
+  // flash freeze: a drop of 4+ degrees to below freezing within 9 h, with rain/wet snow in the 12 h before (surfaces wet)
+  let drop=[0,null,null,null]; for(let i=0;i+9<h.length;i++){ const d=h[i].T-h[i+9].T, wet=h.slice(Math.max(0,i-3),i+9).some(x=>(x.ra+x.fzr)>=0.2 || x.wetSnow); if(d>drop[0] && h[i+9].T<0 && wet) drop=[d,h[i+9].t,h[i].T,h[i+9].T]; }
+  if (drop[0]>=4) n.push(['y','thermometer',`Flash-freeze: temperature drops about ${Math.round(drop[0])} degrees, from ${sgn(drop[2])}° to ${sgn(drop[3])}°, by ${dayLbl(drop[1])} after rain or wet snow. Wet surfaces / switchgear freeze quickly.`]);
   if (m.pcp >= 5) n.push([['g','y','r'][Math.max(s.parts.pcp,s.parts.run)],'droplets',`48 h precipitation ${r1(m.pcp)} mm (rain ${r1(m.rain)} mm${m.snow>=0.5?`, snow ~${Math.round(m.snow)} cm`:''})${m.melt>=1?`; snowmelt adds ~${r1(m.melt)} mm`:''}.`]);
   const go = s.days.findIndex((d,i)=>d.win==='GO' && !(i===0 && d.partial));
   n.push(['g','calendar-days', go>=0 ? `Next full field-work window: <b>${fDay.format(s.days[go].date)} ${fDate.format(s.days[go].date)}</b> (gusts < 50 km/h, low precip chance).` : 'No full field-work window in the 7-day outlook.']);
