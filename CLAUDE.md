@@ -120,8 +120,8 @@ Make targeted find/replace edits on the current content rather than rewriting th
   Southwest / Wreckhouse · GNP and the Straits · Labrador / the Big Land.
 - Usually scheduled for **5:00 AM NDT**; Eddie sends an app push alert around 6:30 AM with the link.
   App alert **description** is a short tease (2–3 sentences, not a full summary) and always ends with
-  `Tap "see more" to read the update.` The push notification ends with "Tap here to read more." **Always give Labrador its own line in app descriptions,
-  push alerts and social captions** (Eddie flagged that it kept getting left out).
+  `Tap "see more" to read the update.` The push notification ends with "Tap here to read more." **Always include Labrador in app descriptions,
+  push alerts and social captions** (Eddie flagged that it kept getting left out), but **work it into the text where it fits, not as a separate "Labrador:" line tacked on below everything** (Eddie, Nov 12, 2026).
 
 ### Evening Forecast (category 4)
 - Usually written from Eddie's YouTube video captions. Fix caption mishearings and list the guesses.
@@ -131,7 +131,7 @@ Make targeted find/replace edits on the current content rather than rewriting th
   Oct 20–21, 2026 videos were sponsored by **Amplifon** (banner media ID 3444, shown at 316px wide, linked to https://www.amplifon.com/).
   Use whichever sponsor Eddie's video names; ask if unsure.
 - Featured image = the YouTube thumbnail Eddie sends.
-- App alerts / push / captions for Evening Forecasts should **tease the video** ("watch my latest forecast", what the video shows), not just summarize the text.
+- App alerts / push / captions for Evening Forecasts should **tease the video** ("watch my latest forecast", what the video shows), not just summarize the text. Put the "watch my latest forecast" line **at the end** (right before `Tap "see more"…` / `Tap here to read more.`) (Eddie, Nov 12, 2026).
 
 ### Voice
 First person, conversational, practical ("give yourself a few extra minutes"), NL place names, °C, km/h, mm/cm.
