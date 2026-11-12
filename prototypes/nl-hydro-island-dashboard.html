@@ -39,7 +39,9 @@
   .site-item:hover{background:#151c25}
   .site-item.active{background:#18212c;border-left-color:var(--teal)}
   .chip{font-family:"JetBrains Mono",Menlo,Consolas,monospace;font-size:10px;padding:1px 5px;border-radius:2px;border:1px solid;line-height:14px;display:inline-block;white-space:nowrap}
-  .c-FZRA{color:var(--fzra);border-color:#ff5ad155;background:#ff5ad114}
+  .c-FZRA,.c-FZDZ{color:var(--fzra);border-color:#ff5ad155;background:#ff5ad114}
+  .c-DZ{color:var(--ra);border-color:#4ade8040;background:#4ade800c}
+  .c-UP{color:#c9d3df;border-color:#c9d3df44;background:#c9d3df0d}
   .c-PL,.c-MIX{color:var(--pl);border-color:#b18cff55;background:#b18cff14}
   .c-SN{color:var(--sn);border-color:#dfe8f244;background:#dfe8f20d}
   .c-RA{color:var(--ra);border-color:#4ade8055;background:#4ade8012}
@@ -288,50 +290,50 @@ const ALL_SITES = [
   swob:'8400416', sea:{from:135,to:225,km:2}, thr:{gustY:80,gustR:100}},
  {id:'cat', frazil:'02YF002', rg:'island', name:'Cat Arm', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈127 MW · 2 units', lon:-56.80, lat:50.10, elev:380, region:'White Bay · Northern Peninsula', lbl:[12,4],
   swob:'8401538', sea:{from:30,to:140,km:1}, thr:{gustY:75,gustR:95}},
- {id:'hin', frazil:'02YK008', rg:'island', name:'Hinds Lake', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈75 MW · 1 unit', lon:-56.95, lat:49.38, elev:210, region:'Deer Lake · Humber Valley', lbl:[12,4],
+ {id:'hin', wx:'8401502', frazil:'02YK008', rg:'island', name:'Hinds Lake', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈75 MW · 1 unit', lon:-56.95, lat:49.38, elev:210, region:'Deer Lake · Humber Valley', lbl:[12,4],
   swob:'8401295', sea:null, thr:{gustY:80,gustR:100}},
  {id:'par', frazil:'02ZH001', rg:'island', name:'Paradise River', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈8 MW · 1 unit', lon:-54.40, lat:47.66, elev:60, region:'Placentia Bay', lbl:[-12,16,'end'],
   swob:'8400104', sea:{from:120,to:230,km:3}, thr:{gustY:85,gustR:105}},
  {id:'gra', frazil:'02ZD003', rg:'island', name:'Granite Canal', group:'Hydro Generation', type:'Hydroelectric Generating Station', icon:'waves', cap:'≈40 MW · 1 unit', lon:-56.35, lat:48.17, elev:330, region:'Central Plateau · Meelpaeg', lbl:[-12,4,'end'],
   swob:'8402757', sea:null, thr:{gustY:80,gustR:100}},
- {id:'hol', rg:'island', name:'Holyrood TGS', group:'Thermal / Backup', type:'Thermal Generating Station (standby / sync. condenser)', icon:'flame', cap:'≈490 MW · 3 units', lon:-53.10, lat:47.43, elev:15, region:'Conception Bay · Avalon', lbl:[-14,-20,'end'],
+ {id:'hol', wx:'8403505', rg:'island', name:'Holyrood TGS', group:'Thermal / Backup', type:'Thermal Generating Station (standby / sync. condenser)', icon:'flame', cap:'≈490 MW · 3 units', lon:-53.10, lat:47.43, elev:15, region:'Conception Bay · Avalon', lbl:[-14,-20,'end'],
   swob:'8403603', sea:{from:300,to:60,km:0.3}, thr:{gustY:80,gustR:100}},
- {id:'sol', rg:'island', name:'Soldiers Pond', group:'Interconnections / Substations', type:'HVdc Converter & Terminal Station (LIL)', icon:'zap', cap:'900 MW converter · 3 sync. condensers', lon:-52.97, lat:47.40, elev:150, region:"Avalon · St. John's Area", lbl:[-6,26,'middle'],
+ {id:'sol', wx:'8403505', rg:'island', name:'Soldiers Pond', group:'Interconnections / Substations', type:'HVdc Converter & Terminal Station (LIL)', icon:'zap', cap:'900 MW converter · 3 sync. condensers', lon:-52.97, lat:47.40, elev:150, region:"Avalon · St. John's Area", lbl:[-6,26,'middle'],
   swob:'8403603', sea:{from:300,to:100,km:9}, thr:{gustY:80,gustR:100}},
  {id:'sun', rg:'island', name:'Sunnyside', group:'Interconnections / Substations', type:'230 kV Terminal Station', icon:'zap', cap:'230 / 138 kV', lon:-53.92, lat:47.86, elev:40, region:'Isthmus of Avalon', lbl:[12,-6],
   swob:'8400104', sea:{from:300,to:60,km:1}, thr:{gustY:80,gustR:100}},
- {id:'shc', rg:'island', name:'Shoal Cove', group:'Interconnections / Substations', type:'LIL SOBI cable transition compound', icon:'cable', cap:'±350 kV HVdc landing', lon:-56.62, lat:51.33, elev:20, region:'Strait of Belle Isle · Northern Peninsula', lbl:[12,4],
+ {id:'shc', wx:'8403389', rg:'island', name:'Shoal Cove', group:'Interconnections / Substations', type:'LIL SOBI cable transition compound', icon:'cable', cap:'±350 kV HVdc landing', lon:-56.62, lat:51.33, elev:20, region:'Strait of Belle Isle · Northern Peninsula', lbl:[12,4],
   swob:'8403399', sea:{from:250,to:40,km:0.3}, thr:{gustY:80,gustR:100}},
  // ---------------- Labrador ----------------
- {id:'chf', frazil:'03OD008', rg:'labrador', name:'Churchill Falls', group:'Generation & LIL', type:'Hydroelectric Generating Station (CF(L)Co)', icon:'waves', cap:'≈5,428 MW · 11 units', lon:-64.05, lat:53.53, elev:470, region:'Western Labrador · Churchill River', lbl:[12,4],
+ {id:'chf', wx:'8501136', frazil:'03OD008', rg:'labrador', name:'Churchill Falls', group:'Generation & LIL', type:'Hydroelectric Generating Station (CF(L)Co)', icon:'waves', cap:'≈5,428 MW · 11 units', lon:-64.05, lat:53.53, elev:470, region:'Western Labrador · Churchill River', lbl:[12,4],
   swob:'8501136', sea:null, thr:{gustY:80,gustR:100}},
- {id:'msk', frazil:'03OE001', rg:'labrador', name:'Muskrat Falls', group:'Generation & LIL', type:'Hydro GS + LIL converter station', icon:'waves', cap:'≈824 MW · 4 units · 900 MW HVdc', lon:-60.77, lat:53.25, elev:40, region:'Lower Churchill River', lbl:[-34,30,'end'], lead:1,
+ {id:'msk', wx:'8501900', frazil:'03OE001', rg:'labrador', name:'Muskrat Falls', group:'Generation & LIL', type:'Hydro GS + LIL converter station', icon:'waves', cap:'≈824 MW · 4 units · 900 MW HVdc', lon:-60.77, lat:53.25, elev:40, region:'Lower Churchill River', lbl:[-34,30,'end'], lead:1,
   swob:'8501915', sea:null, thr:{gustY:80,gustR:100}},
  {id:'mea', rg:'labrador', name:'LIL · Mealy Mtns', group:'Generation & LIL', type:'HVdc line corridor — exposed high terrain', icon:'cable', cap:'±350 kV HVdc overhead line', lon:-59.60, lat:52.80, elev:550, region:'Mealy Mountains crossing', lbl:[-12,16,'end'],
   swob:'NL-DFFA_022', sea:null, thr:{gustY:70,gustR:90}},
- {id:'lwt', rg:'labrador', name:'Labrador West', group:'Labrador West & Goose Bay', type:'Terminal stations (Labrador City / Wabush)', icon:'zap', cap:'230 kV', lon:-66.87, lat:52.94, elev:550, region:'Labrador West', lbl:[12,4],
+ {id:'lwt', wx:'8504177', rg:'labrador', name:'Labrador West', group:'Labrador West & Goose Bay', type:'Terminal stations (Labrador City / Wabush)', icon:'zap', cap:'230 kV', lon:-66.87, lat:52.94, elev:550, region:'Labrador West', lbl:[12,4],
   swob:'8504177', sea:null, thr:{gustY:80,gustR:100}},
- {id:'hvg', rg:'labrador', name:'Happy Valley-Goose Bay', group:'Labrador West & Goose Bay', type:'Terminal station + gas turbine (backup)', icon:'flame', cap:'138 kV · GT backup', lon:-60.39, lat:53.32, elev:40, region:'Lake Melville', lbl:[26,-20], lead:1,
+ {id:'hvg', wx:'8501900', rg:'labrador', name:'Happy Valley-Goose Bay', group:'Labrador West & Goose Bay', type:'Terminal station + gas turbine (backup)', icon:'flame', cap:'138 kV · GT backup', lon:-60.39, lat:53.32, elev:40, region:'Lake Melville', lbl:[26,-20], lead:1,
   swob:'8501915', sea:{from:30,to:120,km:6}, thr:{gustY:80,gustR:100}},
- {id:'frt', rg:'labrador', name:'Forteau Point', group:'Labrador Straits', type:'LIL SOBI cable transition compound', icon:'cable', cap:'±350 kV HVdc landing', lon:-56.95, lat:51.47, elev:30, region:'Strait of Belle Isle', lbl:[-30,22,'end'], lead:1, lead:1,
+ {id:'frt', wx:'7040815', rg:'labrador', name:'Forteau Point', group:'Labrador Straits', type:'LIL SOBI cable transition compound', icon:'cable', cap:'±350 kV HVdc landing', lon:-56.95, lat:51.47, elev:30, region:'Strait of Belle Isle', lbl:[-30,22,'end'], lead:1, lead:1,
   swob:'7040815', sea:{from:150,to:260,km:0.5}, thr:{gustY:80,gustR:100}},
- {id:'lal', rg:'labrador', name:"L'Anse au Loup", group:'Labrador Straits', type:'Diesel plant + Hydro-Québec interconnection', icon:'zap', cap:'Labrador Straits system', lon:-56.83, lat:51.52, elev:20, region:'Strait of Belle Isle', lbl:[-26,-22,'end'], lead:1, lead:1,
+ {id:'lal', wx:'7040815', rg:'labrador', name:"L'Anse au Loup", group:'Labrador Straits', type:'Diesel plant + Hydro-Québec interconnection', icon:'zap', cap:'Labrador Straits system', lon:-56.83, lat:51.52, elev:20, region:'Strait of Belle Isle', lbl:[-26,-22,'end'], lead:1, lead:1,
   swob:'7040815', sea:{from:120,to:250,km:0.3}, thr:{gustY:80,gustR:100}},
- {id:'mrh', rg:'labrador', name:"Mary's Harbour", group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-55.85, lat:52.31, elev:15, region:'Southeast Labrador', lbl:[-12,16,'end'],
+ {id:'mrh', wx:'8502592', rg:'labrador', name:"Mary's Harbour", group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-55.85, lat:52.31, elev:15, region:'Southeast Labrador', lbl:[-12,16,'end'],
   swob:'8502592', sea:{from:30,to:170,km:0.3}, thr:{gustY:80,gustR:100}},
- {id:'phs', rg:'labrador', name:'Port Hope Simpson', group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-56.30, lat:52.53, elev:20, region:'Southeast Labrador', lbl:[-12,-8,'end'],
+ {id:'phs', wx:'8502592', rg:'labrador', name:'Port Hope Simpson', group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-56.30, lat:52.53, elev:20, region:'Southeast Labrador', lbl:[-12,-8,'end'],
   swob:'8502592', sea:{from:45,to:150,km:4}, thr:{gustY:80,gustR:100}},
- {id:'crt', rg:'labrador', name:'Cartwright', group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-57.03, lat:53.71, elev:15, region:'Sandwich Bay', lbl:[12,4],
+ {id:'crt', wx:'8501106', rg:'labrador', name:'Cartwright', group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-57.03, lat:53.71, elev:15, region:'Sandwich Bay', lbl:[12,4],
   swob:'8501106', sea:{from:0,to:110,km:0.3}, thr:{gustY:80,gustR:100}},
  {id:'rig', rg:'labrador', name:'Rigolet', group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-58.43, lat:54.18, elev:15, region:'Hamilton Inlet', lbl:[-12,4,'end'],
   swob:'8501106', sea:{from:20,to:110,km:0.3}, thr:{gustY:80,gustR:100}},
  {id:'psv', rg:'labrador', name:'Postville', group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-59.78, lat:54.91, elev:15, region:'North Coast', lbl:[-12,8,'end'],
   swob:'8502580', sea:{from:30,to:120,km:2}, thr:{gustY:80,gustR:100}},
- {id:'mkv', rg:'labrador', name:'Makkovik', group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-59.18, lat:55.08, elev:15, region:'North Coast', lbl:[12,4],
+ {id:'mkv', wx:'8502580', rg:'labrador', name:'Makkovik', group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-59.18, lat:55.08, elev:15, region:'North Coast', lbl:[12,4],
   swob:'8502580', sea:{from:0,to:130,km:0.3}, thr:{gustY:80,gustR:100}},
- {id:'hpd', rg:'labrador', name:'Hopedale', group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-60.21, lat:55.45, elev:15, region:'North Coast', lbl:[12,4],
+ {id:'hpd', wx:'8502400', rg:'labrador', name:'Hopedale', group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-60.21, lat:55.45, elev:15, region:'North Coast', lbl:[12,4],
   swob:'8502400', sea:{from:0,to:140,km:0.3}, thr:{gustY:80,gustR:100}},
- {id:'nan', rg:'labrador', name:'Nain', group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-61.69, lat:56.54, elev:15, region:'North Coast', lbl:[12,4],
+ {id:'nan', wx:'8502801', rg:'labrador', name:'Nain', group:'Coastal Diesel Systems', type:'Isolated diesel generating station', icon:'fuel', cap:'isolated system', lon:-61.69, lat:56.54, elev:15, region:'North Coast', lbl:[12,4],
   swob:'8502799', sea:{from:20,to:140,km:0.3}, thr:{gustY:80,gustR:100}},
 ];
 let REGION = (()=>{
@@ -366,7 +368,7 @@ function windChill(T,v){ return (T<=10 && v>5) ? 13.12+0.6215*T-11.37*Math.pow(v
 
 /* ---------- state ---------- */
 let DATA = null, ALERTS = [], OBS = {}, selected = SELECTED[REGION];
-const TYPE_DESC = {FZRA:'Freezing rain',PL:'Ice pellets',SN:'Snow',RASN:'Rain / snow mix',RA:'Rain',NIL:'No precip',MIX:'Mixed — freezing rain risk'};
+const TYPE_DESC = {FZDZ:'Freezing drizzle',DZ:'Drizzle',UP:'Precipitation (type unknown)',FZRA:'Freezing rain',PL:'Ice pellets',SN:'Snow',RASN:'Rain / snow mix',RA:'Rain',NIL:'No precip',MIX:'Mixed — freezing rain risk'};
 
 /* =====================================================================
    DERIVED PRODUCTS
@@ -462,6 +464,38 @@ function frazil(s, H){
   return {gauge:g, tw0:last[1], at:parseT(last[0])};
 }
 
+
+/* ---------- observed present weather (MSC SWOB code table "present_weather") ---------- */
+function decodeWx(c, T){
+  const r = (a,b) => c>=a && c<=b, snowOrRain = (T!=null && T<=0.5) ? 'SN' : 'RA';
+  // manned observations
+  if (r(50,56)) return 'DZ'; if (r(57,61)) return 'FZDZ'; if (r(62,70)) return 'RA'; if (r(71,75)) return 'FZRA';
+  if (r(76,77)) return 'RASN'; if (r(78,91)) return 'SN'; if (r(92,96)) return 'PL'; if (r(97,101)) return 'RA';
+  if (r(102,103)) return 'RASN'; if (r(104,108)) return 'SN'; if (r(109,115)) return 'PL'; if (r(116,117)) return 'RA';
+  if (r(118,119)) return 'SN'; if (r(120,124)) return snowOrRain; if (r(148,155)) return 'PL';
+  if (r(0,49) || r(125,147) || r(156,183)) return 'NIL';
+  // automated stations
+  if (r(341,342)) return 'UP'; if (r(343,344)) return 'RA'; if (r(345,346)) return 'SN'; if (r(347,348)) return 'FZRA';
+  if (r(350,354)) return 'DZ'; if (r(355,358)) return 'FZDZ'; if (r(359,366)) return 'RA'; if (r(367,370)) return 'FZRA';
+  if (r(371,372)) return 'RASN'; if (r(374,378)) return 'SN'; if (r(379,381)) return 'PL'; if (r(382,383)) return 'SN';
+  if (r(385,389)) return 'RA'; if (r(390,392)) return 'SN'; if (r(394,398)) return 'PL'; if (c===399 || c===340) return snowOrRain;
+  if (r(300,339)) return 'NIL';
+  // manned or automated (5xx)
+  if (r(550,557)) return 'DZ'; if (c===559 || c===582) return 'RASN'; if (r(560,567) || c===580) return 'RA';
+  if (r(570,579) || c===583) return 'SN'; if (c===581) return 'FZRA'; if (r(584,585)) return 'PL';
+  if (r(500,549)) return 'NIL';
+  return null;
+}
+const WX = {};
+/* type for "now": the airport observation when there is a recent one, otherwise the RDPS hour */
+function nowType(s){
+  const w = s.wx && WX[s.wx];
+  if (w && w.type && w.type !== 'UP' && Date.now() - w.t < 90*60000) return {type:w.type, src:'obs', w};
+  if (w && w.type === 'UP' && Date.now() - w.t < 90*60000){ const m = s.hours[0].type; return {type: m==='NIL' ? 'UP' : m, src:'obs', w, unknown:true}; }
+  return {type:s.hours[0].type, src:'rdps'};
+}
+const FREEZING_OBS = ['FZRA','FZDZ','PL'];
+
 const lvl = (v,y,r) => v>=r?2 : v>=y?1 : 0;
 function status(s){
   const m = s.sum;
@@ -471,6 +505,7 @@ function status(s){
     salt: lvl(m.salt, THR.saltY, THR.saltR),
     rime: lvl(m.rime, THR.rimeY, THR.rimeR),
     frazil: lvl(m.frazil||0, THR.frzY, THR.frzR),
+    obs: (s.wx && nowType(s).src==='obs' && FREEZING_OBS.includes(nowType(s).type)) ? 1 : 0,
     pcp:  lvl(m.pcp, THR.pcpY, THR.pcpR),
     run:  lvl(m.runoff, THR.runY, THR.runR),
     lr:   Math.max(s.lr.rain.lvl, s.lr.warm.lvl, s.lr.melt.lvl) ? 1 : 0,
@@ -590,6 +625,7 @@ function whenWord(t){
 const span = w => !w ? '' : fKey.format(w.a)===fKey.format(w.b) ? `${whenWord(w.a)} ${hh(w.a)}–${hh(w.b)}` : `${whenWord(w.a)} ${hh(w.a)} – ${fDay.format(w.b).toUpperCase()} ${hh(w.b)}`;
 function hazardLines(s){
   const m = s.sum, P = s.parts, H = s.hours, out = [];
+  if (P.obs){ const nt = nowType(s); out.push([1, `${TYPE_DESC[nt.type].toUpperCase()} OBSERVED AT ${nt.w.name ? nt.w.name.toUpperCase()+' ' : ''}(${nt.w.icao}) ${hh(nt.w.t)}`]); }
   if (P.frazil){ const w = windowOf(H, x=>x.frz>=THR.frzY); out.push([P.frazil, `RISK OF FRAZIL ICE ${span(w)}`]); }
   if (m.fzHours){ const w = windowOf(H, x=>x.type==='FZRA'); out.push([Math.max(P.ice,1), `FREEZING RAIN ${span(w)} · ~${r1(m.ice)} MM RADIAL ICE`]); }
   if (P.gust){ const w = windowOf(H, x=>x.gst>=s.thr.gustY); out.push([P.gust, `GUSTS TO ${m.gust} KM/H ${m.gustDir} ${span(w)}`]); }
@@ -629,6 +665,7 @@ function headline(s){
   const m = s.sum, P = s.parts;
   if (P.alert) return [P.alert===2?'r':'y', 'ECCC ALERT'];
   if (m.fzHours) return [P.ice===2?'r':'y', `ICE ${r1(m.ice)}mm`];
+  if (P.obs) return ['y', `OBS ${nowType(s).type}`];
   if (P.frazil) return [P.frazil===2?'r':'y', `FRAZIL ${m.frazil}`];
   if (P.gust) return [P.gust===2?'r':'y', `GST ${m.gust}`];
   if (P.salt) return [P.salt===2?'r':'y', `SALT ${m.salt}`];
@@ -668,7 +705,7 @@ function renderList(){
         <div class="flex items-center justify-between mono mt-1 pl-4" style="font-size:10.5px;color:#9aa7b6">
           <span title="${c.src==='obs'?'ECCC observation':'RDPS model'}">${sgn(c.T)}°${c.src==='obs'?'':'<span style="color:var(--dim2)">ᴹ</span>'}</span>
           <span>${card(c.dir)} ${c.sus??'—'}<span style="color:var(--dim2)">/</span><span class="${c.gst>=s.thr.gustR?'st-r':c.gst>=s.thr.gustY?'st-y':''}">${c.gst??'—'}</span></span>
-          <span class="chip c-${h0.type}">${h0.type==='NIL'?'DRY':h0.type}</span>
+          ${(()=>{ const nt = nowType(s); return `<span class="chip c-${nt.type}" title="${nt.src==='obs'?'Observed at '+nt.w.icao:'RDPS model'}">${nt.type==='NIL'?'DRY':nt.type}${nt.src==='obs'?'<sup style="font-size:7px;margin-left:1px">OBS</sup>':''}</span>`; })()}
           <span style="color:var(--dim)">${c.rh!=null?Math.round(c.rh)+'%':'—'}</span>
         </div>
       </div>`;
@@ -860,7 +897,7 @@ function drawNodes(){
     n.addEventListener('mouseleave',()=>tip.style.display='none');
   });
 }
-function liveLabel(s){ const c=cur(s), h=s.hours[0]; return `${sgn(c.T)}° · G${c.gst??'—'}${h.type!=='NIL'?' · '+h.type:''}`; }
+function liveLabel(s){ const c=cur(s), nt=nowType(s); return `${sgn(c.T)}° · G${c.gst??'—'}${nt.type!=='NIL'?' · '+nt.type+(nt.src==='obs'?'ᵒ':''):''}`; }
 function applyLayers(){
   const on = id => document.getElementById(id).checked;
   document.getElementById('lyrLIL').style.display = on('tLIL')?'':'none';
@@ -956,6 +993,8 @@ function opsNotes(s){
     if (m.salt >= 15) n.push([['g','y','r'][s.parts.salt],'waves',`Salt contamination index peaks at <b>${m.salt}</b> ${dayLbl(m.saltAt)} (strong onshore ${card(s.sea.from)}–${card(s.sea.to)} wind with little rain to wash insulators).${m.flashHours?` Flashover-favourable wetting (fog / drizzle / RH ≥ 92%) from ${dayLbl(m.flashStart)}.`:''}`]);
     else n.push(['g','waves',`Salt contamination low — no sustained strong onshore (${card(s.sea.from)}–${card(s.sea.to)}) wind in the next 48 h.`]);
   }
+  { const nt = nowType(s);
+    if (nt.src==='obs' && FREEZING_OBS.includes(nt.type)) n.unshift(['y','snowflake',`<b>Observed ${TYPE_DESC[nt.type].toLowerCase()} at ${esc(nt.w.icao)} ${hh(nt.w.t)} ${tzAbbr}</b> — icing on lines and equipment possible now.`]); }
   if (s.frazil){
     if (s.frz && s.frz.na) n.push(['g','snowflake',`Frazil ice: no water-temperature gauge near this intake — risk not assessed.`]);
     else {
@@ -1084,7 +1123,9 @@ function renderDetail(){
       <div class="panel px-3 py-2 flex flex-col justify-center" style="background:var(--panel2);border-radius:3px;min-width:132px">
         <div class="mono" style="font-size:34px;line-height:1;font-weight:700;color:${c.T<=0?'#cfe3f5':'#f3f4f6'}">${sgn(c.T)}°</div>
         <div class="mono mt-1" style="font-size:10.5px;color:var(--dim)">FEELS <span style="color:#c9d3df">${c.sus!=null?Math.round(windChill(c.T,c.sus)):'—'}°</span></div>
-        <div class="mt-2"><span class="chip c-${h0.type}" style="font-size:10.5px">${h0.type==='NIL'?'NO PRECIP · RDPS':h0.type+' · RDPS'}</span></div>
+        <div class="mt-2">${(()=>{ const nt = nowType(s); return nt.src==='obs'
+          ? `<span class="chip c-${nt.type}" style="font-size:10.5px">${nt.type==='NIL'?'NO PRECIP':nt.type} · OBS ${esc(nt.w.icao)} ${hh(nt.w.t)}</span><div class="mono mt-1" style="font-size:9.5px;color:var(--dim)">${nt.unknown?'type not reported · model type shown':TYPE_DESC[nt.type]}</div>`
+          : `<span class="chip c-${nt.type}" style="font-size:10.5px">${nt.type==='NIL'?'NO PRECIP':nt.type} · RDPS</span><div class="mono mt-1" style="font-size:9.5px;color:var(--dim)">${s.wx?'airport not reporting':'no airport nearby'}</div>`; })()}</div>
       </div>
       <div style="font-size:11px">
         ${row('Wind (sus / gust)', `${card(c.dir)} ${c.dir!=null?Math.round(c.dir)+'°':''} · ${c.sus??'—'} / <span class="${c.gst>=s.thr.gustR?'st-r':c.gst>=s.thr.gustY?'st-y':''}">${c.gst??'—'}</span> km/h`)}
@@ -1144,7 +1185,7 @@ function renderDetail(){
             <td style="color:${x.T<=0?'#9ec3e6':'#e6edf5'}">${sgn(x.T)}</td>
             <td style="color:var(--dim)">${card(x.dir)}</td>
             <td><span style="color:#c9d3df">${x.sus}</span><span style="color:#3a4757">/</span><span class="${gc}">${x.gst}</span></td>
-            <td style="text-align:center"><span class="chip c-${x.type}">${x.type==='NIL'?'—':x.type}</span></td>
+            <td style="text-align:center">${i===0 && nowType(s).src==='obs' ? `<span class="chip c-${nowType(s).type}" title="observed">${nowType(s).type==='NIL'?'—':nowType(s).type}<sup style="font-size:7px">OBS</sup></span>` : `<span class="chip c-${x.type}">${x.type==='NIL'?'—':x.type}</span>`}</td>
             <td>${amt}</td><td>${fzl}</td>
             <td class="${ic}">${x.ice<0.05?'<span style="color:#3a4757">0.0</span>':r1(x.ice)}</td>
             <td class="${sc}">${s.sea?(x.salt||'<span style="color:#3a4757">0</span>')+(x.flash?'<span style="color:var(--y)">*</span>':''):'<span style="color:#3a4757">—</span>'}</td></tr>`;}).join('')}
@@ -1195,11 +1236,17 @@ async function loadData(){
 }
 
 async function loadObs(){
-  const ids = [...new Set(ALL_SITES.map(s=>s.swob))];
+  const ids = [...new Set(ALL_SITES.map(s=>s.swob).concat(ALL_SITES.filter(s=>s.wx).map(s=>s.wx)))];
   await Promise.all(ids.map(async id=>{
     try {
-      const r = await fetch(`https://api.weather.gc.ca/collections/swob-realtime/items?f=json&msc_id-value=${id}&sortby=-date_tm-value&limit=1`);
-      const f = (await r.json()).features[0]; if (!f) return;
+      const r = await fetch(`https://api.weather.gc.ca/collections/swob-realtime/items?f=json&msc_id-value=${id}&sortby=-date_tm-value&limit=6`);
+      const feats = (await r.json()).features || [], f = feats[0]; if (!f) return;
+      const wf = feats.find(x=>typeof x.properties.prsnt_wx_1==='number');
+      if (wf){ const q = wf.properties, code = q.prsnt_wx_1, code2 = q.prsnt_wx_2, T0 = typeof q.air_temp==='number' ? q.air_temp : null;
+        let type = decodeWx(code, T0); const t2 = typeof code2==='number' ? decodeWx(code2, T0) : null;
+        if ((type==='NIL' || type==null) && t2 && t2!=='NIL') type = t2;
+        const icao = (q.id.match(/-(C[A-Z0-9]{3})-/)||[])[1] || q['tc_id-value'] || '';
+        WX[id] = {code, type, t:new Date(q['date_tm-value']), icao, man:/-MAN-/.test(q.id), name:q['stn_nam-value']}; }
       const p = f.properties, v = (...ks) => { for (const k of ks){ const x = p[k]; if (typeof x==='number' && x>-900) return x; } return null; };
       const o = { t: new Date(p['date_tm-value']), name: p['stn_nam-value'], lon:f.geometry.coordinates[0], lat:f.geometry.coordinates[1],
         T: v('air_temp'), rh: v('rel_hum'), sus: v('avg_wnd_spd_10m_pst10mts','avg_wnd_spd_10m_pst2mts','avg_wnd_spd_10m_pst1hr','avg_wnd_spd_pst10mts'),
@@ -1209,10 +1256,10 @@ async function loadObs(){
       const a = v('pres_tend_amt_pst3hrs'), ch = v('pres_tend_char_pst3hrs');
       o.ptend = a==null ? null : (ch!=null && ch>=5 && ch<=8 ? -a : a);
       if (o.sus!=null) o.sus = Math.round(o.sus); if (o.gst!=null) o.gst = Math.round(o.gst);
-      if (o.T != null) OBS[id] = o;
+      if (o.T != null && ALL_SITES.some(s=>s.swob===id)) OBS[id] = o;
     } catch(e) {}
   }));
-  document.getElementById('lastPoll').textContent = `${hh(new Date())} ${tzAbbr} · ${Object.keys(OBS).length}/${ids.length} stns`;
+  document.getElementById('lastPoll').textContent = `${hh(new Date())} ${tzAbbr} · ${Object.keys(OBS).length} stns · ${Object.values(WX).filter(w=>w.type).length} airport wx`;
 }
 
 async function loadAlerts(){
@@ -1276,7 +1323,7 @@ async function boot(){
   document.getElementById('loading').style.display = 'none';
   refreshIcons();
   { const h = parseHash(); if (h && SITES.find(x=>x.id===h.id)) showModal(h.id, h.tab); }
-  setInterval(async()=>{ await loadObs(); renderList(); drawNodes(); renderDetail(); }, 10*60000);
+  setInterval(async()=>{ await loadObs(); renderAll(); }, 10*60000);
   setInterval(async()=>{ await loadAlerts(); renderAll(); }, 10*60000);
   setInterval(refreshRadar, 5*60000);
   setInterval(async()=>{ try { DATA = await loadData(); ALL_SITES.forEach(derive); await loadAlerts(); renderAll(); } catch(e){} }, 30*60000);
@@ -1286,7 +1333,7 @@ async function boot(){
    ===================================================================== */
 const isNarrow = () => window.innerWidth < 1280;
 const TABS = [['overview','Overview','layout-dashboard'],['graphs','Hourly graphs','chart-line'],['table','Hourly table','table'],['outlook','16-day outlook','telescope'],['water','Water & stations','waves']];
-const TCOL = {FZRA:'#ff5ad1', PL:'#b18cff', SN:'#dfe8f2', RA:'#4ade80', RASN:'#7dd3c0', NIL:'#3a4757'};
+const TCOL = {FZDZ:'#ff5ad1', DZ:'#86d9a6', UP:'#c9d3df', FZRA:'#ff5ad1', PL:'#b18cff', SN:'#dfe8f2', RA:'#4ade80', RASN:'#7dd3c0', NIL:'#3a4757'};
 const fHr = fmt({hour:'numeric', hourCycle:'h23'});
 const fMin = fmt({minute:'numeric'});
 let modal = {id:null, tab:'overview'};
@@ -1416,7 +1463,7 @@ function tabOverview(s){
           ${tile('Wind', `${card(c.dir)} ${c.sus??'—'}`, `gusts <span class="${c.gst>=s.thr.gustR?'st-r':c.gst>=s.thr.gustY?'st-y':''}">${c.gst??'—'}</span> km/h`)}
           ${tile('Humidity', c.rh!=null?`${Math.round(c.rh)}%`:'—', c.mslp!=null?`${r1(c.mslp)} hPa${c.ptend!=null?` ${c.ptend>=0?'▲':'▼'}${Math.abs(c.ptend).toFixed(1)}`:''}`:'')}
           ${tile('Precip 1 h / 24 h', c.src==='obs'?`${c.p1!=null?r1(c.p1):'—'} / ${c.p24!=null?r1(c.p24):'—'}`:'—', 'mm, observed')}
-          ${tile('Now (RDPS)', `<span class="chip c-${h0.type}" style="font-size:12px">${h0.type==='NIL'?'DRY':h0.type}</span>`, TYPE_DESC[h0.type])}
+          ${(()=>{ const nt = nowType(s); return tile(nt.src==='obs' ? `Now (obs ${esc(nt.w.icao)} ${hh(nt.w.t)})` : 'Now (RDPS)', `<span class="chip c-${nt.type}" style="font-size:12px">${nt.type==='NIL'?'DRY':nt.type}</span>`, nt.unknown ? 'precip, type not reported' : TYPE_DESC[nt.type]); })()}
           ${tile('Freezing level', h0.fzl===0?'SFC':`${h0.fzl} m`, h0.fzl===0&&h0.warm>0?`warm layer +${r1(h0.warm)}° aloft`:'RDPS')}
           ${tile('Snow on ground', `${r1(h0.sd)} cm`, 'RDPS')}
           ${tile('Next 48 h', `${r1(m.pcp)} mm`, m.snow>=0.5?`incl. ~${Math.round(m.snow)} cm snow`:`rain ${r1(m.rain)} mm`)}
@@ -1480,7 +1527,7 @@ function tabTable(s){
         <td style="color:${x.T<=0?'#9ec3e6':'#e6edf5'}">${sgn(x.T)}</td><td style="color:var(--dim)">${Math.round(x.feels)}</td>
         <td style="color:var(--dim)">${card(x.dir)} ${x.dir}°</td><td>${x.sus}</td><td class="${gc}">${x.gst}</td>
         <td>${x.rh}</td><td style="color:var(--dim)">${r1(x.pres)}</td>
-        <td style="text-align:center"><span class="chip c-${x.type}">${x.type==='NIL'?'—':x.type}</span></td>
+        <td style="text-align:center">${i===0 && nowType(s).src==='obs' ? `<span class="chip c-${nowType(s).type}" title="observed">${nowType(s).type==='NIL'?'—':nowType(s).type}<sup style="font-size:7px">OBS</sup></span>` : `<span class="chip c-${x.type}">${x.type==='NIL'?'—':x.type}</span>`}</td>
         <td>${f1(x.ra)}</td><td style="color:var(--fzra)">${f1(x.fzr)}</td><td style="color:var(--pl)">${f1(x.plv)}</td><td>${f1(x.sn)}</td>
         <td>${x.fzl===0?'<span style="color:#8aa0b6">SFC</span>':x.fzl}</td><td>${x.T<=0&&x.warm>0?`<span style="color:var(--fzra)">+${r1(x.warm)}°</span>`:z}</td>
         <td class="${x.ice>=THR.iceR?'cell-r':x.ice>=THR.iceY?'cell-y':''}">${x.ice<0.05?z:r1(x.ice)}</td>
