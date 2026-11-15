@@ -132,6 +132,7 @@ Make targeted find/replace edits on the current content rather than rewriting th
   sponsor banner → separator → write-up with `<h3>` sections → separator → "Don’t forget to…" footer.
 - Sponsor: **Medicuro** banner (media ID 3310), linked to https://medicuro.ca/.
   Oct 20–21, 2026 videos were sponsored by **Amplifon** (banner media ID 3444, shown at 316px wide, linked to https://www.amplifon.com/).
+  **Nov 16–22, 2026: Total Snow Solutions** (banner media ID 3963, 728x90, linked to https://totalsnowsolutions.ca/pages/request-a-quote).
   Use whichever sponsor Eddie's video names; ask if unsure.
 - Featured image = the YouTube thumbnail Eddie sends.
 - App alerts / push / captions for Evening Forecasts should **tease the video** ("watch my latest forecast", what the video shows), not just summarize the text. Put the "watch my latest forecast" line **at the end** (right before `Tap "see more"…` / `Tap here to read more.`) (Eddie, Nov 12, 2026).
