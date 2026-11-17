@@ -142,6 +142,15 @@ Make targeted find/replace edits on the current content rather than rewriting th
   Use whichever sponsor Eddie's video names; ask if unsure.
 - Featured image = the YouTube thumbnail Eddie sends.
 - App alerts / push / captions for Evening Forecasts should **tease the video** ("watch my latest forecast", what the video shows), not just summarize the text. Put the "watch my latest forecast" line **at the end** (right before `Tap "see more"…` / `Tap here to read more.`) (Eddie, Nov 12, 2026).
+- **App description format (Eddie's example, Nov 17, 2026):** three short paragraphs: (1) the big picture plus the headline
+  hazard, with a plain-language place hint in brackets, (2) "In the video, I walk through…" what the video covers, ending with
+  a little hook ("… and beyond!"), (3) the closing line `Watch my latest forecast by tapping 'see more' at the bottom of this page!`
+  (this replaces the separate `Tap "see more" to read the update.` line on Evening Forecast descriptions). Example:
+  > A big ridge of high pressure keeps Newfoundland and Labrador fairly quiet this week, but gusts could reach 100 km/h in the Canada Bay area tonight (the Northern Peninsula).
+  >
+  > In the video, I walk through tomorrow’s showers on the Island, Thursday night’s snow for Labrador and the colder air coming to NL over the next week... and beyond!
+  >
+  > Watch my latest forecast by tapping 'see more' at the bottom of this page!
 
 ### Voice
 First person, conversational, practical ("give yourself a few extra minutes"), NL place names, °C, km/h, mm/cm.
