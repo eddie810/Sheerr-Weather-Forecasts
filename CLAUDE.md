@@ -141,6 +141,10 @@ Make targeted find/replace edits on the current content rather than rewriting th
   **Nov 16–22, 2026: Total Snow Solutions** (banner media ID 3963, 728x90, linked to https://totalsnowsolutions.ca/pages/request-a-quote).
   Use whichever sponsor Eddie's video names; ask if unsure.
 - Featured image = the YouTube thumbnail Eddie sends.
+- **After publishing, load the live post and confirm the YouTube player actually renders** (an `<iframe ... youtube.com/embed/<id>`
+  inside `wp-block-embed__wrapper`), not a bare link. On Nov 17, 2026 WordPress cached a failed oEmbed and the post showed only
+  the URL. Fix: swap `https://youtu.be/<id>` for `https://www.youtube.com/watch?v=<id>` in the embed block (new cache key), save, purge.
+  Never tell Eddie the video is in the post until you've checked the live page.
 - App alerts / push / captions for Evening Forecasts should **tease the video** ("watch my latest forecast", what the video shows), not just summarize the text. Put the "watch my latest forecast" line **at the end** (right before `Tap "see more"…` / `Tap here to read more.`) (Eddie, Nov 12, 2026).
 - **App description format (Eddie's example, Nov 17, 2026):** three short paragraphs: (1) the big picture plus the headline
   hazard, with a plain-language place hint in brackets, (2) "In the video, I walk through…" what the video covers, ending with
