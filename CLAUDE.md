@@ -89,6 +89,8 @@ A scheduled task refreshes it every morning at 6:47 AM NL time. The snapshot sto
 
 ## Graphics (maps for posts)
 
+**Videos are only ever 9:16 or 16:9, nothing in between** (Eddie, Nov 17, 2026). Images can be any size.
+
 All Sheerr Weather maps, charts, alert graphics and videos live in the repo **`eddie810/-sheerr-weather-voice`**
 (Eddie's Mac: `/Users/es/sheerr-graphics`; branch `claude/merge-cloud-maps` merged the cloud MAP MAKER copy on Nov 1, 2026).
 Its `README.md` lists every map type with build/render commands; its `CLAUDE.md` has the house style and rules. When
