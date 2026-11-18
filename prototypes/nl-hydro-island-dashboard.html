@@ -175,6 +175,7 @@
   </div>
 </header>
 
+<div id="staleBanner" class="mono" style="display:none;padding:7px 14px;font-size:12px;font-weight:600;background:#ffb62722;border-bottom:1px solid #ffb62788;color:#ffcf6b"></div>
 <div class="flex items-center border-b overflow-hidden" style="height:26px;border-color:var(--line);background:#0d1117">
   <div class="flex items-center gap-1 px-3 h-full flex-none" id="alertTag" style="background:#ff3d5718;border-right:1px solid #ff3d5755;color:var(--r)">
     <i data-lucide="triangle-alert" style="width:13px;height:13px"></i><span class="mono" style="font-size:10px;font-weight:700">ECCC ALERTS</span>
@@ -533,6 +534,7 @@ function status(s){
     alert: (s.alerts||[]).reduce((a,x)=>Math.max(a, x.risk==='red'?2:1), 0),
   };
   s.parts = parts;
+  if (s.stale) Object.keys(parts).forEach(k=>{ if (k!=='alert' && k!=='obs') parts[k] = 0; });
   return ['g','y','r'][Math.max(...Object.values(parts))];
 }
 
@@ -613,7 +615,16 @@ function regionSummary(r){
   const al = regionAlerts(r).length;
   return `<span class="st-g">●${c.g}</span><span class="st-y">●${c.y}</span><span class="st-r">●${c.r}</span>${al?`<span class="chip bd-y" style="padding:0 4px;line-height:13px">${al} ALERT${al>1?'S':''}</span>`:''}`;
 }
+function renderStale(){
+  const el = document.getElementById('staleBanner'); if (!DATA) return;
+  const built = parseT(DATA.generated), hrs = (Date.now()-built)/3600000, noFc = ALL_SITES.some(s=>s.stale);
+  if (hrs <= 12 && !noFc){ el.style.display = 'none'; return; }
+  const age = hrs >= 48 ? `${Math.floor(hrs/24)} days` : `${Math.round(hrs)} hours`;
+  el.innerHTML = `⚠ Forecast data is ${age} old (model run ${DATA.rdps.run.replace('T',' ')}) — automatic updates are not running. ${noFc ? 'Forecast gauges, hourly tables and forecast cautions below are from that old run and are switched off in the site status.' : 'Forecasts may be out of date.'} Live observations, radar and alerts are current.`;
+  el.style.display = 'block';
+}
 function renderHeader(){
+  renderStale();
   document.querySelectorAll('.rtab').forEach(b=>{ b.classList.toggle('on', b.dataset.r===REGION); b.querySelector('.rt-sum').innerHTML = DATA ? regionSummary(b.dataset.r) : ''; });
   const c = {g:0,y:0,r:0}; SITES.forEach(s=>c[s.status]++);
   document.getElementById('statusCounts').innerHTML =
@@ -673,7 +684,8 @@ function renderTicker(){
     items.push(`<span style="color:${col}">■ ${esc(a.name.toUpperCase())}</span> ${esc(a.area)}${a.end?` — until ${dayLbl(a.end)} ${tzAbbr}`:''}`); });
   if (!ALERTS.length) items.push(`<span style="color:var(--g)">■ NO ECCC ALERTS</span> in effect for ${RG.label}`);
   const haz = [];
-  SITES.forEach(st=>hazardLines(st).forEach(([lv,t])=>haz.push([lv, st, t])));
+  SITES.forEach(st=>(st.stale ? hazardLines(st).filter(([lv,t])=>/OBSERVED/.test(t)) : hazardLines(st)).forEach(([lv,t])=>haz.push([lv, st, t])));
+  if (SITES.some(st=>st.stale)) items.unshift(`<span style="color:var(--y)">■ NO CURRENT FORECAST</span> forecast data is out of date — live observations, radar and alerts only`);
   haz.sort((a,b)=>b[0]-a[0]).forEach(([lv,st,t])=>items.push(`<span style="color:${lv===2?'var(--r)':'var(--y)'}">■ ${esc(st.name.toUpperCase())}:</span> ${esc(t)}`));
   if (!haz.length) items.push(`<span style="color:var(--g)">■ ALL SITES NORMAL</span> no site cautions in the next 48 h`);
   const by = k => [...SITES].sort((a,b)=>b.sum[k]-a.sum[k])[0];
@@ -1127,7 +1139,7 @@ function renderDetail(){
   const meltTxt = (m.swe0<1 && L.melt.maxSwe<2) ? `No snowpack now (RDPS snow depth ${r1(m.sd0)} cm) and little forecast snow to build one — melt risk low.`
     : `Snowpack now ~${r1(m.sd0)} cm (≈${Math.round(m.swe0)} mm water${L.melt.maxSwe>m.swe0+1?`, building to ~${Math.round(L.melt.maxSwe)} mm`:''}). Peak 72 h melt + rain-on-snow <b>${r1(L.melt.best.v)} mm</b>${L.melt.best.v>0.5?` ending ${dayLbl(L.t[L.melt.best.i])}`:''}.`;
 
-  let html = `
+  let html = `${s.stale ? `<div class="mono" style="margin:10px 16px 0;padding:7px 10px;border:1px solid #ffb62788;border-radius:3px;color:#ffcf6b;font-size:11px">⚠ No current forecast — gauges and tables below are from the out-of-date run ${DATA.rdps.run.replace('T',' ')}.</div>` : ''}
   <div class="px-4 pt-3 pb-3 border-b" style="border-color:var(--line);background:linear-gradient(180deg,#121a23,#0f141a)">
     <div class="flex items-start justify-between gap-2">
       <div>
@@ -1403,7 +1415,7 @@ function showModal(id, tab){
     </div>`;
   document.getElementById('smTabs').innerHTML = TABS.map(([k,l,ic])=>`<button class="sm-tab ${k===tab?'on':''}" onclick="openModal('${id}','${k}')"><span class="inline-flex items-center gap-1">${icon(ic,12)}${l}</span></button>`).join('');
   const body = document.getElementById('smBody');
-  body.innerHTML = {overview:tabOverview, graphs:tabGraphs, table:tabTable, outlook:tabOutlook, water:tabWater}[tab](s);
+  body.innerHTML = (s.stale && tab!=='water' ? `<div class="card px-3 py-2 mb-3 mono" style="border-color:#ffb62788;color:#ffcf6b;font-size:11.5px">⚠ No current forecast — these numbers are from the out-of-date model run ${DATA.rdps.run.replace('T',' ')}.</div>` : '') + {overview:tabOverview, graphs:tabGraphs, table:tabTable, outlook:tabOutlook, water:tabWater}[tab](s);
   body.scrollTop = 0;
   el.style.display = 'flex'; document.body.style.overflow = 'hidden';
   refreshIcons();
