@@ -615,10 +615,12 @@ function regionSummary(r){
   const al = regionAlerts(r).length;
   return `<span class="st-g">●${c.g}</span><span class="st-y">●${c.y}</span><span class="st-r">●${c.r}</span>${al?`<span class="chip bd-y" style="padding:0 4px;line-height:13px">${al} ALERT${al>1?'S':''}</span>`:''}`;
 }
+// GitHub runs scheduled jobs late on busy days (every 6-10 h seen), so only call data stale after 18 h
+const STALE_H = 18;
 function renderStale(){
   const el = document.getElementById('staleBanner'); if (!DATA) return;
   const built = parseT(DATA.generated), hrs = (Date.now()-built)/3600000, noFc = ALL_SITES.some(s=>s.stale);
-  if (hrs <= 12 && !noFc){ el.style.display = 'none'; return; }
+  if (hrs <= STALE_H && !noFc){ el.style.display = 'none'; return; }
   const age = hrs >= 48 ? `${Math.floor(hrs/24)} days` : `${Math.round(hrs)} hours`;
   el.innerHTML = `⚠ Forecast data is ${age} old (model run ${DATA.rdps.run.replace('T',' ')}) — automatic updates are not running. ${noFc ? 'Forecast gauges, hourly tables and forecast cautions below are from that old run and are switched off in the site status.' : 'Forecasts may be out of date.'} Live observations, radar and alerts are current.`;
   el.style.display = 'block';
@@ -632,7 +634,7 @@ function renderHeader(){
   document.getElementById('siteCount').textContent = SITES.length+' ASSETS';
   const built = parseT(DATA.generated), age = (Date.now()-built)/3600000;
   const live = document.getElementById('liveChip');
-  live.className = 'chip ' + (age>12 ? 'bd-y' : 'bd-g'); live.textContent = age>12 ? '● DATA STALE' : '● LIVE';
+  live.className = 'chip ' + (age>STALE_H ? 'bd-y' : 'bd-g'); live.textContent = age>STALE_H ? '● DATA STALE' : '● LIVE';
   document.getElementById('srcChip').innerHTML = `MSC RDPS ${DATA.rdps.run.slice(11)} · NAEFS ${DATA.naefs.run.slice(11)}<br>NL WRMD · ECCC obs/alerts/radar`;
   document.getElementById('runRdps').textContent = `${DATA.rdps.run.replace('T',' ')} (10 km)`;
   document.getElementById('runNaefs').textContent = `${DATA.naefs.run.replace('T',' ')} (${Object.values(DATA.naefs.points)[0].members} mbr)`;
