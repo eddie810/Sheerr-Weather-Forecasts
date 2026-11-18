@@ -125,6 +125,8 @@ Make targeted find/replace edits on the current content rather than rewriting th
 - Past sponsor: **Roebothan, McKay, Marshall** — `This morning’s update is sponsored by Roebothan, McKay, Marshall.`
   then `Visit MakeTheCall.ca today to learn more about how the law firm can help you!` (the ad unit lands between them, mid-post).
   Both sponsor lines are **centred** (`wp:paragraph {"align":"center"}`), with a separator line above and below the pair.
+- **Highs maps (Eddie, Nov 18, 2026): use the white house style** (`graphics/nl-temps`, Island + Labrador, 4:5), not the newer dark hybrid-highs look. Place the Island map under the Island paragraph and the Labrador map under the Labrador paragraph; give Labrador a hand-written summary line when the auto one doesn't fit (`"summary"` in `data-labrador.js`).
+- **Regional forecasts (Eddie, Nov 18, 2026): short and Environment Canada-like**, few or no town names: sky / precip, wind ("Wind west 15 to 30 km/h"), "High 7° to 8°.", then "Tonight, …" and "Low 1° to 3°." Labrador by area (west, central, south coast, north coast), not town by town.
 - Regions, in order: Eastern Newfoundland / the Avalon · Central · West Coast · South Coast ·
   Southwest / Wreckhouse · GNP and the Straits · Labrador / the Big Land.
 - Usually scheduled for **5:00 AM NDT**; Eddie sends an app push alert around 6:30 AM with the link.
