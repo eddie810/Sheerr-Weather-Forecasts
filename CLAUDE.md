@@ -142,6 +142,7 @@ Make targeted find/replace edits on the current content rather than rewriting th
 - Sponsor: **Medicuro** banner (media ID 3310), linked to https://medicuro.ca/.
   Oct 20–21, 2026 videos were sponsored by **Amplifon** (banner media ID 3444, shown at 316px wide, linked to https://www.amplifon.com/).
   **Nov 16–22, 2026: Total Snow Solutions** (banner media ID 3963, 728x90, linked to https://totalsnowsolutions.ca/pages/request-a-quote).
+  **Nov 23–30, 2026: Amplifon** (Eddie, Nov 24: Amplifon has the Evening Forecast until the end of their run, Nov 30; banner media 3444 at 316px).
   Use whichever sponsor Eddie's video names; ask if unsure.
 - Featured image = the YouTube thumbnail Eddie sends.
 - **After publishing, load the live post and confirm the YouTube player actually renders** (an `<iframe ... youtube.com/embed/<id>`
