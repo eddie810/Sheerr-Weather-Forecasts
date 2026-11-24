@@ -142,7 +142,7 @@ Make targeted find/replace edits on the current content rather than rewriting th
 - Sponsor: **Medicuro** banner (media ID 3310), linked to https://medicuro.ca/.
   Oct 20–21, 2026 videos were sponsored by **Amplifon** (banner media ID 3444, shown at 316px wide, linked to https://www.amplifon.com/).
   **Nov 16–22, 2026: Total Snow Solutions** (banner media ID 3963, 728x90, linked to https://totalsnowsolutions.ca/pages/request-a-quote).
-  **Nov 23–30, 2026: Amplifon** (Eddie, Nov 24: Amplifon has the Evening Forecast until the end of their run, Nov 30; banner media 3444 at 316px).
+  **Nov 23 – Dec 4, 2026: Amplifon** (Eddie, Nov 24: their last Evening Forecast week is Nov 30 to Dec 4, so it ends Fri Dec 4; banner media 3444 at 316px). Their 8 weeks of app ads actually started Oct 18 late evening in Ad Manager (first full day Oct 19), not Oct 5 or Oct 12 as in Jeff's plan, so 8 weeks runs to Dec 13, which is what's booked (7-day page Dec 1–13).
   Use whichever sponsor Eddie's video names; ask if unsure.
 - Featured image = the YouTube thumbnail Eddie sends.
 - **After publishing, load the live post and confirm the YouTube player actually renders** (an `<iframe ... youtube.com/embed/<id>`
