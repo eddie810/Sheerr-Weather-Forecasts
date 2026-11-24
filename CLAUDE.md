@@ -132,7 +132,7 @@ Make targeted find/replace edits on the current content rather than rewriting th
   Southwest / Wreckhouse · GNP and the Straits · Labrador / the Big Land.
 - Usually scheduled for **5:00 AM NDT**; Eddie sends an app push alert around 6:30 AM with the link.
   App alert **description** is a short tease (2–3 sentences, not a full summary) and always ends with
-  `Tap "see more" to read the update.` The push notification ends with "Tap here to read more." **Always include Labrador in app descriptions,
+  `Tap "see more" to read the update.` The push notification ends with "Tap here to read more." **Facebook link-post captions are different** (Eddie, Nov 24, 2026): no "tap 'see more'" line (Facebook has none for link posts), and keep them a bit vague, a teaser that makes people tap the link (e.g. "Who sees snow by Wednesday morning, and how much? It's all in this morning's update 👇"), not the full numbers. **Always include Labrador in app descriptions,
   push alerts and social captions** (Eddie flagged that it kept getting left out), but **work it into the text where it fits, not as a separate "Labrador:" line tacked on below everything** (Eddie, Nov 12, 2026).
 
 ### Evening Forecast (category 4)
